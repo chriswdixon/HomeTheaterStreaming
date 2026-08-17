@@ -1,0 +1,156 @@
+import { and, desc, eq } from "drizzle-orm";
+import { NextResponse } from "next/server";
+import { getDb } from "@/db";
+import { watchlistItems } from "@/db/schema";
+import { availabilityForViewer } from "@/lib/availability";
+import { mergeEffectiveServices } from "@/lib/effective-services";
+import { jsonError, requireHousehold } from "@/lib/server/api";
+import {
+  getHouseholdProviders,
+  getPersonalProviders,
+} from "@/lib/server/membership";
+import { addWatchlistItem } from "@/lib/server/watchlist-actions";
+import {
+  createDbWatchlistStore,
+  mapWatchlistRow,
+} from "@/lib/server/watchlist-store";
+import { createTmdbClient } from "@/lib/tmdb";
+import type { WatchlistKind } from "@/lib/watchlist";
+
+function parseList(value: string | null): WatchlistKind | null {
+  if (value === "personal" || value === "shared") return value;
+  return null;
+}
+
+export async function GET(request: Request) {
+  const result = await requireHousehold();
+  if ("error" in result) return result.error;
+
+  const list = parseList(new URL(request.url).searchParams.get("list"));
+  if (!list) return jsonError("list must be personal or shared", 400);
+
+  const db = getDb();
+  const rows = await db
+    .select()
+    .from(watchlistItems)
+    .where(
+      list === "shared"
+        ? and(
+            eq(watchlistItems.householdId, result.membership.householdId),
+            eq(watchlistItems.list, "shared"),
+          )
+        : and(
+            eq(watchlistItems.householdId, result.membership.householdId),
+            eq(watchlistItems.list, "personal"),
+            eq(watchlistItems.ownerUserId, result.userId),
+          ),
+    )
+    .orderBy(desc(watchlistItems.createdAt));
+
+  const [household, personal] = await Promise.all([
+    getHouseholdProviders(result.membership.householdId),
+    getPersonalProviders(result.userId, result.membership.householdId),
+  ]);
+  const effectiveIds = new Set(
+    mergeEffectiveServices(household, personal).map(
+      (provider) => provider.tmdbProviderId,
+    ),
+  );
+
+  return NextResponse.json({
+    items: rows.map((row) => ({
+      ...mapWatchlistRow(row),
+      availability: availabilityForViewer(
+        row.cachedFlatrateProviders ?? [],
+        effectiveIds,
+      ),
+    })),
+  });
+}
+
+export async function POST(request: Request) {
+  const result = await requireHousehold();
+  if ("error" in result) return result.error;
+
+  const body = (await request.json()) as {
+    list?: WatchlistKind;
+    movie?: {
+      tmdbMovieId: number;
+      title: string;
+      year: string | null;
+      posterPath: string | null;
+      overview: string;
+    };
+  };
+
+  const list = parseList(body.list ?? null);
+  if (!list) return jsonError("list must be personal or shared", 400);
+  if (!body.movie?.tmdbMovieId || !body.movie.title) {
+    return jsonError("movie is required", 400);
+  }
+
+  const added = await addWatchlistItem(
+    {
+      tmdb: createTmdbClient(),
+      store: createDbWatchlistStore(result.membership.householdId),
+    },
+    {
+      list,
+      ownerUserId: list === "personal" ? result.userId : null,
+      addedByUserId: result.userId,
+      region: result.membership.household.region,
+      movie: {
+        tmdbMovieId: body.movie.tmdbMovieId,
+        title: body.movie.title,
+        year: body.movie.year ?? null,
+        posterPath: body.movie.posterPath ?? null,
+        overview: body.movie.overview ?? "",
+      },
+    },
+  );
+
+  if (!added.ok) {
+    return jsonError("That movie is already on this list", 409);
+  }
+
+  const [household, personal] = await Promise.all([
+    getHouseholdProviders(result.membership.householdId),
+    getPersonalProviders(result.userId, result.membership.householdId),
+  ]);
+  const availability = availabilityForViewer(
+    added.item.cachedFlatrateProviders,
+    new Set(
+      mergeEffectiveServices(household, personal).map(
+        (provider) => provider.tmdbProviderId,
+      ),
+    ),
+  );
+
+  return NextResponse.json({ item: { ...added.item, availability } }, { status: 201 });
+}
+
+export async function DELETE(request: Request) {
+  const result = await requireHousehold();
+  if ("error" in result) return result.error;
+
+  const id = new URL(request.url).searchParams.get("id");
+  if (!id) return jsonError("id is required", 400);
+
+  const db = getDb();
+  const [row] = await db
+    .select()
+    .from(watchlistItems)
+    .where(eq(watchlistItems.id, id))
+    .limit(1);
+
+  if (!row || row.householdId !== result.membership.householdId) {
+    return jsonError("Movie not found", 404);
+  }
+
+  if (row.list === "personal" && row.ownerUserId !== result.userId) {
+    return jsonError("You can only remove movies from your own list", 403);
+  }
+
+  await db.delete(watchlistItems).where(eq(watchlistItems.id, id));
+  return NextResponse.json({ ok: true });
+}
