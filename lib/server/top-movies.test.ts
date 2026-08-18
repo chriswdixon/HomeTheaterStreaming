@@ -24,6 +24,7 @@ describe("getTopMoviesPayload", () => {
       getMovieRecommendations: vi.fn(),
       getTitleRecommendations: vi.fn(),
       getTitleMeta: vi.fn(),
+      getTitleDetails: vi.fn(),
       getCollectionParts: vi.fn(),
       discoverByKeyword: vi.fn(),
       getMoviesByIds: vi.fn(),

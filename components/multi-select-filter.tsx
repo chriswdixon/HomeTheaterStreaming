@@ -54,22 +54,24 @@ export function MultiSelectFilter<T extends string | number>({
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="glass-input flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm"
+        className="filter-trigger flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm"
         aria-expanded={open}
       >
         <span className="truncate">
           <span className="text-muted">{label}: </span>
-          <span className="text-foreground">{summary}</span>
+          <span className="font-medium text-foreground">{summary}</span>
         </span>
         <span className="text-muted">{open ? "▴" : "▾"}</span>
       </button>
       {open ? (
-        <div className="glass absolute z-30 mt-2 max-h-64 w-full min-w-[12rem] overflow-auto rounded-2xl p-2 shadow-2xl">
+        <div className="filter-menu absolute z-30 mt-2 max-h-64 w-full min-w-[12rem] overflow-auto rounded-2xl p-2">
           <button
             type="button"
             onClick={() => onChange([])}
-            className={`mb-1 w-full rounded-xl px-3 py-2 text-left text-sm hover:bg-white/5 ${
-              selected.length === 0 ? "bg-white/10 text-foreground" : "text-muted"
+            className={`filter-menu-item mb-1 w-full rounded-xl px-3 py-2 text-left text-sm ${
+              selected.length === 0
+                ? "filter-menu-item-active font-medium"
+                : "filter-menu-item-muted"
             }`}
           >
             {allLabel}
@@ -79,8 +81,8 @@ export function MultiSelectFilter<T extends string | number>({
             return (
               <label
                 key={String(option.value)}
-                className={`flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-white/5 ${
-                  active ? "bg-white/10" : ""
+                className={`filter-menu-item flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-sm ${
+                  active ? "filter-menu-item-active font-medium" : ""
                 }`}
               >
                 <input

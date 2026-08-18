@@ -410,7 +410,7 @@ function FranchiseFolder({
             getKey={(movie) => `${group.name}-${movie.tmdbMovieId}`}
             renderActions={(movie) =>
               movie.onList ? (
-                <span className="rounded-full border border-white/15 px-3 py-1 text-xs text-muted">
+                <span className="action-btn-pill card-action-button w-full border border-white/15 text-center text-sm text-muted">
                   On your list
                 </span>
               ) : (
@@ -520,14 +520,14 @@ function AddButtons({
       <button
         type="button"
         onClick={() => onAdd(movie, "personal")}
-        className="action-btn-pill action-btn-add px-3 py-1 text-xs"
+        className="action-btn-pill action-btn-add card-action-button w-full"
       >
         My list
       </button>
       <button
         type="button"
         onClick={() => onAdd(movie, "shared")}
-        className="action-btn-pill action-btn-add px-3 py-1 text-xs"
+        className="action-btn-pill action-btn-add card-action-button w-full"
       >
         Shared
       </button>
@@ -577,6 +577,7 @@ function RecommendationGrid<T extends {
         return (
           <li key={getKey(movie)} className="h-full">
             <MovieCard
+              tmdbMovieId={movie.tmdbMovieId}
               title={movie.title}
               year={movie.year}
               posterPath={movie.posterPath}

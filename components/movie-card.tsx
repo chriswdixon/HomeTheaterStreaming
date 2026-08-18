@@ -1,12 +1,14 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useState, type MouseEvent, type ReactNode } from "react";
 import type { ViewerAvailability } from "@/lib/availability";
 import type { MediaType } from "@/lib/media";
-import { openStreamingTarget } from "@/lib/open-streaming";
-import type { StreamingOpenTarget } from "@/lib/streaming-links";
 import { formatReleaseLabel } from "@/lib/release-label";
+import type { StreamingOpenTarget } from "@/lib/streaming-links";
 import { tmdbImageUrl } from "@/lib/tmdb";
 import { CheckIcon, CopyIcon, GripIcon, StarIcon, TrashIcon } from "./icons";
 import { ProviderBadges } from "./provider-badges";
+import { TitleDetailLightbox } from "./title-detail-lightbox";
 
 export function MoviePoster({
   title,
@@ -35,12 +37,13 @@ export function MoviePoster({
 }
 
 export function MovieCard({
+  tmdbMovieId,
   title,
   year,
   posterPath,
   overview,
   availability,
-  mediaType,
+  mediaType = "movie",
   rating,
   draggable,
   onWatched,
@@ -50,6 +53,7 @@ export function MovieCard({
   actions,
   order,
 }: {
+  tmdbMovieId?: number;
   title: string;
   year: string | null;
   posterPath: string | null;
@@ -65,52 +69,80 @@ export function MovieCard({
   actions?: ReactNode;
   order?: number;
 }) {
+  const [detailOpen, setDetailOpen] = useState(false);
   const openTarget = availability.openTarget;
   const hasIconActions = Boolean(
     onWatched || onRemove || onUnwatch || onCopyToShared,
   );
   const showOverlay = Boolean(openTarget || hasIconActions || actions);
+  const canOpenDetail = tmdbMovieId != null;
+
+  function stopOverlayClick(event: MouseEvent) {
+    event.stopPropagation();
+  }
+
+  function handleCardClick() {
+    if (canOpenDetail) setDetailOpen(true);
+  }
 
   const watchNowButton = openTarget ? (
-    <WatchNowButton target={openTarget} />
+    <WatchNowLink target={openTarget} onClick={stopOverlayClick} />
   ) : null;
 
   const actionOverlay = showOverlay ? (
-    <div className="pointer-events-none absolute inset-0 z-10 flex items-end justify-center gap-2 rounded-2xl bg-gradient-to-t from-black/75 via-black/35 to-transparent p-3 opacity-0 transition-opacity group-hover/card:opacity-100 group-focus-within/card:opacity-100 group-hover/card:pointer-events-auto group-focus-within/card:pointer-events-auto">
-      {hasIconActions ? (
-        <div className="pointer-events-auto flex w-full flex-wrap items-center gap-2">
-          {watchNowButton}
-          {onUnwatch ? (
-            <IconButton label="Mark not watched" onClick={onUnwatch} tone="watched">
-              <CheckIcon className="h-4 w-4" />
-            </IconButton>
-          ) : onWatched ? (
-            <IconButton label="Watched" onClick={onWatched} tone="watched">
-              <CheckIcon className="h-4 w-4" />
-            </IconButton>
-          ) : null}
-          {onCopyToShared ? (
-            <IconButton label="Copy to shared list" onClick={onCopyToShared} tone="add">
-              <CopyIcon className="h-4 w-4" />
-            </IconButton>
-          ) : null}
-          {onRemove ? (
-            <IconButton
-              label="Remove"
-              onClick={onRemove}
-              tone="delete"
-              className="ml-auto"
-            >
-              <TrashIcon className="h-4 w-4" />
-            </IconButton>
-          ) : null}
-        </div>
-      ) : (
-        <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-2">
-          {watchNowButton}
-          {actions}
-        </div>
-      )}
+    <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-black/55 p-4 opacity-0 transition-opacity group-hover/card:opacity-100 group-focus-within/card:opacity-100 group-hover/card:pointer-events-auto group-focus-within/card:pointer-events-auto">
+      <div className="card-action-stack pointer-events-auto flex w-full max-w-[11rem] flex-col gap-2">
+        {watchNowButton}
+        {hasIconActions ? (
+          <>
+            {onUnwatch ? (
+              <OverlayActionButton
+                label="Not watched"
+                onClick={(event) => {
+                  stopOverlayClick(event);
+                  onUnwatch();
+                }}
+                tone="watched"
+                icon={<CheckIcon className="h-5 w-5" />}
+              />
+            ) : onWatched ? (
+              <OverlayActionButton
+                label="Watched"
+                onClick={(event) => {
+                  stopOverlayClick(event);
+                  onWatched();
+                }}
+                tone="watched"
+                icon={<CheckIcon className="h-5 w-5" />}
+              />
+            ) : null}
+            {onCopyToShared ? (
+              <OverlayActionButton
+                label="Copy to shared"
+                onClick={(event) => {
+                  stopOverlayClick(event);
+                  onCopyToShared();
+                }}
+                tone="add"
+                icon={<CopyIcon className="h-5 w-5" />}
+              />
+            ) : null}
+            {onRemove ? (
+              <OverlayActionButton
+                label="Remove"
+                onClick={(event) => {
+                  stopOverlayClick(event);
+                  onRemove();
+                }}
+                tone="delete"
+                icon={<TrashIcon className="h-5 w-5" />}
+              />
+            ) : null}
+          </>
+        ) : (
+          <div onClick={stopOverlayClick}>{actions}</div>
+        )}
+      </div>
     </div>
   ) : null;
 
@@ -160,44 +192,84 @@ export function MovieCard({
           ))}
         </p>
       ) : null}
-      <div className="mt-auto flex min-h-[1.75rem] w-full items-end">
-        <ProviderBadges availability={availability} />
+      <div
+        className="mt-auto flex min-h-[1.75rem] w-full items-end"
+        onClick={stopOverlayClick}
+      >
+        <ProviderBadges availability={availability} title={title} linkable />
       </div>
     </div>
   );
 
   return (
-    <article className="group/card glass flex h-full flex-col rounded-3xl p-3 transition-shadow hover:ring-2 hover:ring-[var(--accent-warm)]">
-      {posterBlock}
-      {detailsBlock}
-    </article>
+    <>
+      <article
+        className={`group/card glass flex h-full flex-col rounded-3xl p-3 transition-shadow hover:ring-2 hover:ring-[var(--accent-warm)] ${
+          canOpenDetail ? "cursor-pointer" : ""
+        }`}
+        onClick={canOpenDetail ? handleCardClick : undefined}
+        onKeyDown={
+          canOpenDetail
+            ? (event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  setDetailOpen(true);
+                }
+              }
+            : undefined
+        }
+        tabIndex={canOpenDetail ? 0 : undefined}
+        aria-label={canOpenDetail ? `View details for ${title}` : undefined}
+      >
+        {posterBlock}
+        {detailsBlock}
+      </article>
+      {detailOpen && tmdbMovieId != null ? (
+        <TitleDetailLightbox
+          tmdbMovieId={tmdbMovieId}
+          mediaType={mediaType}
+          title={title}
+          year={year}
+          posterPath={posterPath}
+          overview={overview}
+          availability={availability}
+          onClose={() => setDetailOpen(false)}
+        />
+      ) : null}
+    </>
   );
 }
 
-function WatchNowButton({ target }: { target: StreamingOpenTarget }) {
+function WatchNowLink({
+  target,
+  onClick,
+}: {
+  target: StreamingOpenTarget;
+  onClick: (event: MouseEvent) => void;
+}) {
   return (
-    <button
-      type="button"
-      onClick={() => openStreamingTarget(target)}
-      className="action-btn-pill action-btn-watch shrink-0 px-3 py-1.5 text-xs font-medium"
+    <a
+      href={target.webUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={onClick}
+      className="action-btn-pill action-btn-watch card-action-button w-full text-center no-underline"
     >
       Watch now
-    </button>
+    </a>
   );
 }
 
-function IconButton({
+function OverlayActionButton({
   label,
   onClick,
-  children,
-  tone = "watched",
-  className = "",
+  icon,
+  tone,
 }: {
   label: string;
-  onClick: () => void;
-  children: ReactNode;
-  tone?: "add" | "watched" | "delete";
-  className?: string;
+  onClick: (event: MouseEvent) => void;
+  icon: ReactNode;
+  tone: "add" | "watched" | "delete";
 }) {
   const toneClass =
     tone === "add"
@@ -207,23 +279,14 @@ function IconButton({
         : "action-btn-watched";
 
   return (
-    <div className={`group/action relative ${className}`}>
-      <button
-        type="button"
-        aria-label={label}
-        onClick={onClick}
-        className={`pointer-events-auto glass-icon-button ${toneClass}`}
-      >
-        {children}
-      </button>
-      <span
-        role="tooltip"
-        className={`app-tooltip pointer-events-none absolute bottom-[calc(100%+0.4rem)] z-20 whitespace-nowrap opacity-0 transition-opacity group-hover/action:opacity-100 group-focus-visible/action:opacity-100 ${
-          tone === "delete" ? "right-0" : "left-1/2 -translate-x-1/2"
-        }`}
-      >
-        {label}
-      </span>
-    </div>
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className={`action-btn-pill card-action-button w-full ${toneClass}`}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
   );
 }

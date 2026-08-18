@@ -62,7 +62,7 @@ export function MovieSearch({
       <label htmlFor="movie-search" className="sr-only">
         Search movies and series to add
       </label>
-      <div className="glass-input flex w-full min-w-0 items-center gap-3 px-5 py-4">
+      <div className="search-field flex w-full min-w-0 items-center gap-3 py-3.5 pl-4 pr-5">
         <SearchIcon className="h-5 w-5 shrink-0 text-accent" />
         <input
           id="movie-search"
@@ -75,7 +75,7 @@ export function MovieSearch({
       </div>
       {error ? <p className="mt-2 text-sm text-red-300">{error}</p> : null}
       {open && visibleResults.length > 0 ? (
-        <ul className="glass absolute z-20 mt-2 max-h-96 w-full overflow-auto rounded-2xl shadow-2xl">
+        <ul className="filter-menu absolute z-20 mt-2 max-h-96 w-full overflow-auto rounded-2xl p-2 shadow-2xl">
           {visibleResults.map((movie) => (
             <li key={`${movie.mediaType}-${movie.tmdbMovieId}`}>
               <button

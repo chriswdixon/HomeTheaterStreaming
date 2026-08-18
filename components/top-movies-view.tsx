@@ -75,6 +75,7 @@ export function TopMoviesView({
         {movies.map((movie) => (
           <li key={movie.tmdbMovieId} className="h-full">
             <MovieCard
+              tmdbMovieId={movie.tmdbMovieId}
               title={movie.title}
               year={movie.year}
               posterPath={movie.posterPath}
@@ -96,50 +97,50 @@ export function TopMoviesView({
               )}
               actions={
                 movie.onPersonalList && movie.onSharedList ? (
-                  <span className="rounded-full border border-white/15 px-3 py-1 text-xs text-muted">
+                  <span className="action-btn-pill card-action-button w-full border border-white/15 text-center text-sm text-muted">
                     On both lists
                   </span>
                 ) : movie.onPersonalList ? (
-                  <div className="flex flex-wrap gap-2">
-                    <span className="rounded-full border border-white/15 px-3 py-1 text-xs text-muted">
+                  <>
+                    <span className="action-btn-pill card-action-button w-full border border-white/15 text-center text-sm text-muted">
                       On your list
                     </span>
                     {!movie.onSharedList ? (
                       <button
                         type="button"
                         onClick={() => void addMovie(movie, "shared")}
-                        className="action-btn-pill action-btn-add"
+                        className="action-btn-pill action-btn-add card-action-button w-full"
                       >
                         Shared
                       </button>
                     ) : null}
-                  </div>
+                  </>
                 ) : movie.onSharedList ? (
-                  <div className="flex flex-wrap gap-2">
+                  <>
                     <button
                       type="button"
                       onClick={() => void addMovie(movie, "personal")}
-                      className="action-btn-pill action-btn-add"
+                      className="action-btn-pill action-btn-add card-action-button w-full"
                     >
                       My list
                     </button>
-                    <span className="rounded-full border border-white/15 px-3 py-1 text-xs text-muted">
+                    <span className="action-btn-pill card-action-button w-full border border-white/15 text-center text-sm text-muted">
                       On shared
                     </span>
-                  </div>
+                  </>
                 ) : (
                   <>
                     <button
                       type="button"
                       onClick={() => void addMovie(movie, "personal")}
-                      className="action-btn-pill action-btn-add"
+                      className="action-btn-pill action-btn-add card-action-button w-full"
                     >
                       My list
                     </button>
                     <button
                       type="button"
                       onClick={() => void addMovie(movie, "shared")}
-                      className="action-btn-pill action-btn-add"
+                      className="action-btn-pill action-btn-add card-action-button w-full"
                     >
                       Shared
                     </button>

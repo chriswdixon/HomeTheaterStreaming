@@ -20,6 +20,35 @@ export type TitleMeta = {
   contentRating: string | null;
 };
 
+export type TitleTrailer = {
+  name: string;
+  key: string;
+  site: string;
+  type: string;
+};
+
+export type TvSeasonSummary = {
+  seasonNumber: number;
+  name: string;
+  episodeCount: number;
+};
+
+export type TitleDetails = {
+  tmdbMovieId: number;
+  mediaType: MediaType;
+  title: string;
+  year: string | null;
+  posterPath: string | null;
+  overview: string;
+  contentRating: string | null;
+  trailers: TitleTrailer[];
+  tvStats: {
+    seasonCount: number;
+    episodeCount: number;
+    seasons: TvSeasonSummary[];
+  } | null;
+};
+
 export type WatchOptions = {
   flatrate: Provider[];
   rent: Provider[];
@@ -55,6 +84,11 @@ export type TmdbClient = {
     mediaType: MediaType,
   ) => Promise<RecommendedMovie[]>;
   getTitleMeta: (movieId: number, mediaType: MediaType, region?: string) => Promise<TitleMeta>;
+  getTitleDetails: (
+    movieId: number,
+    mediaType: MediaType,
+    region?: string,
+  ) => Promise<TitleDetails | null>;
   getContentRating: (
     movieId: number,
     mediaType: MediaType,
@@ -279,6 +313,81 @@ export function createTmdbClient(
     },
 
     getContentRating: contentRatingFor,
+
+    async getTitleDetails(movieId, mediaType, region = "US") {
+      const path = mediaType === "tv" ? `/tv/${movieId}` : `/movie/${movieId}`;
+      try {
+        const [data, contentRating] = await Promise.all([
+          tmdbGet<{
+            title?: string;
+            name?: string;
+            overview?: string;
+            poster_path?: string | null;
+            release_date?: string;
+            first_air_date?: string;
+            number_of_seasons?: number;
+            number_of_episodes?: number;
+            seasons?: {
+              season_number: number;
+              name?: string;
+              episode_count?: number;
+            }[];
+            videos?: {
+              results?: {
+                name?: string;
+                key?: string;
+                site?: string;
+                type?: string;
+              }[];
+            };
+          }>(path, { append_to_response: "videos" }),
+          contentRatingFor(movieId, mediaType, region),
+        ]);
+
+        const trailers = (data.videos?.results ?? [])
+          .filter(
+            (video) =>
+              video.site === "YouTube" &&
+              video.key &&
+              (video.type === "Trailer" || video.type === "Teaser"),
+          )
+          .map((video) => ({
+            name: video.name ?? "Trailer",
+            key: video.key!,
+            site: video.site ?? "YouTube",
+            type: video.type ?? "Trailer",
+          }));
+
+        const tvStats =
+          mediaType === "tv"
+            ? {
+                seasonCount: data.number_of_seasons ?? 0,
+                episodeCount: data.number_of_episodes ?? 0,
+                seasons: (data.seasons ?? [])
+                  .filter((season) => season.season_number > 0)
+                  .map((season) => ({
+                    seasonNumber: season.season_number,
+                    name: season.name?.trim() || `Season ${season.season_number}`,
+                    episodeCount: season.episode_count ?? 0,
+                  })),
+              }
+            : null;
+
+        return {
+          tmdbMovieId: movieId,
+          mediaType,
+          title: data.title ?? data.name ?? "Untitled",
+          year: releaseYearFromDate(data.release_date ?? data.first_air_date),
+          posterPath: data.poster_path ?? null,
+          overview: data.overview ?? "",
+          contentRating,
+          trailers,
+          tvStats,
+        };
+      } catch {
+        return null;
+      }
+    },
 
     async getTitleMeta(movieId, mediaType, region = "US") {
       const path = mediaType === "tv" ? `/tv/${movieId}` : `/movie/${movieId}`;

@@ -114,6 +114,7 @@ export function WatchlistView({
 
     return (
       <MovieCard
+        tmdbMovieId={item.tmdbMovieId}
         title={item.title}
         year={item.year}
         posterPath={item.posterPath}
@@ -273,7 +274,7 @@ export function WatchlistView({
         </p>
       ) : null}
       {showSearch && list ? (
-        <div className="glass mt-6 overflow-visible rounded-3xl p-4 sm:p-5">
+        <div className="search-panel mt-6 rounded-3xl p-4 sm:p-5">
           <p className="mb-3 text-xs uppercase tracking-[0.2em] text-accent">
             Add to your list
           </p>
@@ -281,7 +282,7 @@ export function WatchlistView({
         </div>
       ) : null}
       {mode === "queue" || genres.length > 0 || contentRatings.length > 0 ? (
-        <div className="mt-4 flex flex-wrap items-start gap-3">
+        <div className="mt-4 flex w-full flex-wrap items-center gap-3">
           {genres.length > 0 ? (
             <MultiSelectFilter
               label="Genre"
@@ -320,7 +321,7 @@ export function WatchlistView({
               type="button"
               onClick={() => setShowWatched((current) => !current)}
               title={showWatched ? "Show unwatched" : "Show watched"}
-              className="group relative shrink-0 rounded-full bg-accent px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-accent/80"
+              className="group relative ml-auto shrink-0 rounded-full bg-accent px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-accent/80"
             >
               {showWatched ? "Watched" : "Unwatched"}
               <span

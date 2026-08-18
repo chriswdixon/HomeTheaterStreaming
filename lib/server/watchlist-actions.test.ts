@@ -47,6 +47,7 @@ function mockTmdb(overrides: Partial<TmdbClient> = {}): TmdbClient {
       collectionName: null,
       contentRating: null,
     }),
+    getTitleDetails: vi.fn().mockResolvedValue(null),
     getContentRating: vi.fn().mockResolvedValue(null),
     getCollectionParts: vi.fn().mockResolvedValue([]),
     discoverByKeyword: vi.fn().mockResolvedValue([]),
