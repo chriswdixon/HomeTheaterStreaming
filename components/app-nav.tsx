@@ -3,14 +3,13 @@
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { NAV_ICONS, NavGlassIcon } from "./nav-icons";
+import { NAV_ICONS, NavGlassIcon, NavServicesIcon } from "./nav-icons";
 
 const LINKS = [
   { href: "/my-list", label: "My list", short: "Mine" },
   { href: "/shared", label: "Shared list", short: "Shared" },
   { href: "/top-100", label: "Top 100", short: "Top 100" },
   { href: "/recently-watched", label: "Recently watched", short: "Recent" },
-  { href: "/services", label: "Services", short: "Services" },
   { href: "/recommendations", label: "Recommendations", short: "Recs" },
 ] as const;
 
@@ -42,7 +41,15 @@ export function AppNav({ householdName }: { householdName: string }) {
           })}
         </nav>
         <p className="nav-household-name hidden lg:inline">{householdName}</p>
-        <UserButton />
+        <UserButton>
+          <UserButton.MenuItems>
+            <UserButton.Link
+              label="Services"
+              labelIcon={<NavServicesIcon />}
+              href="/services"
+            />
+          </UserButton.MenuItems>
+        </UserButton>
       </div>
     </header>
   );
