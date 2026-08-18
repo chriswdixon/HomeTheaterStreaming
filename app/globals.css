@@ -187,17 +187,38 @@ a {
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.app-nav-drawer .household-switcher-menu {
+.app-nav-drawer .household-switcher-menu-drawer {
   position: static;
   width: 100%;
   margin-top: 0.5rem;
   box-shadow: none;
 }
 
-.app-nav-drawer .household-switcher-trigger {
+.app-nav-drawer .household-switcher-drawer .household-switcher-trigger {
   max-width: none;
   width: 100%;
   justify-content: space-between;
+}
+
+.shared-list-manage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.shared-list-manage-link {
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+.shared-list-manage-link:hover {
+  border-color: rgba(232, 184, 109, 0.35);
+  color: var(--accent);
 }
 
 .glass-nav {
@@ -1284,6 +1305,26 @@ textarea.glass-input {
   .household-nav-button:hover {
     border-color: rgba(232, 184, 109, 0.35);
     background: rgba(232, 184, 109, 0.1);
+  }
+
+  .glass-nav,
+  .app-nav-inner {
+    overflow: visible;
+  }
+
+  .household-switcher-trigger {
+    max-width: min(7.5rem, 32vw);
+    padding: 0.3rem 0.55rem;
+    font-size: 0.75rem;
+  }
+
+  .household-switcher-menu-header {
+    position: fixed;
+    right: 0.75rem;
+    left: 0.75rem;
+    top: calc(3.25rem + env(safe-area-inset-top, 0px));
+    width: auto;
+    z-index: 70;
   }
 
   .notification-panel {

@@ -13,9 +13,15 @@ export type HouseholdOption = {
 export function HouseholdSwitcher({
   households,
   activeHouseholdId,
+  onViewInvite,
+  onNavigate,
+  variant = "header",
 }: {
   households: HouseholdOption[];
   activeHouseholdId: string;
+  onViewInvite?: () => void;
+  onNavigate?: () => void;
+  variant?: "header" | "drawer";
 }) {
   const router = useRouter();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -38,10 +44,16 @@ export function HouseholdSwitcher({
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [open]);
 
+  function closeMenu() {
+    setOpen(false);
+    onNavigate?.();
+  }
+
   async function switchHousehold(householdId: string) {
     if (householdId === activeHouseholdId || switching) return;
     setSwitching(true);
     setOpen(false);
+    onNavigate?.();
     try {
       const response = await fetch("/api/household/active", {
         method: "POST",
@@ -57,8 +69,16 @@ export function HouseholdSwitcher({
 
   if (!active || households.length === 0) return null;
 
+  const menuClass =
+    variant === "drawer"
+      ? "household-switcher-menu household-switcher-menu-drawer"
+      : "household-switcher-menu household-switcher-menu-header";
+
   return (
-    <div ref={rootRef} className="household-switcher">
+    <div
+      ref={rootRef}
+      className={`household-switcher ${variant === "drawer" ? "household-switcher-drawer" : ""}`}
+    >
       <button
         type="button"
         className="household-switcher-trigger"
@@ -71,7 +91,7 @@ export function HouseholdSwitcher({
         <span className="text-muted">{open ? "▴" : "▾"}</span>
       </button>
       {open ? (
-        <div className="household-switcher-menu" role="listbox" aria-label="Shared lists">
+        <div className={menuClass} role="listbox" aria-label="Shared lists">
           <p className="household-switcher-heading">Your shared lists</p>
           <ul className="household-switcher-list">
             {households.map((household) => {
@@ -98,22 +118,62 @@ export function HouseholdSwitcher({
             })}
           </ul>
           <div className="household-switcher-actions">
+            {onViewInvite ? (
+              <button
+                type="button"
+                className="household-switcher-action w-full text-left"
+                onClick={() => {
+                  closeMenu();
+                  onViewInvite();
+                }}
+              >
+                View invite code
+              </button>
+            ) : null}
             <Link
               href="/create-list"
               className="household-switcher-action"
-              onClick={() => setOpen(false)}
+              onClick={closeMenu}
             >
               Create new shared list
             </Link>
             <Link
               href="/join-list"
               className="household-switcher-action"
-              onClick={() => setOpen(false)}
+              onClick={closeMenu}
             >
               Join with invite code
             </Link>
           </div>
         </div>
+      ) : null}
+    </div>
+  );
+}
+
+export function SharedListManageLinks({
+  onViewInvite,
+  className = "",
+}: {
+  onViewInvite?: () => void;
+  className?: string;
+}) {
+  return (
+    <div className={`shared-list-manage ${className}`.trim()}>
+      <Link href="/create-list" className="shared-list-manage-link">
+        Create list
+      </Link>
+      <Link href="/join-list" className="shared-list-manage-link">
+        Join list
+      </Link>
+      {onViewInvite ? (
+        <button
+          type="button"
+          onClick={onViewInvite}
+          className="shared-list-manage-link"
+        >
+          Invite
+        </button>
       ) : null}
     </div>
   );

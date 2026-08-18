@@ -27,6 +27,7 @@ import { sortSharedListItems } from "@/lib/shared-list-votes";
 import { ConfirmDialog, RatingDialog } from "./dialogs";
 import { HouseholdSharingLightbox } from "./household-sharing-lightbox";
 import { HouseholdMembersList } from "./household-members-list";
+import { SharedListManageLinks } from "./household-switcher";
 import { MultiSelectFilter } from "./multi-select-filter";
 import { MovieCard } from "./movie-card";
 import { MovieSearch } from "./movie-search";
@@ -345,14 +346,20 @@ export function WatchlistView({
         <div>
           <h1 className="page-title">{title}</h1>
           {household ? (
-            <button
-              type="button"
-              onClick={() => setShowHouseholdInvite(true)}
-              className="household-name-button mt-2"
-              title="View household invite code"
-            >
-              {household.name}
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => setShowHouseholdInvite(true)}
+                className="household-name-button mt-2 hidden md:inline-flex"
+                title="View invite code"
+              >
+                {household.name}
+              </button>
+              <SharedListManageLinks
+                className="mt-3 md:hidden"
+                onViewInvite={() => setShowHouseholdInvite(true)}
+              />
+            </>
           ) : null}
           {members.length > 0 ? <HouseholdMembersList members={members} /> : null}
           <p className="mt-1 text-muted">{description}</p>

@@ -7,9 +7,10 @@ import { useEffect, useState } from "react";
 import { HouseholdSharingLightbox } from "./household-sharing-lightbox";
 import {
   HouseholdSwitcher,
+  SharedListManageLinks,
   type HouseholdOption,
 } from "./household-switcher";
-import { CloseIcon, MenuIcon, SharedIcon } from "./icons";
+import { CloseIcon, MenuIcon } from "./icons";
 import { NotificationsBell } from "./notifications-bell";
 import {
   NAV_ICONS,
@@ -62,6 +63,10 @@ export function AppNav({
     };
   }, [menuOpen]);
 
+  function closeMenu() {
+    setMenuOpen(false);
+  }
+
   return (
     <>
       <header className="glass-nav sticky top-0 z-50">
@@ -113,21 +118,14 @@ export function AppNav({
           </nav>
 
           <div className="ml-auto flex min-w-0 shrink items-center gap-1.5 md:ml-0 md:gap-2">
-            <div className="hidden min-w-0 md:block">
+            <div className="min-w-0">
               <HouseholdSwitcher
                 households={households}
                 activeHouseholdId={activeHouseholdId}
+                onViewInvite={() => setShowHouseholdInvite(true)}
+                variant="header"
               />
             </div>
-            <button
-              type="button"
-              onClick={() => setShowHouseholdInvite(true)}
-              className="household-nav-button md:hidden"
-              title={`Shared list: ${household.name}`}
-              aria-label={`Shared list: ${household.name}`}
-            >
-              <SharedIcon className="h-4 w-4" />
-            </button>
             <NotificationsBell
               initialNotifications={initialNotifications}
               initialUnreadCount={initialUnreadCount}
@@ -146,16 +144,34 @@ export function AppNav({
       </header>
 
       {menuOpen ? (
-        <div className="app-nav-drawer-overlay md:hidden" onClick={() => setMenuOpen(false)}>
+        <div className="app-nav-drawer-overlay md:hidden" onClick={closeMenu}>
           <nav
             className="app-nav-drawer"
             aria-label="Main navigation"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="border-b border-white/10 px-3 pb-3">
-              <HouseholdSwitcher
-                households={households}
-                activeHouseholdId={activeHouseholdId}
+            <div className="border-b border-white/10 px-3 py-3">
+              <p className="text-xs uppercase tracking-[0.16em] text-muted">
+                Active shared list
+              </p>
+              <div className="mt-2">
+                <HouseholdSwitcher
+                  households={households}
+                  activeHouseholdId={activeHouseholdId}
+                  onViewInvite={() => {
+                    closeMenu();
+                    setShowHouseholdInvite(true);
+                  }}
+                  onNavigate={closeMenu}
+                  variant="drawer"
+                />
+              </div>
+              <SharedListManageLinks
+                className="mt-3"
+                onViewInvite={() => {
+                  closeMenu();
+                  setShowHouseholdInvite(true);
+                }}
               />
             </div>
             <ul className="app-nav-drawer-list">
@@ -167,7 +183,7 @@ export function AppNav({
                     <Link
                       href={link.href}
                       className={`app-nav-drawer-link ${active ? "app-nav-drawer-link-active" : ""}`}
-                      onClick={() => setMenuOpen(false)}
+                      onClick={closeMenu}
                     >
                       {hasIcon ? <NavGlassIcon href={link.href} /> : null}
                       <span>{link.label}</span>
