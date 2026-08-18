@@ -1,10 +1,14 @@
 import { WatchlistView } from "@/components/watchlist-view";
-import { loadWatchlist } from "@/lib/server/load-watchlist";
+import { loadWatchlistSafe } from "@/lib/server/load-watchlist";
 import { requirePageMembership } from "@/lib/server/page-session";
 
 export default async function SharedListPage() {
   const { userId, membership } = await requirePageMembership();
-  const items = await loadWatchlist(userId, membership.householdId, "shared");
+  const { items, warning } = await loadWatchlistSafe(
+    userId,
+    membership.householdId,
+    "shared",
+  );
 
   return (
     <WatchlistView
@@ -12,6 +16,7 @@ export default async function SharedListPage() {
       title="Shared list"
       description="The household queue. Anyone here can add, reorder, or remove titles."
       initialItems={items}
+      warning={warning}
     />
   );
 }

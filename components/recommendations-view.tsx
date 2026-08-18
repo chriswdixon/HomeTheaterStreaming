@@ -25,6 +25,7 @@ type UnlockedPayload = {
   watchOrderGroups?: WatchOrderGroup[];
   affinityGroups?: AffinityGroup[];
   generalRecs?: RankedMovie[];
+  degraded?: boolean;
 };
 
 export function RecommendationsView({
@@ -32,7 +33,7 @@ export function RecommendationsView({
   viewerServices,
 }: {
   initial:
-    | { unlocked: false; count: number; needed: number }
+    | { unlocked: false; count: number; needed: number; degraded?: boolean }
     | UnlockedPayload;
   viewerServices: Provider[];
 }) {
@@ -211,6 +212,12 @@ export function RecommendationsView({
       <p className="mt-1 text-muted">
         Franchise paths from your list, plus similar titles you might enjoy.
       </p>
+      {initial.degraded ? (
+        <p className="mt-4 rounded-2xl border border-amber-400/25 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+          Streaming availability data is sometimes rate-limited. Your lists are
+          unchanged — refresh in a moment to reload recommendations.
+        </p>
+      ) : null}
       <div className="mt-4 flex flex-wrap gap-2">
         <FilterChip
           active={serviceFilter === "my-services"}

@@ -9,9 +9,11 @@ import { MovieCard } from "./movie-card";
 export function TopMoviesView({
   initialMovies,
   viewerServices,
+  availabilityWarning,
 }: {
   initialMovies: TopMovie[];
   viewerServices: Provider[];
+  availabilityWarning?: string;
 }) {
   const [movies, setMovies] = useState(initialMovies);
   const [message, setMessage] = useState<string | null>(null);
@@ -63,6 +65,11 @@ export function TopMoviesView({
         TMDB&apos;s highest-rated films of all time. Add anything you want to
         watch to your list or the shared list.
       </p>
+      {availabilityWarning ? (
+        <p className="mt-4 rounded-2xl border border-amber-400/25 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+          {availabilityWarning}
+        </p>
+      ) : null}
       {message ? <p className="mt-4 text-sm text-accent">{message}</p> : null}
       <ul className="mt-8 grid grid-cols-2 items-stretch gap-4 md:grid-cols-4 lg:grid-cols-5">
         {movies.map((movie) => (

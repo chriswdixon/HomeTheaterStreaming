@@ -657,4 +657,26 @@ describe("getRecommendationPayload", () => {
 
     expect(tmdb.getTitleMeta).toHaveBeenCalledWith(1726, "movie");
   });
+
+  it("returns a degraded payload instead of failing when recommendation build throws", async () => {
+    const personal = personalMovies(10);
+    const tmdb = mockTmdb();
+    const store = memoryStore(personal);
+    vi.spyOn(store, "listItems").mockImplementationOnce(async () => {
+      throw new Error("TMDB request failed (429) for /movie/1/recommendations");
+    });
+
+    const payload = await getRecommendationPayload(
+      { tmdb, store },
+      { ownerUserId: "user-1", region: "US" },
+    );
+
+    expect(payload.degraded).toBe(true);
+    expect(payload.unlocked).toBe(true);
+    if (payload.unlocked) {
+      expect(payload.watchOrderGroups).toEqual([]);
+      expect(payload.affinityGroups).toEqual([]);
+      expect(payload.generalRecs).toEqual([]);
+    }
+  });
 });

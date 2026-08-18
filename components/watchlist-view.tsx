@@ -34,6 +34,7 @@ export function WatchlistView({
   showSearch = true,
   allowDrag = true,
   mode = "queue",
+  warning,
 }: {
   list?: WatchlistKind;
   title: string;
@@ -42,6 +43,7 @@ export function WatchlistView({
   showSearch?: boolean;
   allowDrag?: boolean;
   mode?: "queue" | "watched";
+  warning?: string;
 }) {
   const router = useRouter();
   const [items, setItems] = useState(initialItems);
@@ -247,6 +249,11 @@ export function WatchlistView({
         </div>
         <p className="text-sm text-muted">{displayed.length} titles</p>
       </div>
+      {warning ? (
+        <p className="mt-4 rounded-2xl border border-amber-400/25 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+          {warning}
+        </p>
+      ) : null}
       {showSearch && list ? (
         <div className="glass mt-6 rounded-3xl p-4 sm:p-5">
           <p className="mb-3 text-xs uppercase tracking-[0.2em] text-accent">

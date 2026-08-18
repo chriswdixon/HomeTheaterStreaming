@@ -91,7 +91,7 @@ export async function loadWatchlist(
     )
     .orderBy(asc(watchlistItems.sortOrder), desc(watchlistItems.createdAt));
 
-  const hydrated = await backfillMissingTitleMeta(rows);
+  const hydrated = await backfillMissingTitleMeta(rows).catch(() => rows);
 
   const [services, states] = await Promise.all([
     servicesFor(userId, householdId),
@@ -109,6 +109,24 @@ export async function loadWatchlist(
       stateById.get(row.id) ?? null,
     ),
   );
+}
+
+export async function loadWatchlistSafe(
+  userId: string,
+  householdId: string,
+  list: WatchlistKind,
+): Promise<{ items: WatchlistItemView[]; warning?: string }> {
+  try {
+    const items = await loadWatchlist(userId, householdId, list);
+    return { items };
+  } catch (error) {
+    console.error("loadWatchlist failed", error);
+    return {
+      items: [],
+      warning:
+        "Could not load list data right now. Your saved titles are still in the database — refresh in a moment.",
+    };
+  }
 }
 
 export async function loadRecentlyWatched(
@@ -138,4 +156,21 @@ export async function loadRecentlyWatched(
   return recentlyWatchedItems(items, states).map((item) =>
     withAvailability(item, services, stateById.get(item.id) ?? null),
   );
+}
+
+export async function loadRecentlyWatchedSafe(
+  userId: string,
+  householdId: string,
+): Promise<{ items: WatchlistItemView[]; warning?: string }> {
+  try {
+    const items = await loadRecentlyWatched(userId, householdId);
+    return { items };
+  } catch (error) {
+    console.error("loadRecentlyWatched failed", error);
+    return {
+      items: [],
+      warning:
+        "Could not load recently watched titles right now. Refresh in a moment.",
+    };
+  }
 }

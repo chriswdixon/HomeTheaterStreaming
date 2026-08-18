@@ -2,6 +2,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { clerkAppearance } from "@/lib/clerk-appearance";
+import { clerkKeyIssue } from "@/lib/clerk-env";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -21,6 +22,11 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
+  const clerkIssue = clerkKeyIssue();
+  if (clerkIssue) {
+    console.warn(`[Clerk] ${clerkIssue}`);
+  }
+
   return (
     <html
       lang="en"

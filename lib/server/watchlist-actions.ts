@@ -241,7 +241,7 @@ export async function addFranchiseFolderToWatchlist(
 }
 
 export type RecommendationPayload =
-  | { unlocked: false; count: number; needed: number }
+  | { unlocked: false; count: number; needed: number; degraded?: boolean }
   | {
       unlocked: true;
       count: number;
@@ -249,6 +249,7 @@ export type RecommendationPayload =
       watchOrderGroups: WatchOrderGroup[];
       affinityGroups: AffinityGroup[];
       generalRecs: RankedMovie[];
+      degraded?: boolean;
     };
 
 export const MAX_WATCH_PROVIDER_LOOKUPS = 30;
@@ -447,7 +448,39 @@ async function buildAffinityGroups(
   });
 }
 
-export async function getRecommendationPayload(
+async function getDegradedRecommendationPayload(
+  deps: { store: WatchlistStore },
+  input: { ownerUserId: string },
+): Promise<RecommendationPayload> {
+  let items: StoredWatchlistItem[] = [];
+  try {
+    items = await deps.store.listItems();
+  } catch {
+    items = [];
+  }
+
+  const personal = items.filter(
+    (item) => item.list === "personal" && item.ownerUserId === input.ownerUserId,
+  );
+  const count = personal.length;
+  const needed = RECOMMENDATION_UNLOCK_COUNT;
+
+  if (!isRecommendationsUnlocked(count)) {
+    return { unlocked: false, count, needed, degraded: true };
+  }
+
+  return {
+    unlocked: true,
+    count,
+    needed,
+    watchOrderGroups: [],
+    affinityGroups: [],
+    generalRecs: [],
+    degraded: true,
+  };
+}
+
+async function buildRecommendationPayload(
   deps: { tmdb: TmdbClient; store: WatchlistStore },
   input: {
     ownerUserId: string;
@@ -594,6 +627,20 @@ export async function getRecommendationPayload(
     affinityGroups,
     generalRecs: hydratedGeneralRecs,
   };
+}
+
+export async function getRecommendationPayload(
+  deps: { tmdb: TmdbClient; store: WatchlistStore },
+  input: {
+    ownerUserId: string;
+    region: string;
+  },
+): Promise<RecommendationPayload> {
+  try {
+    return await buildRecommendationPayload(deps, input);
+  } catch {
+    return getDegradedRecommendationPayload(deps, input);
+  }
 }
 
 export function viewerAvailability(

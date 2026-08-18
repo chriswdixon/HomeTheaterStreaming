@@ -1,10 +1,13 @@
 import { WatchlistView } from "@/components/watchlist-view";
-import { loadRecentlyWatched } from "@/lib/server/load-watchlist";
+import { loadRecentlyWatchedSafe } from "@/lib/server/load-watchlist";
 import { requirePageMembership } from "@/lib/server/page-session";
 
 export default async function RecentlyWatchedPage() {
   const { userId, membership } = await requirePageMembership();
-  const items = await loadRecentlyWatched(userId, membership.householdId);
+  const { items, warning } = await loadRecentlyWatchedSafe(
+    userId,
+    membership.householdId,
+  );
 
   return (
     <WatchlistView
@@ -14,6 +17,7 @@ export default async function RecentlyWatchedPage() {
       showSearch={false}
       allowDrag={false}
       mode="watched"
+      warning={warning}
     />
   );
 }

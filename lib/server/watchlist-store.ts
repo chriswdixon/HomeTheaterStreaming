@@ -45,7 +45,12 @@ export function createDbWatchlistStore(householdId: string): WatchlistStore {
         .from(watchlistItems)
         .where(eq(watchlistItems.householdId, householdId))
         .orderBy(asc(watchlistItems.sortOrder), desc(watchlistItems.createdAt));
-      const hydrated = await backfillMissingTitleMeta(rows);
+      let hydrated = rows;
+      try {
+        hydrated = await backfillMissingTitleMeta(rows);
+      } catch {
+        // Keep stored rows when TMDB backfill fails.
+      }
       return hydrated.map(mapWatchlistRow);
     },
     async insertItem(item) {
@@ -163,7 +168,12 @@ export async function syncItemWatchCache(
   const db = getDb();
   const tmdb = createTmdbClient();
   const mediaType = row.mediaType === "tv" ? "tv" : "movie";
-  const watch = await tmdb.getWatchProviders(row.tmdbMovieId, region, mediaType);
+  let watch;
+  try {
+    watch = await tmdb.getWatchProviders(row.tmdbMovieId, region, mediaType);
+  } catch {
+    return row;
+  }
   if (watchCacheUnchanged(row, watch)) return row;
 
   const [updated] = await db
@@ -194,7 +204,15 @@ export async function refreshHouseholdAvailability(
     .from(watchlistItems)
     .where(eq(watchlistItems.householdId, householdId));
 
-  await Promise.all(rows.map((row) => syncItemWatchCache(row, region)));
+  await Promise.all(
+    rows.map(async (row) => {
+      try {
+        await syncItemWatchCache(row, region);
+      } catch {
+        // Keep going when one title cannot refresh.
+      }
+    }),
+  );
 }
 
 export async function backfillMissingTitleMeta(

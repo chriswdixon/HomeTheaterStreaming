@@ -1,10 +1,14 @@
 import { WatchlistView } from "@/components/watchlist-view";
-import { loadWatchlist } from "@/lib/server/load-watchlist";
+import { loadWatchlistSafe } from "@/lib/server/load-watchlist";
 import { requirePageMembership } from "@/lib/server/page-session";
 
 export default async function MyListPage() {
   const { userId, membership } = await requirePageMembership();
-  const items = await loadWatchlist(userId, membership.householdId, "personal");
+  const { items, warning } = await loadWatchlistSafe(
+    userId,
+    membership.householdId,
+    "personal",
+  );
 
   return (
     <WatchlistView
@@ -12,6 +16,7 @@ export default async function MyListPage() {
       title="My list"
       description="Movies and series you want to watch. Drag to reorder. Recommendations use this list."
       initialItems={items}
+      warning={warning}
     />
   );
 }
