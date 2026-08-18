@@ -3,6 +3,7 @@ import { getDb } from "@/db";
 import { householdMembers, households } from "@/db/schema";
 import { jsonError, requireUserId } from "@/lib/server/api";
 import { getMembership } from "@/lib/server/membership";
+import { notifyHouseholdMemberJoined } from "@/lib/server/notifications";
 import { eq } from "drizzle-orm";
 
 export async function POST(request: Request) {
@@ -34,6 +35,8 @@ export async function POST(request: Request) {
     userId: authResult.userId,
     role: "member",
   });
+
+  await notifyHouseholdMemberJoined(household.id, authResult.userId);
 
   return NextResponse.json({ household, role: "member" });
 }

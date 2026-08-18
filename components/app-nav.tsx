@@ -5,7 +5,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { HouseholdSharingLightbox } from "./household-sharing-lightbox";
+import { NotificationsBell } from "./notifications-bell";
 import { NAV_ICONS, NavGlassIcon, NavServicesIcon } from "./nav-icons";
+import type { UserNotificationView } from "@/lib/server/notifications";
 
 const LINKS = [
   { href: "/my-list", label: "My list", short: "Mine" },
@@ -17,8 +19,12 @@ const LINKS = [
 
 export function AppNav({
   household,
+  initialNotifications,
+  initialUnreadCount,
 }: {
   household: { name: string; inviteCode: string; region: string };
+  initialNotifications: UserNotificationView[];
+  initialUnreadCount: number;
 }) {
   const pathname = usePathname();
   const [showHouseholdInvite, setShowHouseholdInvite] = useState(false);
@@ -56,6 +62,10 @@ export function AppNav({
         >
           {household.name}
         </button>
+        <NotificationsBell
+          initialNotifications={initialNotifications}
+          initialUnreadCount={initialUnreadCount}
+        />
         <UserButton>
           <UserButton.MenuItems>
             <UserButton.Link

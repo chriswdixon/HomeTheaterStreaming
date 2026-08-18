@@ -101,3 +101,14 @@ export function VoteIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+
+export function BellIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-14 0v5l-2 2v1h18v-1z"
+      />
+    </svg>
+  );
+}
