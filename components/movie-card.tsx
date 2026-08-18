@@ -96,7 +96,7 @@ export function MovieCard({
         ) : null}
         <ProviderBadges availability={availability} />
         {onWatched || onRemove || onUnwatch || onCopyToShared ? (
-          <div className="mt-auto flex flex-wrap gap-2">
+          <div className="mt-auto flex items-center gap-2">
             {onUnwatch ? (
               <IconButton label="Mark not watched" onClick={onUnwatch}>
                 <CheckIcon className="h-4 w-4" />
@@ -112,7 +112,12 @@ export function MovieCard({
               </IconButton>
             ) : null}
             {onRemove ? (
-              <IconButton label="Remove" onClick={onRemove}>
+              <IconButton
+                label="Remove"
+                onClick={onRemove}
+                tone="danger"
+                className="ml-auto"
+              >
                 <TrashIcon className="h-4 w-4" />
               </IconButton>
             ) : null}
@@ -129,20 +134,40 @@ function IconButton({
   label,
   onClick,
   children,
+  tone = "accent",
+  className = "",
 }: {
   label: string;
   onClick: () => void;
   children: ReactNode;
+  tone?: "accent" | "danger";
+  className?: string;
 }) {
+  const hover =
+    tone === "danger"
+      ? "hover:border-red-400/50 hover:bg-red-500/20 hover:text-red-300"
+      : "hover:border-accent/70 hover:bg-accent/20 hover:text-accent";
+
   return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      onClick={onClick}
-      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-muted hover:text-foreground"
-    >
-      {children}
-    </button>
+    <div className={`group relative ${className}`}>
+      <button
+        type="button"
+        aria-label={label}
+        onClick={onClick}
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-muted transition-colors ${hover}`}
+      >
+        {children}
+      </button>
+      <span
+        role="tooltip"
+        className={`pointer-events-none absolute bottom-[calc(100%+0.4rem)] z-10 whitespace-nowrap rounded-md bg-black px-2 py-1 text-[11px] text-foreground opacity-0 shadow-lg transition-opacity group-hover:opacity-100 ${
+          tone === "danger"
+            ? "right-0"
+            : "left-1/2 -translate-x-1/2"
+        }`}
+      >
+        {label}
+      </span>
+    </div>
   );
 }
