@@ -15,6 +15,8 @@ export type RecommendedMovie = {
   posterPath: string | null;
   overview: string;
   providers: Provider[];
+  rentProviders?: Provider[];
+  contentRating?: string | null;
 };
 
 export type RankedMovie = RecommendedMovie & { score: number };

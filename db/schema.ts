@@ -94,6 +94,7 @@ export const watchlistItems = pgTable(
       .default(sql`'[]'::jsonb`),
     collectionId: integer("collection_id"),
     collectionName: text("collection_name"),
+    contentRating: text("content_rating"),
     folderName: text("folder_name"),
     folderOrder: integer("folder_order"),
     sortOrder: integer("sort_order").notNull().default(0),

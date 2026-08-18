@@ -20,13 +20,8 @@ export function AppNav({ householdName }: { householdName: string }) {
   return (
     <header className="glass-nav sticky top-0 z-50">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
-        <Link href="/my-list" className="flex items-center gap-2 pr-2">
-          <span className="glass-nav-icon">
-            <span className="text-sm font-bold text-foreground">S</span>
-          </span>
-          <span className="hidden text-lg font-semibold tracking-tight sm:inline">
-            ScreenStack
-          </span>
+        <Link href="/my-list" className="pr-2 text-lg font-semibold tracking-tight">
+          ScreenStack
         </Link>
         <nav className="flex flex-1 flex-wrap items-center gap-1">
           {LINKS.map((link) => {

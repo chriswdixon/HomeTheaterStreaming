@@ -45,6 +45,7 @@ export type StoredWatchlistItem = {
   keywords: Keyword[];
   collectionId: number | null;
   collectionName: string | null;
+  contentRating: string | null;
   folderName: string | null;
   folderOrder: number | null;
   sortOrder: number;
@@ -71,6 +72,7 @@ export type WatchlistStore = {
         | "keywords"
         | "collectionId"
         | "collectionName"
+        | "contentRating"
       >
     >,
   ) => Promise<StoredWatchlistItem>;
@@ -125,7 +127,7 @@ export async function addWatchlistItem(
       input.region,
       mediaType,
     ),
-    deps.tmdb.getTitleMeta(input.movie.tmdbMovieId, mediaType),
+    deps.tmdb.getTitleMeta(input.movie.tmdbMovieId, mediaType, input.region),
   ]);
 
   const item = await deps.store.insertItem({
@@ -141,6 +143,7 @@ export async function addWatchlistItem(
     keywords: meta.keywords,
     collectionId: meta.collectionId,
     collectionName: meta.collectionName,
+    contentRating: meta.contentRating,
     folderName: null,
     folderOrder: null,
     sortOrder,
@@ -210,7 +213,7 @@ export async function addFranchiseFolderToWatchlist(
 
     const [watch, meta] = await Promise.all([
       deps.tmdb.getWatchProviders(movie.tmdbMovieId, input.region, mediaType),
-      deps.tmdb.getTitleMeta(movie.tmdbMovieId, mediaType),
+      deps.tmdb.getTitleMeta(movie.tmdbMovieId, mediaType, input.region),
     ]);
 
     const item = await deps.store.insertItem({
@@ -226,6 +229,7 @@ export async function addFranchiseFolderToWatchlist(
       keywords: meta.keywords,
       collectionId: meta.collectionId,
       collectionName: meta.collectionName,
+      contentRating: meta.contentRating,
       folderName: input.folderName,
       folderOrder,
       sortOrder,
@@ -294,6 +298,7 @@ function listedMovieItems(
 async function buildPersonalCatalog(
   deps: { tmdb: TmdbClient; store: WatchlistStore },
   personal: StoredWatchlistItem[],
+  region: string,
 ): Promise<CatalogTitle[]> {
   const movies = personal.filter((item) => item.mediaType === "movie");
 
@@ -305,7 +310,7 @@ async function buildPersonalCatalog(
 
       if (keywords.length === 0) {
         try {
-          const meta = await deps.tmdb.getTitleMeta(item.tmdbMovieId, "movie");
+          const meta = await deps.tmdb.getTitleMeta(item.tmdbMovieId, "movie", region);
           keywords = meta.keywords;
           collectionId = meta.collectionId ?? collectionId;
           collectionName = meta.collectionName ?? collectionName;
@@ -314,6 +319,7 @@ async function buildPersonalCatalog(
             keywords: meta.keywords,
             collectionId: meta.collectionId,
             collectionName: meta.collectionName,
+            contentRating: meta.contentRating,
           });
         } catch {
           // Keep whatever is already stored.
@@ -520,7 +526,7 @@ async function buildRecommendationPayload(
     }),
   );
 
-  const catalog = await buildPersonalCatalog(deps, personal);
+  const catalog = await buildPersonalCatalog(deps, personal, input.region);
 
   const detected = detectSeriesAndFranchises(catalog);
   const franchiseSeeds = rankSeedsByListStrength(
@@ -546,6 +552,7 @@ async function buildRecommendationPayload(
   const watchOrderNames = new Set(watchOrderGroups.map((group) => group.name));
 
   const providersById = new Map<number, Provider[]>();
+  const rentProvidersById = new Map<number, Provider[]>();
   const toHydrateWatchOrder = watchOrderGroups
     .flatMap((group) => group.movies)
     .filter((movie) => !movie.onList)
@@ -559,6 +566,10 @@ async function buildRecommendationPayload(
       movie.mediaType ?? "movie",
     );
     providersById.set(movie.tmdbMovieId, watch.flatrate);
+    rentProvidersById.set(
+      movie.tmdbMovieId,
+      mergeRentalProviders(watch.rent, watch.buy),
+    );
   });
 
   for (const group of watchOrderGroups) {
@@ -567,6 +578,9 @@ async function buildRecommendationPayload(
       providers: movie.onList
         ? movie.providers
         : (providersById.get(movie.tmdbMovieId) ?? movie.providers),
+      rentProviders: movie.onList
+        ? movie.rentProviders
+        : (rentProvidersById.get(movie.tmdbMovieId) ?? []),
     }));
   }
 
@@ -612,12 +626,17 @@ async function buildRecommendationPayload(
         movie.mediaType ?? "movie",
       );
       providersById.set(movie.tmdbMovieId, watch.flatrate);
+      rentProvidersById.set(
+        movie.tmdbMovieId,
+        mergeRentalProviders(watch.rent, watch.buy),
+      );
     },
   );
 
   const hydratedGeneralRecs = generalRecs.map((movie) => ({
     ...movie,
     providers: providersById.get(movie.tmdbMovieId) ?? [],
+    rentProviders: rentProvidersById.get(movie.tmdbMovieId) ?? [],
   }));
 
   return {

@@ -27,6 +27,7 @@ export function mapWatchlistRow(
     keywords: row.keywords ?? [],
     collectionId: row.collectionId,
     collectionName: row.collectionName,
+    contentRating: row.contentRating ?? null,
     folderName: row.folderName ?? null,
     folderOrder: row.folderOrder ?? null,
     sortOrder: row.sortOrder,
@@ -72,6 +73,7 @@ export function createDbWatchlistStore(householdId: string): WatchlistStore {
           keywords: item.keywords,
           collectionId: item.collectionId,
           collectionName: item.collectionName,
+          contentRating: item.contentRating,
           folderName: item.folderName,
           folderOrder: item.folderOrder,
           sortOrder: item.sortOrder,
@@ -108,6 +110,9 @@ export function createDbWatchlistStore(householdId: string): WatchlistStore {
             : {}),
           ...(patch.collectionName !== undefined
             ? { collectionName: patch.collectionName }
+            : {}),
+          ...(patch.contentRating !== undefined
+            ? { contentRating: patch.contentRating }
             : {}),
         })
         .where(
@@ -229,8 +234,12 @@ export async function refreshHouseholdAvailability(
 
 export async function backfillMissingTitleMeta(
   rows: (typeof watchlistItems.$inferSelect)[],
+  region = "US",
 ): Promise<(typeof watchlistItems.$inferSelect)[]> {
-  const missing = rows.filter((row) => (row.genres ?? []).length === 0);
+  const missing = rows.filter(
+    (row) =>
+      (row.genres ?? []).length === 0 || row.contentRating == null,
+  );
   if (missing.length === 0) return rows;
 
   const db = getDb();
@@ -244,14 +253,15 @@ export async function backfillMissingTitleMeta(
       if (!row) return;
       try {
         const mediaType = row.mediaType === "tv" ? "tv" : "movie";
-        const meta = await tmdb.getTitleMeta(row.tmdbMovieId, mediaType);
+        const meta = await tmdb.getTitleMeta(row.tmdbMovieId, mediaType, region);
         const [saved] = await db
           .update(watchlistItems)
           .set({
-            genres: meta.genres,
-            keywords: meta.keywords,
-            collectionId: meta.collectionId,
-            collectionName: meta.collectionName,
+            genres: meta.genres.length > 0 ? meta.genres : row.genres,
+            keywords: meta.keywords.length > 0 ? meta.keywords : row.keywords,
+            collectionId: meta.collectionId ?? row.collectionId,
+            collectionName: meta.collectionName ?? row.collectionName,
+            contentRating: meta.contentRating ?? row.contentRating,
           })
           .where(eq(watchlistItems.id, row.id))
           .returning();

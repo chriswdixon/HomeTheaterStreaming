@@ -118,8 +118,8 @@ export function MovieCard({
 
   return (
     <article
-      className={`glass flex h-full flex-col rounded-3xl p-3 ${
-        onOpen ? "transition-transform hover:-translate-y-0.5" : ""
+      className={`group glass flex h-full flex-col rounded-3xl p-3 transition-shadow hover:ring-2 hover:ring-[var(--accent-warm)] ${
+        onOpen ? "hover:-translate-y-0.5" : ""
       }`}
     >
       {onOpen ? (
@@ -135,7 +135,7 @@ export function MovieCard({
         <div className="flex-1">{mainContent}</div>
       )}
       {onWatched || onRemove || onUnwatch || onCopyToShared ? (
-        <div className="mt-auto flex items-center gap-2 pt-2">
+        <div className="mt-auto flex items-center gap-2 pt-2 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
           {onUnwatch ? (
             <IconButton label="Mark not watched" onClick={onUnwatch}>
               <CheckIcon className="h-4 w-4" />
@@ -162,7 +162,9 @@ export function MovieCard({
           ) : null}
         </div>
       ) : actions ? (
-        <div className="mt-auto flex flex-wrap gap-2 pt-2">{actions}</div>
+        <div className="mt-auto flex flex-wrap gap-2 pt-2 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+          {actions}
+        </div>
       ) : null}
     </article>
   );

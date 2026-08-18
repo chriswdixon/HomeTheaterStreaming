@@ -27,9 +27,38 @@ export function filterByGenre<T extends { genres: Genre[] }>(
   genreId: number | null,
 ): T[] {
   if (genreId == null) return items;
+  return filterByGenres(items, [genreId]);
+}
+
+export function filterByGenres<T extends { genres: Genre[] }>(
+  items: T[],
+  genreIds: number[],
+): T[] {
+  if (genreIds.length === 0) return items;
+  const allowed = new Set(genreIds);
   return items.filter((item) =>
-    item.genres.some((genre) => genre.tmdbGenreId === genreId),
+    item.genres.some((genre) => allowed.has(genre.tmdbGenreId)),
   );
+}
+
+export function filterWatchlistByServices<T extends { availability: {
+  available: boolean;
+  onServices: { tmdbProviderId: number; name: string }[];
+  rentOffer: { provider: { tmdbProviderId: number; name: string } } | null;
+} }>(
+  items: T[],
+  selectedServiceIds: number[],
+): T[] {
+  if (selectedServiceIds.length === 0) return items;
+  const selected = new Set(selectedServiceIds);
+  return items.filter((item) => {
+    if (item.availability.onServices.some((provider) => selected.has(provider.tmdbProviderId))) {
+      return true;
+    }
+    const rentProvider = item.availability.rentOffer?.provider;
+    if (!rentProvider) return false;
+    return selected.has(rentProvider.tmdbProviderId);
+  });
 }
 
 export function reorderIds(

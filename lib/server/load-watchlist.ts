@@ -94,7 +94,7 @@ export async function loadWatchlist(
     .orderBy(asc(watchlistItems.sortOrder), desc(watchlistItems.createdAt));
 
   const withWatchProviders = await backfillMissingWatchProviders(rows, region);
-  const hydrated = await backfillMissingTitleMeta(withWatchProviders).catch(
+  const hydrated = await backfillMissingTitleMeta(withWatchProviders, region).catch(
     () => withWatchProviders,
   );
 

@@ -45,7 +45,9 @@ function mockTmdb(overrides: Partial<TmdbClient> = {}): TmdbClient {
       keywords: [],
       collectionId: null,
       collectionName: null,
+      contentRating: null,
     }),
+    getContentRating: vi.fn().mockResolvedValue(null),
     getCollectionParts: vi.fn().mockResolvedValue([]),
     discoverByKeyword: vi.fn().mockResolvedValue([]),
     getMoviesByIds: vi.fn().mockResolvedValue([]),
@@ -76,6 +78,7 @@ function personalMovies(count: number) {
     cachedFlatrateProviders: [netflix],
     cachedRentProviders: [],
     watchUrl: null,
+    contentRating: null,
     addedByUserId: "user-1",
   }));
 }
@@ -130,6 +133,7 @@ describe("addWatchlistItem", () => {
         cachedFlatrateProviders: [],
         cachedRentProviders: [],
         watchUrl: null,
+        contentRating: null,
         addedByUserId: "user-1",
       },
     ]);
@@ -228,6 +232,7 @@ describe("addFranchiseFolderToWatchlist", () => {
         cachedFlatrateProviders: [],
         cachedRentProviders: [],
         watchUrl: null,
+        contentRating: null,
         addedByUserId: "user-1",
       },
     ]);
@@ -655,7 +660,7 @@ describe("getRecommendationPayload", () => {
       { ownerUserId: "user-1", region: "US" },
     );
 
-    expect(tmdb.getTitleMeta).toHaveBeenCalledWith(1726, "movie");
+    expect(tmdb.getTitleMeta).toHaveBeenCalledWith(1726, "movie", "US");
   });
 
   it("returns a degraded payload instead of failing when recommendation build throws", async () => {

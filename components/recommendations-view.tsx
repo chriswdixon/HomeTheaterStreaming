@@ -7,7 +7,6 @@ import { availabilityForViewer } from "@/lib/availability";
 import { fetchNoStore } from "@/lib/http-cache";
 import {
   filterByViewerServices,
-  type RecommendationServiceFilter,
 } from "@/lib/recommendation-filter";
 import type {
   AffinityGroup,
@@ -15,8 +14,8 @@ import type {
   WatchOrderGroup,
 } from "@/lib/recommendations";
 import type { TmdbSearchMovie } from "@/lib/tmdb";
-import { GlassChip } from "./glass-ui";
 import { MovieCard } from "./movie-card";
+import { MultiSelectFilter } from "./multi-select-filter";
 
 type UnlockedPayload = {
   unlocked: true;
@@ -40,8 +39,7 @@ export function RecommendationsView({
   const router = useRouter();
   const [payload, setPayload] = useState(initial);
   const [message, setMessage] = useState<string | null>(null);
-  const [serviceFilter, setServiceFilter] =
-    useState<RecommendationServiceFilter>("all");
+  const [selectedServiceIds, setSelectedServiceIds] = useState<number[]>([]);
 
   async function addFranchise(
     group: {
@@ -144,12 +142,12 @@ export function RecommendationsView({
           ...group,
           movies: filterByViewerServices(
             group.movies,
-            serviceFilter,
+            selectedServiceIds,
             viewerServices,
           ),
         }))
         .filter((group) => group.movies.length > 0),
-    [serviceFilter, viewerServices, watchOrderGroups],
+    [selectedServiceIds, viewerServices, watchOrderGroups],
   );
 
   const filteredAffinityGroups = useMemo(
@@ -159,18 +157,18 @@ export function RecommendationsView({
           ...group,
           movies: filterByViewerServices(
             group.movies,
-            serviceFilter,
+            selectedServiceIds,
             viewerServices,
           ),
         }))
         .filter((group) => group.movies.length > 0),
-    [affinityGroups, serviceFilter, viewerServices],
+    [affinityGroups, selectedServiceIds, viewerServices],
   );
 
   const filteredGeneralRecs = useMemo(
     () =>
-      filterByViewerServices(generalRecs, serviceFilter, viewerServices),
-    [generalRecs, serviceFilter, viewerServices],
+      filterByViewerServices(generalRecs, selectedServiceIds, viewerServices),
+    [generalRecs, selectedServiceIds, viewerServices],
   );
 
   if (!unlocked) {
@@ -218,29 +216,30 @@ export function RecommendationsView({
           unchanged — refresh in a moment to reload recommendations.
         </p>
       ) : null}
-      <div className="mt-4 flex flex-wrap gap-2">
-        <FilterChip
-          active={serviceFilter === "my-services"}
-          onClick={() => setServiceFilter("my-services")}
-          label="On my services"
-        />
-        <FilterChip
-          active={serviceFilter === "all"}
-          onClick={() => setServiceFilter("all")}
-          label="All services"
-        />
+      <div className="mt-4 flex flex-wrap items-start gap-3">
+        {viewerServices.length > 0 ? (
+          <MultiSelectFilter
+            label="Services"
+            options={viewerServices.map((service) => ({
+              value: service.tmdbProviderId,
+              label: service.name,
+            }))}
+            selected={selectedServiceIds}
+            onChange={setSelectedServiceIds}
+          />
+        ) : null}
       </div>
       {message ? <p className="mt-4 text-sm text-accent">{message}</p> : null}
       {!hasRecommendations ? (
         <div className="mt-8 rounded-3xl border border-dashed border-white/15 px-6 py-16 text-center">
           <h2 className="text-xl font-medium">
-            {hasUnfilteredRecommendations && serviceFilter === "my-services"
-              ? "Nothing on your services right now"
+            {hasUnfilteredRecommendations && selectedServiceIds.length > 0
+              ? "Nothing on your selected services right now"
               : "No matches yet"}
           </h2>
           <p className="mt-2 text-muted">
-            {hasUnfilteredRecommendations && serviceFilter === "my-services"
-              ? "Try All services to see everything, or update your service list under Services."
+            {hasUnfilteredRecommendations && selectedServiceIds.length > 0
+              ? "Clear the service filter or pick different services to see more."
               : "Add more titles to your personal list to unlock franchise and general recommendations."}
           </p>
         </div>
@@ -280,7 +279,6 @@ export function RecommendationsView({
                       )
                     }
                     getOrder={(movie) => movie.order}
-                    serviceFilter={serviceFilter}
                     viewerServices={viewerServices}
                   />
                 </section>
@@ -296,7 +294,6 @@ export function RecommendationsView({
                     movies={group.movies}
                     getKey={(movie) => `${group.name}-${movie.tmdbMovieId}`}
                     renderActions={(movie) => <AddButtons movie={movie} onAdd={addMovie} />}
-                    serviceFilter={serviceFilter}
                     viewerServices={viewerServices}
                   />
                 </section>
@@ -317,7 +314,6 @@ export function RecommendationsView({
                 movies={filteredGeneralRecs}
                 getKey={(movie) => `general-${movie.tmdbMovieId}`}
                 renderActions={(movie) => <AddButtons movie={movie} onAdd={addMovie} />}
-                serviceFilter={serviceFilter}
                 viewerServices={viewerServices}
               />
             </section>
@@ -437,22 +433,6 @@ function AddButtons({
   );
 }
 
-function FilterChip({
-  label,
-  active,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <GlassChip active={active} onClick={onClick}>
-      {label}
-    </GlassChip>
-  );
-}
-
 function RecommendationGrid<T extends {
   tmdbMovieId: number;
   mediaType?: TmdbSearchMovie["mediaType"];
@@ -461,45 +441,36 @@ function RecommendationGrid<T extends {
   posterPath: string | null;
   overview: string;
   providers: { tmdbProviderId: number; name: string; logoPath: string | null }[];
+  rentProviders?: { tmdbProviderId: number; name: string; logoPath: string | null }[];
 }>({
   movies,
   getKey,
   renderActions,
   getOrder,
-  serviceFilter,
   viewerServices,
 }: {
   movies: T[];
   getKey: (movie: T) => string;
   renderActions: (movie: T) => React.ReactNode;
   getOrder?: (movie: T) => number | undefined;
-  serviceFilter: RecommendationServiceFilter;
   viewerServices: Provider[];
 }) {
   return (
     <ul className="grid grid-cols-2 items-stretch gap-4 md:grid-cols-4 lg:grid-cols-5">
       {movies.map((movie) => {
-        const availability =
-          serviceFilter === "all"
-            ? {
-                available: movie.providers.length > 0,
-                onServices: movie.providers,
-                rentOffer: null,
-                openTarget: null,
-              }
-            : availabilityForViewer(
-                {
-                  flatrate: movie.providers,
-                  rent: [],
-                  watchUrl: null,
-                },
-                viewerServices,
-                {
-                  title: movie.title,
-                  tmdbMovieId: movie.tmdbMovieId,
-                  mediaType: movie.mediaType ?? "movie",
-                },
-              );
+        const availability = availabilityForViewer(
+          {
+            flatrate: movie.providers,
+            rent: movie.rentProviders ?? [],
+            watchUrl: null,
+          },
+          viewerServices,
+          {
+            title: movie.title,
+            tmdbMovieId: movie.tmdbMovieId,
+            mediaType: movie.mediaType ?? "movie",
+          },
+        );
 
         return (
           <li key={getKey(movie)} className="h-full">

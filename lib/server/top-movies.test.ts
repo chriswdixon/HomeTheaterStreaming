@@ -29,6 +29,7 @@ describe("getTopMoviesPayload", () => {
       getMoviesByIds: vi.fn(),
       getTopRatedMovies: vi.fn().mockResolvedValue(movies),
       listWatchProviders: vi.fn(),
+      getContentRating: vi.fn().mockResolvedValue(null),
     };
 
     const payload = await getTopMoviesPayload({

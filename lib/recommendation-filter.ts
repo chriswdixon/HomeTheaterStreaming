@@ -1,6 +1,5 @@
 import type { Provider } from "./effective-services";
-
-export type RecommendationServiceFilter = "my-services" | "all";
+import { providerFamily } from "./availability";
 
 export function isOnViewerServices(
   flatrate: Provider[],
@@ -11,16 +10,47 @@ export function isOnViewerServices(
   return flatrate.some((provider) => serviceIds.has(provider.tmdbProviderId));
 }
 
+function matchesSelectedServices(
+  flatrate: Provider[],
+  rent: Provider[],
+  selectedServices: Provider[],
+): boolean {
+  const selectedIds = new Set(
+    selectedServices.map((provider) => provider.tmdbProviderId),
+  );
+
+  if (flatrate.some((provider) => selectedIds.has(provider.tmdbProviderId))) {
+    return true;
+  }
+
+  return rent.some((provider) =>
+    selectedServices.some(
+      (service) =>
+        service.tmdbProviderId === provider.tmdbProviderId ||
+        providerFamily(service.name) === providerFamily(provider.name),
+    ),
+  );
+}
+
 export function filterByViewerServices<T extends {
   providers: Provider[];
+  rentProviders?: Provider[];
   onList?: boolean;
 }>(
   movies: T[],
-  filter: RecommendationServiceFilter,
+  selectedServiceIds: number[],
   services: Provider[],
 ): T[] {
-  if (filter === "all") return movies;
-  return movies.filter(
-    (movie) => movie.onList || isOnViewerServices(movie.providers, services),
+  if (selectedServiceIds.length === 0) return movies;
+
+  const selectedServices = services.filter((provider) =>
+    selectedServiceIds.includes(provider.tmdbProviderId),
   );
+  if (selectedServices.length === 0) return movies;
+
+  return movies.filter((movie) => {
+    if (movie.onList) return true;
+    const rent = movie.rentProviders ?? [];
+    return matchesSelectedServices(movie.providers, rent, selectedServices);
+  });
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   filterByGenre,
+  filterByGenres,
   genresOnList,
   reorderIds,
   visibleWatchlistItems,
@@ -131,6 +132,11 @@ describe("list query", () => {
     expect(filterByGenre([wick, lasso], action.tmdbGenreId).map((item) => item.id)).toEqual(
       ["1"],
     );
+    expect(
+      filterByGenres([wick, lasso], [action.tmdbGenreId, comedy.tmdbGenreId]).map(
+        (item) => item.id,
+      ),
+    ).toEqual(["1", "2"]);
   });
 
   it("reorders ids by drag-and-drop", () => {

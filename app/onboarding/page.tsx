@@ -1,7 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { OnboardingForm } from "@/components/onboarding-form";
-import { SiteFooter } from "@/components/site-footer";
 import { getMembership } from "@/lib/server/membership";
 
 export default async function OnboardingPage() {
@@ -15,7 +14,6 @@ export default async function OnboardingPage() {
       <main className="mx-auto flex w-full max-w-4xl flex-1 items-center px-4 py-16">
         <OnboardingForm />
       </main>
-      <SiteFooter />
     </div>
   );
 }

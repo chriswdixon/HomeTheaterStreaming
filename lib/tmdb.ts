@@ -16,6 +16,7 @@ export type TitleMeta = {
   keywords: Keyword[];
   collectionId: number | null;
   collectionName: string | null;
+  contentRating: string | null;
 };
 
 export type WatchOptions = {
@@ -37,6 +38,7 @@ export const EMPTY_TITLE_META: TitleMeta = {
   keywords: [],
   collectionId: null,
   collectionName: null,
+  contentRating: null,
 };
 
 export type TmdbClient = {
@@ -51,7 +53,12 @@ export type TmdbClient = {
     movieId: number,
     mediaType: MediaType,
   ) => Promise<RecommendedMovie[]>;
-  getTitleMeta: (movieId: number, mediaType: MediaType) => Promise<TitleMeta>;
+  getTitleMeta: (movieId: number, mediaType: MediaType, region?: string) => Promise<TitleMeta>;
+  getContentRating: (
+    movieId: number,
+    mediaType: MediaType,
+    region?: string,
+  ) => Promise<string | null>;
   getCollectionParts: (collectionId: number) => Promise<TmdbSearchMovie[]>;
   discoverByKeyword: (keywordId: number) => Promise<TmdbSearchMovie[]>;
   getMoviesByIds: (ids: number[]) => Promise<TmdbSearchMovie[]>;
@@ -178,6 +185,38 @@ export function createTmdbClient(
     }
   }
 
+  async function contentRatingFor(
+    movieId: number,
+    mediaType: MediaType,
+    region = "US",
+  ): Promise<string | null> {
+    try {
+      if (mediaType === "tv") {
+        const data = await tmdbGet<{
+          results?: { iso_3166_1?: string; rating?: string }[];
+        }>(`/tv/${movieId}/content_ratings`);
+        return (
+          data.results?.find((entry) => entry.iso_3166_1 === region)?.rating ??
+          null
+        );
+      }
+
+      const data = await tmdbGet<{
+        results?: {
+          iso_3166_1?: string;
+          release_dates?: { certification?: string }[];
+        }[];
+      }>(`/movie/${movieId}/release_dates`);
+      const country = data.results?.find((entry) => entry.iso_3166_1 === region);
+      const certification = country?.release_dates
+        ?.map((entry) => entry.certification?.trim())
+        .find((value) => value);
+      return certification || null;
+    } catch {
+      return null;
+    }
+  }
+
   return {
     async searchMovies(query) {
       const trimmed = query.trim();
@@ -238,17 +277,22 @@ export function createTmdbClient(
       return recommendations(movieId, mediaType);
     },
 
-    async getTitleMeta(movieId, mediaType) {
+    getContentRating: contentRatingFor,
+
+    async getTitleMeta(movieId, mediaType, region = "US") {
       const path = mediaType === "tv" ? `/tv/${movieId}` : `/movie/${movieId}`;
       try {
-        const data = await tmdbGet<{
-          genres?: TmdbGenrePayload[];
-          belongs_to_collection?: { id: number; name: string } | null;
-          keywords?: {
-            keywords?: TmdbKeywordPayload[];
-            results?: TmdbKeywordPayload[];
-          };
-        }>(path, { append_to_response: "keywords" });
+        const [data, contentRating] = await Promise.all([
+          tmdbGet<{
+            genres?: TmdbGenrePayload[];
+            belongs_to_collection?: { id: number; name: string } | null;
+            keywords?: {
+              keywords?: TmdbKeywordPayload[];
+              results?: TmdbKeywordPayload[];
+            };
+          }>(path, { append_to_response: "keywords" }),
+          contentRatingFor(movieId, mediaType, region),
+        ]);
         const keywordPayload =
           data.keywords?.keywords ?? data.keywords?.results ?? [];
         return {
@@ -262,6 +306,7 @@ export function createTmdbClient(
           })),
           collectionId: data.belongs_to_collection?.id ?? null,
           collectionName: data.belongs_to_collection?.name ?? null,
+          contentRating,
         };
       } catch {
         return EMPTY_TITLE_META;

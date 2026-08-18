@@ -2,7 +2,6 @@ import { auth } from "@clerk/nextjs/server";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { SiteFooter } from "@/components/site-footer";
 import { getMembership } from "@/lib/server/membership";
 
 export const dynamic = "force-dynamic";
@@ -68,9 +67,6 @@ export default async function HomePage() {
           </Link>
         </div>
       </main>
-      <div className="relative z-10">
-        <SiteFooter />
-      </div>
     </div>
   );
 }

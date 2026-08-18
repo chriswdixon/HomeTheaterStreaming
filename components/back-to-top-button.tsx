@@ -16,18 +16,22 @@ export function BackToTopButton() {
   }, []);
 
   return (
-    <button
-      type="button"
-      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      aria-label="Back to top"
-      className={`fixed right-6 bottom-6 z-40 flex h-12 w-12 items-center justify-center rounded-full glass text-accent transition hover:scale-105 ${
-        visible
-          ? "translate-y-0 opacity-100"
-          : "pointer-events-none translate-y-2 opacity-0"
-      }`}
-    >
-      <ArrowUpIcon className="h-5 w-5" />
-    </button>
+    <div className="pointer-events-none fixed inset-0 z-40">
+      <div className="mx-auto flex h-full w-full max-w-6xl items-center px-4">
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          aria-label="Back to top"
+          className={`pointer-events-auto ml-auto flex h-12 w-12 translate-x-[calc(100%+0.75rem)] items-center justify-center rounded-full glass text-accent transition hover:scale-105 ${
+            visible
+              ? "opacity-100"
+              : "pointer-events-none opacity-0"
+          }`}
+        >
+          <ArrowUpIcon className="h-5 w-5" />
+        </button>
+      </div>
+    </div>
   );
 }
 

@@ -5,7 +5,13 @@ import { useMemo, useState } from "react";
 import type { ViewerAvailability } from "@/lib/availability";
 import { fetchNoStore } from "@/lib/http-cache";
 import {
-  filterByGenre,
+  filterByContentRatings,
+  contentRatingsOnList,
+} from "@/lib/content-ratings";
+import type { Provider } from "@/lib/effective-services";
+import {
+  filterByGenres,
+  filterWatchlistByServices,
   genresOnList,
   reorderIds,
   visibleWatchlistItems,
@@ -17,7 +23,7 @@ import { layoutWatchlistFolders } from "@/lib/watchlist-folders";
 import type { WatchState } from "@/lib/watch-state";
 import type { WatchlistKind } from "@/lib/watchlist";
 import { ConfirmDialog, RatingDialog } from "./dialogs";
-import { GlassChip } from "./glass-ui";
+import { MultiSelectFilter } from "./multi-select-filter";
 import { MovieCard } from "./movie-card";
 import { MovieSearch } from "./movie-search";
 
@@ -35,6 +41,8 @@ export function WatchlistView({
   allowDrag = true,
   mode = "queue",
   warning,
+  viewerServices = [],
+  showServiceFilter = false,
 }: {
   list?: WatchlistKind;
   title: string;
@@ -44,12 +52,16 @@ export function WatchlistView({
   allowDrag?: boolean;
   mode?: "queue" | "watched";
   warning?: string;
+  viewerServices?: Provider[];
+  showServiceFilter?: boolean;
 }) {
   const router = useRouter();
   const [items, setItems] = useState(initialItems);
   const [message, setMessage] = useState<string | null>(null);
   const [showWatched, setShowWatched] = useState(mode === "watched");
-  const [genreId, setGenreId] = useState<number | null>(null);
+  const [genreIds, setGenreIds] = useState<number[]>([]);
+  const [contentRatingIds, setContentRatingIds] = useState<string[]>([]);
+  const [selectedServiceIds, setSelectedServiceIds] = useState<number[]>([]);
   const [ratingItem, setRatingItem] = useState<WatchlistItemView | null>(null);
   const [removeItem, setRemoveItem] = useState<WatchlistItemView | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -63,10 +75,22 @@ export function WatchlistView({
 
   const displayed = useMemo(() => {
     const byWatch = visibleWatchlistItems(items, states, { showWatched });
-    return filterByGenre(byWatch, genreId);
-  }, [genreId, items, showWatched, states]);
+    const byGenre = filterByGenres(byWatch, genreIds);
+    const byRating = filterByContentRatings(byGenre, contentRatingIds);
+    if (!showServiceFilter) return byRating;
+    return filterWatchlistByServices(byRating, selectedServiceIds);
+  }, [
+    contentRatingIds,
+    genreIds,
+    items,
+    selectedServiceIds,
+    showServiceFilter,
+    showWatched,
+    states,
+  ]);
 
   const genres = genresOnList(items);
+  const contentRatings = contentRatingsOnList(items);
 
   const sections = useMemo(
     () => layoutWatchlistFolders(displayed),
@@ -262,31 +286,41 @@ export function WatchlistView({
           <MovieSearch onSelect={addMovie} />
         </div>
       ) : null}
-      {mode === "queue" || genres.length > 0 ? (
-        <div className="mt-4 flex items-start gap-3">
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-            {genres.length > 0 ? (
-              <>
-                <FilterChip
-                  active={genreId == null}
-                  onClick={() => setGenreId(null)}
-                  label="All genres"
-                />
-                {genres.map((genre) => (
-                  <FilterChip
-                    key={genre.tmdbGenreId}
-                    active={genreId === genre.tmdbGenreId}
-                    onClick={() =>
-                      setGenreId(
-                        genreId === genre.tmdbGenreId ? null : genre.tmdbGenreId,
-                      )
-                    }
-                    label={genre.name}
-                  />
-                ))}
-              </>
-            ) : null}
-          </div>
+      {mode === "queue" || genres.length > 0 || contentRatings.length > 0 ? (
+        <div className="mt-4 flex flex-wrap items-start gap-3">
+          {genres.length > 0 ? (
+            <MultiSelectFilter
+              label="Genre"
+              options={genres.map((genre) => ({
+                value: genre.tmdbGenreId,
+                label: genre.name,
+              }))}
+              selected={genreIds}
+              onChange={setGenreIds}
+            />
+          ) : null}
+          {contentRatings.length > 0 ? (
+            <MultiSelectFilter
+              label="Rating"
+              options={contentRatings.map((rating) => ({
+                value: rating,
+                label: rating,
+              }))}
+              selected={contentRatingIds}
+              onChange={setContentRatingIds}
+            />
+          ) : null}
+          {showServiceFilter && viewerServices.length > 0 ? (
+            <MultiSelectFilter
+              label="Services"
+              options={viewerServices.map((service) => ({
+                value: service.tmdbProviderId,
+                label: service.name,
+              }))}
+              selected={selectedServiceIds}
+              onChange={setSelectedServiceIds}
+            />
+          ) : null}
           {mode === "queue" ? (
             <button
               type="button"
@@ -322,7 +356,7 @@ export function WatchlistView({
           <p className="mt-2 text-muted">
             {items.length === 0
               ? "Search above to add a movie or series."
-              : "Try another genre or watched filter."}
+              : "Try another genre, rating, service, or watched filter."}
           </p>
         </div>
       ) : (
@@ -405,21 +439,5 @@ export function WatchlistView({
         />
       ) : null}
     </div>
-  );
-}
-
-function FilterChip({
-  label,
-  active,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <GlassChip active={active} onClick={onClick}>
-      {label}
-    </GlassChip>
   );
 }
