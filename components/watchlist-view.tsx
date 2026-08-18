@@ -337,9 +337,9 @@ export function WatchlistView({
 
   return (
     <div>
-      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="page-header-block">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
+          <h1 className="page-title">{title}</h1>
           {household ? (
             <button
               type="button"
@@ -369,7 +369,7 @@ export function WatchlistView({
         </div>
       ) : null}
       {mode === "queue" || genres.length > 0 || contentRatings.length > 0 ? (
-        <div className="mt-4 flex w-full flex-wrap items-center gap-3">
+        <div className="mobile-filter-bar mt-4">
           {genres.length > 0 ? (
             <MultiSelectFilter
               label="Genre"
@@ -408,7 +408,7 @@ export function WatchlistView({
               type="button"
               onClick={() => setShowWatched((current) => !current)}
               title={showWatched ? "Show unwatched" : "Show watched"}
-              className="group relative ml-auto shrink-0 rounded-full bg-accent px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-accent/80"
+              className="group relative shrink-0 rounded-full bg-accent px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-accent/80"
             >
               {showWatched ? "Watched" : "Unwatched"}
               <span
@@ -431,7 +431,7 @@ export function WatchlistView({
         </p>
       ) : null}
       {displayed.length === 0 ? (
-        <div className="mt-12 rounded-3xl border border-dashed border-white/15 px-6 py-16 text-center">
+        <div className="mt-8 rounded-3xl border border-dashed border-white/15 px-4 py-12 text-center md:px-6 md:py-16">
           <h2 className="text-xl font-medium">
             {items.length === 0 ? "Nothing queued yet" : "No titles match"}
           </h2>
@@ -473,7 +473,7 @@ export function WatchlistView({
                     </span>
                   </button>
                   {open ? (
-                    <ul className="mt-4 grid grid-cols-2 items-stretch gap-4 overflow-visible p-1 md:grid-cols-4 lg:grid-cols-5">
+                    <ul className="title-grid mt-4 overflow-visible p-1">
                       {section.folder.items.map((item) => (
                         <li key={item.id} className="h-full">
                           {renderItem(item, { order: item.folderOrder ?? undefined })}
@@ -488,7 +488,7 @@ export function WatchlistView({
             return (
               <ul
                 key="loose-items"
-                className="grid grid-cols-2 items-stretch gap-4 md:grid-cols-4 lg:grid-cols-5"
+                className="title-grid"
               >
                 {section.items.map((item) => (
                   <li

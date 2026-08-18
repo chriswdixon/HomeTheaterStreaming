@@ -228,12 +228,12 @@ export function MovieCard({
   );
 
   const detailsBlock = (
-    <div className="mt-3 flex min-h-0 flex-1 flex-col gap-2">
-      <div className="min-h-[3.2rem]">
+    <div className="movie-card-meta mt-3 flex min-h-0 flex-1 flex-col gap-2">
+      <div className="movie-card-title-block min-h-[3.2rem]">
         <h3 className="line-clamp-2 font-medium leading-snug">{title}</h3>
         <p className="text-xs text-muted">{formatReleaseLabel(year)}</p>
       </div>
-      <p className="line-clamp-2 min-h-[2.4rem] text-xs text-muted">
+      <p className="movie-card-overview line-clamp-2 min-h-[2.4rem] text-xs text-muted">
         {overview || " "}
       </p>
       {rating ? (
@@ -269,7 +269,7 @@ export function MovieCard({
 
   return (
     <>
-      <article className="group/card glass flex h-full flex-col rounded-3xl p-3 transition-shadow hover:ring-2 hover:ring-[var(--accent-warm)]">
+      <article className="group/card movie-card glass flex h-full flex-col rounded-3xl p-3 transition-shadow hover:ring-2 hover:ring-[var(--accent-warm)]">
         {posterBlock}
         {detailsBlock}
       </article>

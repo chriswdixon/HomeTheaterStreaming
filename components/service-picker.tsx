@@ -67,7 +67,7 @@ export function ServicePicker({
   }
 
   return (
-    <section className="glass rounded-3xl p-6">
+    <section className="glass glass-panel rounded-3xl">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-xl font-medium">{title}</h2>
@@ -77,7 +77,7 @@ export function ServicePicker({
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search services"
-          className="glass-input max-w-xs px-4 py-2 text-sm"
+          className="glass-input w-full max-w-none px-4 py-2 text-sm sm:max-w-xs"
         />
       </div>
       <ProviderList

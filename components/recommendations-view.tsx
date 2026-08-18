@@ -227,17 +227,17 @@ export function RecommendationsView({
     const remaining = payload.needed - payload.count;
     return (
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Recommendations</h1>
-        <div className="mt-8 rounded-3xl border border-dashed border-white/15 px-6 py-16 text-center">
-          <p className="text-sm uppercase tracking-[0.2em] text-accent">Almost there</p>
-          <h2 className="mt-3 text-2xl font-medium">
+        <h1 className="page-title">Recommendations</h1>
+        <div className="mt-6 rounded-3xl border border-dashed border-white/15 px-4 py-12 text-center md:mt-8 md:px-6 md:py-16">
+          <p className="page-kicker">Almost there</p>
+          <h2 className="page-section-title mt-3">
             Add {remaining} more {remaining === 1 ? "movie" : "movies"} to your list
           </h2>
           <p className="mt-2 text-muted">
             Recommendations unlock after {payload.needed} movies on your personal
             list ({payload.count}/{payload.needed}).
           </p>
-          <div className="mx-auto mt-6 h-2 w-64 overflow-hidden rounded-full bg-white/10">
+          <div className="mx-auto mt-6 h-2 w-full max-w-xs overflow-hidden rounded-full bg-white/10 md:w-64">
             <div
               className="h-full bg-accent"
               style={{ width: `${(payload.count / payload.needed) * 100}%` }}
@@ -260,8 +260,8 @@ export function RecommendationsView({
 
   return (
     <div>
-      <h1 className="text-3xl font-semibold tracking-tight">Recommendations</h1>
-      <p className="mt-1 text-muted">
+      <h1 className="page-title">Recommendations</h1>
+      <p className="mt-1 text-sm text-muted md:text-base">
         Franchise paths from your list, plus similar titles you might enjoy.
       </p>
       {initial.degraded ? (
@@ -270,7 +270,7 @@ export function RecommendationsView({
           unchanged — refresh in a moment to reload recommendations.
         </p>
       ) : null}
-      <div className="mt-4 flex flex-wrap items-start gap-3">
+      <div className="mobile-filter-bar mt-4">
         {contentRatings.length > 0 ? (
           <MultiSelectFilter
             label="Rating"
@@ -296,8 +296,8 @@ export function RecommendationsView({
       </div>
       {message ? <p className="mt-4 text-sm text-accent">{message}</p> : null}
       {!hasRecommendations ? (
-        <div className="mt-8 rounded-3xl border border-dashed border-white/15 px-6 py-16 text-center">
-          <h2 className="text-xl font-medium">
+        <div className="mt-6 rounded-3xl border border-dashed border-white/15 px-4 py-12 text-center md:mt-8 md:px-6 md:py-16">
+          <h2 className="page-section-title">
             {hasUnfilteredRecommendations && hasActiveFilters
               ? "Nothing matches your filters right now"
               : "No matches yet"}
@@ -309,14 +309,12 @@ export function RecommendationsView({
           </p>
         </div>
       ) : (
-        <div className="mt-8 space-y-14">
+        <div className="mt-6 space-y-10 md:mt-8 md:space-y-14">
           {hasFranchiseRecs ? (
             <div className="space-y-6">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-accent">
-                  Franchises & series
-                </p>
-                <h2 className="mt-1 text-2xl font-medium">
+                <p className="page-kicker">Franchises & series</p>
+                <h2 className="page-section-title mt-1">
                   From collections on your list
                 </h2>
               </div>
@@ -332,10 +330,8 @@ export function RecommendationsView({
           ) : null}
           {filteredGeneralRecs.length > 0 ? (
             <section>
-              <p className="text-xs uppercase tracking-[0.2em] text-accent">
-                General recommendations
-              </p>
-              <h2 className="mt-1 mb-4 text-2xl font-medium">More you might like</h2>
+              <p className="page-kicker">General recommendations</p>
+              <h2 className="page-section-title mt-1 mb-4">More you might like</h2>
               <p className="mb-4 text-sm text-muted">
                 Similar titles based on your personal list, not grouped by streaming
                 service.
@@ -379,7 +375,7 @@ function RecommendationGrid<T extends {
   viewerServices: Provider[];
 }) {
   return (
-    <ul className="grid grid-cols-2 items-stretch gap-4 md:grid-cols-4 lg:grid-cols-5">
+    <ul className="title-grid">
       {movies.map((movie) => {
         const availability = availabilityForViewer(
           {

@@ -75,7 +75,7 @@ export function MovieSearch({
       </div>
       {error ? <p className="mt-2 text-sm text-red-300">{error}</p> : null}
       {open && visibleResults.length > 0 ? (
-        <ul className="filter-menu absolute z-20 mt-2 max-h-96 w-full overflow-auto rounded-2xl p-2 shadow-2xl">
+        <ul className="search-results-menu filter-menu absolute z-20 mt-2 max-h-96 w-full overflow-auto rounded-2xl p-2 shadow-2xl">
           {visibleResults.map((movie) => (
             <li key={`${movie.mediaType}-${movie.tmdbMovieId}`}>
               <button
@@ -96,7 +96,7 @@ export function MovieSearch({
                     setPending(false);
                   }
                 }}
-                className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-white/5"
+                className="flex w-full items-center gap-3 px-3 py-3 text-left hover:bg-white/5 sm:py-2"
               >
                 <div className="w-10 shrink-0">
                   <MoviePoster title={movie.title} posterPath={movie.posterPath} />

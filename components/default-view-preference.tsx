@@ -35,7 +35,7 @@ export function DefaultViewPreference({
   }
 
   return (
-    <section className="glass rounded-3xl p-6">
+    <section className="glass glass-panel rounded-3xl">
       <h2 className="text-xl font-medium">Default view</h2>
       <p className="mt-1 text-sm text-muted">
         Choose which list opens when you sign in or click the ScreenStack logo.

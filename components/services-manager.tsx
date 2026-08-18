@@ -87,15 +87,15 @@ export function ServicesManager({
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Services</h1>
-        <p className="mt-1 text-muted">
+        <h1 className="page-title">Services</h1>
+        <p className="mt-1 text-sm text-muted md:text-base">
           Pick every service you can stream on. Household services are shared;
           anything you add here that the household does not share is kept as your
           personal add-on.
         </p>
       </div>
 
-      <section className="glass rounded-3xl p-6">
+      <section className="glass glass-panel rounded-3xl">
         <h2 className="text-xl font-medium">Household</h2>
         <form onSubmit={saveHouseholdMeta} className="mt-4 grid gap-4 sm:grid-cols-2">
           <label className="text-sm text-muted">

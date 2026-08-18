@@ -127,12 +127,10 @@ export function OnboardingForm({ initialCode }: { initialCode?: string }) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl rounded-3xl border border-white/10 bg-card/90 p-8 shadow-2xl">
-      <p className="text-sm uppercase tracking-[0.2em] text-accent">Get started</p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-        Set up your household
-      </h1>
-      <p className="mt-2 text-muted">
+    <div className="onboarding-shell mx-auto w-full max-w-3xl rounded-3xl border border-white/10 bg-card/90 p-8 shadow-2xl">
+      <p className="page-kicker">Get started</p>
+      <h1 className="page-title mt-2">Set up your household</h1>
+      <p className="mt-2 text-sm text-muted md:text-base">
         Share a watchlist, pick the services you subscribe to, and keep a personal
         list of your own.
       </p>
@@ -181,18 +179,18 @@ export function OnboardingForm({ initialCode }: { initialCode?: string }) {
               required
             />
           </label>
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <button
               type="button"
               onClick={() => setMode("choose")}
-              className="rounded-full border border-white/15 px-5 py-2 text-sm"
+              className="rounded-full border border-white/15 px-5 py-2.5 text-sm"
             >
               Back
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-black"
+              className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-black"
             >
               {loading ? "Joining…" : "Join household"}
             </button>
@@ -227,13 +225,13 @@ export function OnboardingForm({ initialCode }: { initialCode?: string }) {
             </select>
           </label>
           <div>
-            <div className="flex items-end justify-between gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <p className="text-sm text-muted">Household streaming services</p>
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search services"
-                className="w-48 rounded-full border border-white/10 bg-black/40 px-4 py-2 text-sm"
+                className="w-full rounded-full border border-white/10 bg-black/40 px-4 py-2 text-sm sm:w-48"
               />
             </div>
             <ProviderChecklist
@@ -255,18 +253,18 @@ export function OnboardingForm({ initialCode }: { initialCode?: string }) {
               onToggle={toggle}
             />
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <button
               type="button"
               onClick={() => setMode("choose")}
-              className="rounded-full border border-white/15 px-5 py-2 text-sm"
+              className="rounded-full border border-white/15 px-5 py-2.5 text-sm"
             >
               Back
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-black"
+              className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-black"
             >
               {loading ? "Saving…" : "Create household"}
             </button>

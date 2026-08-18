@@ -43,7 +43,7 @@ export function HouseholdSharingLightbox({
 
   return (
     <div
-      className="title-lightbox-overlay fixed inset-0 z-[60] flex items-center justify-center p-4 md:p-8"
+      className="title-lightbox-overlay fixed inset-0 z-[60] flex items-end justify-center p-0 md:items-center md:p-8"
       onClick={onClose}
       role="presentation"
     >
@@ -51,7 +51,7 @@ export function HouseholdSharingLightbox({
         role="dialog"
         aria-modal="true"
         aria-labelledby="household-lightbox-heading"
-        className="title-lightbox-panel relative flex max-h-[min(92vh,720px)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl md:flex-row"
+        className="household-lightbox-panel title-lightbox-panel relative flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl md:max-h-[min(92vh,720px)] md:flex-row md:rounded-3xl"
         onClick={(event) => event.stopPropagation()}
       >
         <button
@@ -63,7 +63,7 @@ export function HouseholdSharingLightbox({
           ×
         </button>
 
-        <div className="title-lightbox-poster flex shrink-0 items-center justify-center md:w-[min(38%,280px)]">
+        <div className="household-lightbox-poster title-lightbox-poster flex shrink-0 items-center justify-center md:w-[min(38%,280px)]">
           <div className="flex flex-col items-center gap-4 p-8 text-center">
             <span className="flex h-20 w-20 items-center justify-center rounded-full border border-accent/30 bg-accent/10 text-accent">
               <SharedIcon className="h-10 w-10" />
@@ -101,7 +101,7 @@ export function HouseholdSharingLightbox({
                   await navigator.clipboard.writeText(inviteLink);
                   setCopiedLink(true);
                 }}
-                className="glass-button glass-button-primary px-5 py-2 text-sm"
+                className="glass-button glass-button-primary w-full px-5 py-2.5 text-sm sm:w-auto"
               >
                 {copiedLink ? "Copied" : "Copy link"}
               </button>
@@ -123,7 +123,7 @@ export function HouseholdSharingLightbox({
                   await navigator.clipboard.writeText(inviteCode);
                   setCopiedCode(true);
                 }}
-                className="glass-button px-5 py-2 text-sm"
+                className="glass-button w-full px-5 py-2.5 text-sm sm:w-auto"
               >
                 {copiedCode ? "Copied" : "Copy code"}
               </button>

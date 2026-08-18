@@ -37,19 +37,15 @@ export default async function JoinHouseholdPage({
 
     return (
       <div className="flex min-h-full flex-1 flex-col">
-        <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-16">
-          <div className="rounded-3xl border border-white/10 bg-card/90 p-8 shadow-2xl">
-            <p className="text-sm uppercase tracking-[0.2em] text-accent">
-              You&apos;re invited
-            </p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-              Join {preview.name}
-            </h1>
-            <p className="mt-2 text-muted">
+        <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-10 md:py-16">
+          <div className="invite-shell rounded-3xl border border-white/10 bg-card/90 p-8 shadow-2xl">
+            <p className="page-kicker">You&apos;re invited</p>
+            <h1 className="page-title mt-2">Join {preview.name}</h1>
+            <p className="mt-2 text-sm text-muted md:text-base">
               Create an account or sign in to join this household on ScreenStack.
             </p>
             <p className="mt-1 text-sm text-muted">{regionLabel(preview.region)}</p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-8 flex flex-col gap-3">
               <Link
                 href={`/sign-up?redirect_url=${redirectUrl}`}
                 className="rounded-full bg-accent px-6 py-3 text-center text-sm font-medium text-black"
@@ -73,19 +69,17 @@ export default async function JoinHouseholdPage({
   if (membership) {
     return (
       <div className="flex min-h-full flex-1 flex-col">
-        <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-16">
-          <div className="rounded-3xl border border-white/10 bg-card/90 p-8 shadow-2xl">
-            <p className="text-sm uppercase tracking-[0.2em] text-accent">Household invite</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-              You&apos;re already in a household
-            </h1>
-            <p className="mt-2 text-muted">
+        <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-10 md:py-16">
+          <div className="invite-shell rounded-3xl border border-white/10 bg-card/90 p-8 shadow-2xl">
+            <p className="page-kicker">Household invite</p>
+            <h1 className="page-title mt-2">You&apos;re already in a household</h1>
+            <p className="mt-2 text-sm text-muted md:text-base">
               You belong to {membership.household.name}. Leave that household before
               joining {preview.name}.
             </p>
             <Link
               href="/start"
-              className="mt-8 inline-block rounded-full bg-accent px-6 py-3 text-sm font-medium text-black"
+              className="mt-8 inline-block w-full rounded-full bg-accent px-6 py-3 text-center text-sm font-medium text-black sm:w-auto"
             >
               Go to your lists
             </Link>
@@ -97,7 +91,7 @@ export default async function JoinHouseholdPage({
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-16">
+      <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-10 md:py-16">
         <JoinHouseholdInvite householdName={preview.name} inviteCode={inviteCode} />
       </main>
     </div>

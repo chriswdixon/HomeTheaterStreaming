@@ -35,12 +35,10 @@ export function JoinHouseholdInvite({
   }
 
   return (
-    <div className="mx-auto w-full max-w-lg rounded-3xl border border-white/10 bg-card/90 p-8 shadow-2xl">
-      <p className="text-sm uppercase tracking-[0.2em] text-accent">Household invite</p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-        Join {householdName}
-      </h1>
-      <p className="mt-2 text-muted">
+    <div className="invite-shell mx-auto w-full max-w-lg rounded-3xl border border-white/10 bg-card/90 p-8 shadow-2xl">
+      <p className="page-kicker">Household invite</p>
+      <h1 className="page-title mt-2">Join {householdName}</h1>
+      <p className="mt-2 text-sm text-muted md:text-base">
         Accept this invite to share the household watchlist and streaming services.
       </p>
       {error ? (
@@ -52,7 +50,7 @@ export function JoinHouseholdInvite({
         type="button"
         onClick={() => void joinHousehold()}
         disabled={loading}
-        className="mt-8 rounded-full bg-accent px-6 py-3 text-sm font-medium text-black disabled:opacity-60"
+        className="mt-8 w-full rounded-full bg-accent px-6 py-3 text-sm font-medium text-black disabled:opacity-60 sm:w-auto"
       >
         {loading ? "Joining…" : "Join household"}
       </button>

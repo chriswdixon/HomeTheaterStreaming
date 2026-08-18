@@ -19,7 +19,7 @@ export default async function OnboardingPage({
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      <main className="mx-auto flex w-full max-w-4xl flex-1 items-center px-4 py-16">
+      <main className="mx-auto flex w-full max-w-4xl flex-1 items-center px-4 py-10 md:py-16">
         <OnboardingForm initialCode={initialCode} />
       </main>
     </div>

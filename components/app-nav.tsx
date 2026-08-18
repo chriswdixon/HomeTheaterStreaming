@@ -7,6 +7,7 @@ import { useState } from "react";
 import { HouseholdSharingLightbox } from "./household-sharing-lightbox";
 import { NotificationsBell } from "./notifications-bell";
 import { NAV_ICONS, NavGlassIcon, NavServicesIcon } from "./nav-icons";
+import { SharedIcon } from "./icons";
 import type { UserNotificationView } from "@/lib/server/notifications";
 
 const LINKS = [
@@ -58,6 +59,15 @@ export function AppNav({
           })}
         </nav>
         <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
+        <button
+          type="button"
+          onClick={() => setShowHouseholdInvite(true)}
+          className="household-nav-button lg:hidden"
+          title={`Household: ${household.name}`}
+          aria-label={`Household: ${household.name}`}
+        >
+          <SharedIcon className="h-4 w-4" />
+        </button>
         <button
           type="button"
           onClick={() => setShowHouseholdInvite(true)}

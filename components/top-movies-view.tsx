@@ -63,7 +63,7 @@ export function TopMoviesView({
 
   return (
     <div>
-      <h1 className="text-3xl font-semibold tracking-tight">Top 100 movies</h1>
+      <h1 className="page-title">Top 100 movies</h1>
       <p className="mt-1 text-muted">
         TMDB&apos;s highest-rated films of all time. Add anything you want to
         watch to your list or the shared list.
@@ -74,7 +74,7 @@ export function TopMoviesView({
         </p>
       ) : null}
       {message ? <p className="mt-4 text-sm text-accent">{message}</p> : null}
-      <ul className="mt-8 grid grid-cols-2 items-stretch gap-4 md:grid-cols-4 lg:grid-cols-5">
+      <ul className="title-grid mt-6 md:mt-8">
         {movies.map((movie) => (
           <li key={movie.tmdbMovieId} className="h-full">
             <MovieCard
