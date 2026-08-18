@@ -12,7 +12,13 @@ export default async function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      <AppNav householdName={membership.household.name} />
+      <AppNav
+        household={{
+          name: membership.household.name,
+          inviteCode: membership.household.inviteCode,
+          region: membership.household.region,
+        }}
+      />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
       <BackToTopButton />
     </div>

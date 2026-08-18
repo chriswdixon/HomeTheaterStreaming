@@ -3,6 +3,8 @@
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { HouseholdSharingLightbox } from "./household-sharing-lightbox";
 import { NAV_ICONS, NavGlassIcon, NavServicesIcon } from "./nav-icons";
 
 const LINKS = [
@@ -13,12 +15,18 @@ const LINKS = [
   { href: "/recommendations", label: "Recommendations", short: "Recs" },
 ] as const;
 
-export function AppNav({ householdName }: { householdName: string }) {
+export function AppNav({
+  household,
+}: {
+  household: { name: string; inviteCode: string; region: string };
+}) {
   const pathname = usePathname();
+  const [showHouseholdInvite, setShowHouseholdInvite] = useState(false);
 
   return (
-    <header className="glass-nav sticky top-0 z-50">
-      <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
+    <>
+      <header className="glass-nav sticky top-0 z-50">
+        <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
         <Link href="/my-list" className="pr-2 text-lg font-semibold tracking-tight">
           ScreenStack
         </Link>
@@ -40,7 +48,14 @@ export function AppNav({ householdName }: { householdName: string }) {
             );
           })}
         </nav>
-        <p className="nav-household-name hidden lg:inline">{householdName}</p>
+        <button
+          type="button"
+          onClick={() => setShowHouseholdInvite(true)}
+          className="household-name-button hidden lg:inline"
+          title="View household invite code"
+        >
+          {household.name}
+        </button>
         <UserButton>
           <UserButton.MenuItems>
             <UserButton.Link
@@ -50,7 +65,16 @@ export function AppNav({ householdName }: { householdName: string }) {
             />
           </UserButton.MenuItems>
         </UserButton>
-      </div>
-    </header>
+        </div>
+      </header>
+      {showHouseholdInvite ? (
+        <HouseholdSharingLightbox
+          householdName={household.name}
+          inviteCode={household.inviteCode}
+          region={household.region}
+          onClose={() => setShowHouseholdInvite(false)}
+        />
+      ) : null}
+    </>
   );
 }

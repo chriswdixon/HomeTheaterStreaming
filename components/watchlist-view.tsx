@@ -22,6 +22,7 @@ import { layoutWatchlistFolders } from "@/lib/watchlist-folders";
 import type { WatchState } from "@/lib/watch-state";
 import type { WatchlistKind } from "@/lib/watchlist";
 import { ConfirmDialog, RatingDialog } from "./dialogs";
+import { HouseholdSharingLightbox } from "./household-sharing-lightbox";
 import { MultiSelectFilter } from "./multi-select-filter";
 import { MovieCard } from "./movie-card";
 import { MovieSearch } from "./movie-search";
@@ -42,6 +43,7 @@ export function WatchlistView({
   warning,
   viewerServices = [],
   showServiceFilter = false,
+  household,
 }: {
   list?: WatchlistKind;
   title: string;
@@ -53,6 +55,7 @@ export function WatchlistView({
   warning?: string;
   viewerServices?: Provider[];
   showServiceFilter?: boolean;
+  household?: { name: string; inviteCode: string; region: string };
 }) {
   const router = useRouter();
   const [items, setItems] = useState(initialItems);
@@ -65,6 +68,7 @@ export function WatchlistView({
   const [removeItem, setRemoveItem] = useState<WatchlistItemView | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [openFolderName, setOpenFolderName] = useState<string | null>(null);
+  const [showHouseholdInvite, setShowHouseholdInvite] = useState(false);
 
   const states = items
     .map((item) => item.watchState)
@@ -257,6 +261,16 @@ export function WatchlistView({
       <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
+          {household ? (
+            <button
+              type="button"
+              onClick={() => setShowHouseholdInvite(true)}
+              className="household-name-button mt-2"
+              title="View household invite code"
+            >
+              {household.name}
+            </button>
+          ) : null}
           <p className="mt-1 text-muted">{description}</p>
         </div>
         <p className="text-sm text-muted">{displayed.length} titles</p>
@@ -427,6 +441,14 @@ export function WatchlistView({
           confirmLabel="Remove"
           onCancel={() => setRemoveItem(null)}
           onConfirm={() => void remove(removeItem)}
+        />
+      ) : null}
+      {showHouseholdInvite && household ? (
+        <HouseholdSharingLightbox
+          householdName={household.name}
+          inviteCode={household.inviteCode}
+          region={household.region}
+          onClose={() => setShowHouseholdInvite(false)}
         />
       ) : null}
     </div>

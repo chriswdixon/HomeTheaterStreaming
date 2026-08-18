@@ -18,6 +18,11 @@ export default async function SharedListPage() {
       description="The household queue. Anyone here can add, reorder, or remove titles."
       initialItems={items}
       warning={warning}
+      household={{
+        name: membership.household.name,
+        inviteCode: membership.household.inviteCode,
+        region: membership.household.region,
+      }}
     />
   );
 }
