@@ -38,6 +38,15 @@ function mockTmdb(overrides: Partial<TmdbClient> = {}): TmdbClient {
       flatrate: [netflix],
     }),
     getMovieRecommendations: vi.fn().mockResolvedValue([dune]),
+    getTitleRecommendations: vi.fn().mockResolvedValue([dune]),
+    getTitleMeta: vi.fn().mockResolvedValue({
+      genres: [],
+      keywords: [],
+      collectionId: null,
+      collectionName: null,
+    }),
+    getCollectionParts: vi.fn().mockResolvedValue([]),
+    discoverByKeyword: vi.fn().mockResolvedValue([]),
     listWatchProviders: vi.fn(),
     ...overrides,
   };
@@ -48,11 +57,17 @@ function personalMovies(count: number) {
     id: String(index),
     list: "personal" as const,
     ownerUserId: "user-1",
+    mediaType: "movie" as const,
     tmdbMovieId: index + 1,
     title: `Movie ${index}`,
     year: "2020",
     posterPath: null,
     overview: "",
+    genres: [],
+    keywords: [],
+    collectionId: null,
+    collectionName: null,
+    sortOrder: index,
     cachedFlatrateProviders: [netflix],
     cachedRentProviders: [],
     watchUrl: null,
@@ -88,11 +103,17 @@ describe("addWatchlistItem", () => {
         id: "existing",
         list: "personal",
         ownerUserId: "user-1",
+        mediaType: "movie",
         tmdbMovieId: 42,
         title: "Heat",
         year: "1995",
         posterPath: null,
         overview: "",
+        genres: [],
+        keywords: [],
+        collectionId: null,
+        collectionName: null,
+        sortOrder: 0,
         cachedFlatrateProviders: [],
         cachedRentProviders: [],
         watchUrl: null,
@@ -156,7 +177,7 @@ describe("addWatchlistItem", () => {
     );
 
     expect(result.ok).toBe(true);
-    expect(tmdb.getWatchProviders).toHaveBeenCalledWith(550, "US");
+    expect(tmdb.getWatchProviders).toHaveBeenCalledWith(550, "US", "movie");
     expect(store.items[0]?.cachedFlatrateProviders).toEqual([netflix]);
     expect(store.items[0]?.cachedRentProviders).toEqual([
       {
@@ -195,7 +216,7 @@ describe("getRecommendationPayload", () => {
     const personal = personalMovies(10);
 
     const tmdb = mockTmdb({
-      getMovieRecommendations: vi.fn().mockResolvedValue([dune]),
+      getTitleRecommendations: vi.fn().mockResolvedValue([dune]),
       getWatchProviders: vi.fn().mockResolvedValue({
         ...emptyWatch,
         flatrate: [netflix],
@@ -229,7 +250,7 @@ describe("getRecommendationPayload", () => {
       providers: [],
     };
     const tmdb = mockTmdb({
-      getMovieRecommendations: vi.fn().mockResolvedValue([
+      getTitleRecommendations: vi.fn().mockResolvedValue([
         { ...dune, providers: [] },
         flop,
       ]),
@@ -269,7 +290,7 @@ describe("getRecommendationPayload", () => {
       providers: [] as Provider[],
     }));
     const tmdb = mockTmdb({
-      getMovieRecommendations: vi.fn().mockImplementation(async (movieId: number) => {
+      getTitleRecommendations: vi.fn().mockImplementation(async (movieId: number) => {
         const uncachedDune = { ...dune, providers: [] };
         if (movieId === 1) {
           return [uncachedDune, ...crowdFavorites];

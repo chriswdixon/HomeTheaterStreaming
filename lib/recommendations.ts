@@ -1,4 +1,5 @@
 import type { Provider } from "./effective-services";
+import type { MediaType } from "./media";
 
 export type { Provider };
 
@@ -7,6 +8,7 @@ export const RECOMMENDATIONS_PER_PROVIDER = 5;
 
 export type RecommendedMovie = {
   tmdbMovieId: number;
+  mediaType?: MediaType;
   title: string;
   year: string | null;
   posterPath: string | null;
@@ -18,6 +20,11 @@ export type RankedMovie = RecommendedMovie & { score: number };
 
 export type RecommendationGroup = {
   provider: Provider;
+  movies: RankedMovie[];
+};
+
+export type AffinityGroup = {
+  name: string;
   movies: RankedMovie[];
 };
 

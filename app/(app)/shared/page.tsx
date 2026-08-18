@@ -10,7 +10,7 @@ export default async function SharedListPage() {
     <WatchlistView
       list="shared"
       title="Shared list"
-      description="The household queue. Anyone here can add or remove titles."
+      description="The household queue. Anyone here can add, reorder, or remove titles."
       initialItems={items}
     />
   );

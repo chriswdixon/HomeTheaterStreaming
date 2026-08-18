@@ -61,14 +61,14 @@ export function MovieSearch({
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         onFocus={() => visibleResults.length > 0 && setOpen(true)}
-        placeholder="Search movies to add…"
+        placeholder="Search movies and series to add…"
         className="w-full rounded-full border border-white/10 bg-black/40 px-5 py-3 text-sm outline-none ring-accent/40 focus:ring-2"
       />
       {error ? <p className="mt-2 text-sm text-red-300">{error}</p> : null}
       {open && visibleResults.length > 0 ? (
         <ul className="absolute z-20 mt-2 max-h-96 w-full overflow-auto rounded-2xl border border-white/10 bg-[#12121a] shadow-2xl">
           {visibleResults.map((movie) => (
-            <li key={movie.tmdbMovieId}>
+            <li key={`${movie.mediaType}-${movie.tmdbMovieId}`}>
               <button
                 type="button"
                 disabled={pending}
@@ -96,6 +96,11 @@ export function MovieSearch({
                   {movie.title}
                   {movie.year ? (
                     <span className="text-muted"> ({movie.year})</span>
+                  ) : null}
+                  {movie.mediaType === "tv" ? (
+                    <span className="ml-2 text-[10px] uppercase tracking-wide text-accent">
+                      Series
+                    </span>
                   ) : null}
                 </span>
               </button>

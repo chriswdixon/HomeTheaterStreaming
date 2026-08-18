@@ -1,12 +1,21 @@
 import type { Provider } from "./effective-services";
+import type { Genre, Keyword, MediaType } from "./media";
 import type { RecommendedMovie } from "./recommendations";
 
 export type TmdbSearchMovie = {
   tmdbMovieId: number;
+  mediaType: MediaType;
   title: string;
   year: string | null;
   posterPath: string | null;
   overview: string;
+};
+
+export type TitleMeta = {
+  genres: Genre[];
+  keywords: Keyword[];
+  collectionId: number | null;
+  collectionName: string | null;
 };
 
 export type WatchOptions = {
@@ -18,8 +27,19 @@ export type WatchOptions = {
 
 export type TmdbClient = {
   searchMovies: (query: string) => Promise<TmdbSearchMovie[]>;
-  getWatchProviders: (movieId: number, region: string) => Promise<WatchOptions>;
+  getWatchProviders: (
+    movieId: number,
+    region: string,
+    mediaType?: MediaType,
+  ) => Promise<WatchOptions>;
   getMovieRecommendations: (movieId: number) => Promise<RecommendedMovie[]>;
+  getTitleRecommendations: (
+    movieId: number,
+    mediaType: MediaType,
+  ) => Promise<RecommendedMovie[]>;
+  getTitleMeta: (movieId: number, mediaType: MediaType) => Promise<TitleMeta>;
+  getCollectionParts: (collectionId: number) => Promise<TmdbSearchMovie[]>;
+  discoverByKeyword: (keywordId: number) => Promise<TmdbSearchMovie[]>;
   listWatchProviders: (region: string) => Promise<Provider[]>;
 };
 
@@ -40,10 +60,15 @@ export function yearFromReleaseDate(releaseDate: string | null | undefined): str
 
 type TmdbMoviePayload = {
   id: number;
-  title: string;
+  title?: string;
+  name?: string;
   overview?: string;
   poster_path?: string | null;
   release_date?: string;
+  first_air_date?: string;
+  media_type?: string;
+  popularity?: number;
+  genre_ids?: number[];
 };
 
 type TmdbProviderPayload = {
@@ -52,11 +77,18 @@ type TmdbProviderPayload = {
   logo_path?: string | null;
 };
 
-function mapMovie(payload: TmdbMoviePayload): TmdbSearchMovie {
+type TmdbGenrePayload = { id: number; name: string };
+type TmdbKeywordPayload = { id: number; name: string };
+
+function mapTitle(
+  payload: TmdbMoviePayload,
+  mediaType: MediaType,
+): TmdbSearchMovie {
   return {
     tmdbMovieId: payload.id,
-    title: payload.title,
-    year: yearFromReleaseDate(payload.release_date),
+    mediaType,
+    title: payload.title ?? payload.name ?? "Untitled",
+    year: yearFromReleaseDate(payload.release_date ?? payload.first_air_date),
     posterPath: payload.poster_path ?? null,
     overview: payload.overview ?? "",
   };
@@ -67,6 +99,20 @@ function mapProvider(payload: TmdbProviderPayload): Provider {
     tmdbProviderId: payload.provider_id,
     name: payload.provider_name,
     logoPath: payload.logo_path ?? null,
+  };
+}
+
+function mapWatchOptions(regionData?: {
+  link?: string;
+  flatrate?: TmdbProviderPayload[];
+  rent?: TmdbProviderPayload[];
+  buy?: TmdbProviderPayload[];
+}): WatchOptions {
+  return {
+    flatrate: (regionData?.flatrate ?? []).map(mapProvider),
+    rent: (regionData?.rent ?? []).map(mapProvider),
+    buy: (regionData?.buy ?? []).map(mapProvider),
+    watchUrl: regionData?.link ?? null,
   };
 }
 
@@ -99,18 +145,53 @@ export function createTmdbClient(
     return (await response.json()) as T;
   }
 
+  async function recommendations(
+    id: number,
+    mediaType: MediaType,
+  ): Promise<RecommendedMovie[]> {
+    const path =
+      mediaType === "tv" ? `/tv/${id}/recommendations` : `/movie/${id}/recommendations`;
+    const data = await tmdbGet<{ results: TmdbMoviePayload[] }>(path);
+    return (data.results ?? []).map((payload) => ({
+      ...mapTitle(payload, mediaType),
+      providers: [],
+    }));
+  }
+
   return {
     async searchMovies(query) {
       const trimmed = query.trim();
       if (!trimmed) return [];
-      const data = await tmdbGet<{ results: TmdbMoviePayload[] }>("/search/movie", {
-        query: trimmed,
-        include_adult: "false",
-      });
-      return (data.results ?? []).map(mapMovie);
+      const [movies, shows] = await Promise.all([
+        tmdbGet<{ results: TmdbMoviePayload[] }>("/search/movie", {
+          query: trimmed,
+          include_adult: "false",
+        }),
+        tmdbGet<{ results: TmdbMoviePayload[] }>("/search/tv", {
+          query: trimmed,
+          include_adult: "false",
+        }),
+      ]);
+      const combined = [
+        ...(movies.results ?? []).map((payload) => ({
+          ...mapTitle(payload, "movie"),
+          popularity: payload.popularity ?? 0,
+        })),
+        ...(shows.results ?? []).map((payload) => ({
+          ...mapTitle(payload, "tv"),
+          popularity: payload.popularity ?? 0,
+        })),
+      ];
+      return combined
+        .sort((a, b) => b.popularity - a.popularity)
+        .map(({ popularity: _popularity, ...title }) => title);
     },
 
-    async getWatchProviders(movieId, region) {
+    async getWatchProviders(movieId, region, mediaType = "movie") {
+      const path =
+        mediaType === "tv"
+          ? `/tv/${movieId}/watch/providers`
+          : `/movie/${movieId}/watch/providers`;
       const data = await tmdbGet<{
         results?: Record<
           string,
@@ -121,24 +202,58 @@ export function createTmdbClient(
             buy?: TmdbProviderPayload[];
           }
         >;
-      }>(`/movie/${movieId}/watch/providers`);
-      const regionData = data.results?.[region];
-      return {
-        flatrate: (regionData?.flatrate ?? []).map(mapProvider),
-        rent: (regionData?.rent ?? []).map(mapProvider),
-        buy: (regionData?.buy ?? []).map(mapProvider),
-        watchUrl: regionData?.link ?? null,
-      };
+      }>(path);
+      return mapWatchOptions(data.results?.[region]);
     },
 
     async getMovieRecommendations(movieId) {
-      const data = await tmdbGet<{ results: TmdbMoviePayload[] }>(
-        `/movie/${movieId}/recommendations`,
-      );
-      return (data.results ?? []).map((payload) => ({
-        ...mapMovie(payload),
-        providers: [],
-      }));
+      return recommendations(movieId, "movie");
+    },
+
+    async getTitleRecommendations(movieId, mediaType) {
+      return recommendations(movieId, mediaType);
+    },
+
+    async getTitleMeta(movieId, mediaType) {
+      const path = mediaType === "tv" ? `/tv/${movieId}` : `/movie/${movieId}`;
+      const data = await tmdbGet<{
+        genres?: TmdbGenrePayload[];
+        belongs_to_collection?: { id: number; name: string } | null;
+        keywords?: {
+          keywords?: TmdbKeywordPayload[];
+          results?: TmdbKeywordPayload[];
+        };
+      }>(path, { append_to_response: "keywords" });
+      const keywordPayload =
+        data.keywords?.keywords ?? data.keywords?.results ?? [];
+      return {
+        genres: (data.genres ?? []).map((genre) => ({
+          tmdbGenreId: genre.id,
+          name: genre.name,
+        })),
+        keywords: keywordPayload.map((keyword) => ({
+          tmdbKeywordId: keyword.id,
+          name: keyword.name,
+        })),
+        collectionId: data.belongs_to_collection?.id ?? null,
+        collectionName: data.belongs_to_collection?.name ?? null,
+      };
+    },
+
+    async getCollectionParts(collectionId) {
+      const data = await tmdbGet<{
+        parts?: TmdbMoviePayload[];
+      }>(`/collection/${collectionId}`);
+      return (data.parts ?? []).map((payload) => mapTitle(payload, "movie"));
+    },
+
+    async discoverByKeyword(keywordId) {
+      const data = await tmdbGet<{ results: TmdbMoviePayload[] }>("/discover/movie", {
+        with_keywords: String(keywordId),
+        sort_by: "popularity.desc",
+        include_adult: "false",
+      });
+      return (data.results ?? []).map((payload) => mapTitle(payload, "movie"));
     },
 
     async listWatchProviders(region) {

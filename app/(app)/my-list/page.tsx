@@ -10,7 +10,7 @@ export default async function MyListPage() {
     <WatchlistView
       list="personal"
       title="My list"
-      description="Movies you want to watch. Recommendations use this list."
+      description="Movies and series you want to watch. Drag to reorder. Recommendations use this list."
       initialItems={items}
     />
   );

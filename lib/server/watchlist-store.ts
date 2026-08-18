@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { watchlistItems } from "@/db/schema";
 import type {
@@ -15,11 +15,17 @@ export function mapWatchlistRow(
     id: row.id,
     list: row.list as WatchlistKind,
     ownerUserId: row.ownerUserId,
+    mediaType: row.mediaType === "tv" ? "tv" : "movie",
     tmdbMovieId: row.tmdbMovieId,
     title: row.title,
     year: row.year,
     posterPath: row.posterPath,
     overview: row.overview ?? "",
+    genres: row.genres ?? [],
+    keywords: row.keywords ?? [],
+    collectionId: row.collectionId,
+    collectionName: row.collectionName,
+    sortOrder: row.sortOrder,
     cachedFlatrateProviders: row.cachedFlatrateProviders ?? [],
     cachedRentProviders: row.cachedRentProviders ?? [],
     watchUrl: row.watchUrl ?? null,
@@ -35,7 +41,8 @@ export function createDbWatchlistStore(householdId: string): WatchlistStore {
       const rows = await db
         .select()
         .from(watchlistItems)
-        .where(eq(watchlistItems.householdId, householdId));
+        .where(eq(watchlistItems.householdId, householdId))
+        .orderBy(asc(watchlistItems.sortOrder), desc(watchlistItems.createdAt));
       return rows.map(mapWatchlistRow);
     },
     async insertItem(item) {
@@ -45,11 +52,17 @@ export function createDbWatchlistStore(householdId: string): WatchlistStore {
           householdId,
           list: item.list,
           ownerUserId: item.ownerUserId,
+          mediaType: item.mediaType,
           tmdbMovieId: item.tmdbMovieId,
           title: item.title,
           year: item.year,
           posterPath: item.posterPath,
           overview: item.overview,
+          genres: item.genres,
+          keywords: item.keywords,
+          collectionId: item.collectionId,
+          collectionName: item.collectionName,
+          sortOrder: item.sortOrder,
           cachedFlatrateProviders: item.cachedFlatrateProviders,
           cachedRentProviders: item.cachedRentProviders,
           watchUrl: item.watchUrl,
@@ -64,6 +77,26 @@ export function createDbWatchlistStore(householdId: string): WatchlistStore {
       return mapWatchlistRow(row);
     },
   };
+}
+
+export async function saveWatchlistOrder(
+  householdId: string,
+  ids: string[],
+) {
+  const db = getDb();
+  await Promise.all(
+    ids.map((id, index) =>
+      db
+        .update(watchlistItems)
+        .set({ sortOrder: index })
+        .where(
+          and(
+            eq(watchlistItems.id, id),
+            eq(watchlistItems.householdId, householdId),
+          ),
+        ),
+    ),
+  );
 }
 
 function watchCacheUnchanged(
@@ -88,7 +121,8 @@ export async function syncItemWatchCache(
 ): Promise<typeof watchlistItems.$inferSelect> {
   const db = getDb();
   const tmdb = createTmdbClient();
-  const watch = await tmdb.getWatchProviders(row.tmdbMovieId, region);
+  const mediaType = row.mediaType === "tv" ? "tv" : "movie";
+  const watch = await tmdb.getWatchProviders(row.tmdbMovieId, region, mediaType);
   if (watchCacheUnchanged(row, watch)) return row;
 
   const [updated] = await db
