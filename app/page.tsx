@@ -1,5 +1,5 @@
-import { SignedIn, SignedOut, SignInButton, SignUpButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SiteFooter } from "@/components/site-footer";
 import { getMembership } from "@/lib/server/membership";
@@ -17,31 +17,20 @@ export default async function HomePage() {
     <div className="flex min-h-full flex-1 flex-col">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-6">
         <p className="text-lg font-semibold tracking-tight">ScreenStack</p>
-        <SignedOut>
-          <div className="flex gap-3">
-            <SignInButton mode="modal">
-              <button
-                type="button"
-                className="rounded-full border border-white/15 px-4 py-2 text-sm"
-              >
-                Sign in
-              </button>
-            </SignInButton>
-            <SignUpButton mode="modal">
-              <button
-                type="button"
-                className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-black"
-              >
-                Create account
-              </button>
-            </SignUpButton>
-          </div>
-        </SignedOut>
-        <SignedIn>
-          <a href="/my-list" className="text-sm text-accent">
-            Open watchlist
-          </a>
-        </SignedIn>
+        <div className="flex gap-3">
+          <Link
+            href="/sign-in"
+            className="rounded-full border border-white/15 px-4 py-2 text-sm"
+          >
+            Sign in
+          </Link>
+          <Link
+            href="/sign-up"
+            className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-black"
+          >
+            Create account
+          </Link>
+        </div>
       </header>
       <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col justify-center px-4 py-16">
         <p className="text-sm uppercase tracking-[0.25em] text-accent">
@@ -55,26 +44,20 @@ export default async function HomePage() {
           subscribe to. After ten personal picks, get recommendations from each
           of those services.
         </p>
-        <SignedOut>
-          <div className="mt-8 flex gap-3">
-            <SignUpButton mode="modal">
-              <button
-                type="button"
-                className="rounded-full bg-accent px-6 py-3 text-sm font-medium text-black"
-              >
-                Start a household
-              </button>
-            </SignUpButton>
-            <SignInButton mode="modal">
-              <button
-                type="button"
-                className="rounded-full border border-white/15 px-6 py-3 text-sm"
-              >
-                I have an invite
-              </button>
-            </SignInButton>
-          </div>
-        </SignedOut>
+        <div className="mt-8 flex gap-3">
+          <Link
+            href="/sign-up"
+            className="rounded-full bg-accent px-6 py-3 text-sm font-medium text-black"
+          >
+            Start a household
+          </Link>
+          <Link
+            href="/sign-in"
+            className="rounded-full border border-white/15 px-6 py-3 text-sm"
+          >
+            I have an invite
+          </Link>
+        </div>
       </main>
       <SiteFooter />
     </div>
