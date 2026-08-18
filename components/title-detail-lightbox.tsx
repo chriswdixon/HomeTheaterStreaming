@@ -7,6 +7,7 @@ import { fetchNoStore } from "@/lib/http-cache";
 import { formatReleaseLabel } from "@/lib/release-label";
 import type { TitleDetails } from "@/lib/tmdb";
 import { tmdbImageUrl } from "@/lib/tmdb";
+import { TrashIcon } from "./icons";
 import { ProviderBadges } from "./provider-badges";
 
 export function TitleDetailLightbox({
@@ -17,6 +18,7 @@ export function TitleDetailLightbox({
   posterPath,
   overview,
   availability,
+  onRemove,
   onClose,
 }: {
   tmdbMovieId: number;
@@ -26,6 +28,7 @@ export function TitleDetailLightbox({
   posterPath: string | null;
   overview?: string;
   availability: ViewerAvailability;
+  onRemove?: () => void;
   onClose: () => void;
 }) {
   const [details, setDetails] = useState<TitleDetails | null>(null);
@@ -247,6 +250,22 @@ export function TitleDetailLightbox({
               />
             </div>
           </div>
+
+          {onRemove ? (
+            <div className="border-t border-white/10 pt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  onRemove();
+                  onClose();
+                }}
+                className="title-lightbox-remove flex w-full items-center justify-center gap-2 rounded-2xl border border-red-400/30 bg-red-950/30 px-4 py-3 text-sm font-medium text-red-200 transition-colors hover:border-red-400/50 hover:bg-red-950/50"
+              >
+                <TrashIcon className="h-4 w-4" />
+                Remove from list
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

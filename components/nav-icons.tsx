@@ -95,6 +95,22 @@ export function NavRecommendationsIcon() {
   );
 }
 
+export function NavBrandIcon() {
+  return (
+    <GlassSvgIcon gradientId="nav-brand">
+      <rect x="6" y="9" width="20" height="14" rx="2.5" stroke="url(#nav-brand)" strokeWidth="2" />
+      <path
+        d="M6 13h20M12 9v14M20 9v14"
+        stroke="url(#nav-brand)"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <circle cx="9" cy="11.5" r="1.2" fill="url(#nav-brand)" />
+      <circle cx="23" cy="20.5" r="1.2" fill="url(#nav-brand)" />
+    </GlassSvgIcon>
+  );
+}
+
 export const NAV_ICONS = {
   "/my-list": NavMyListIcon,
   "/shared": NavSharedIcon,

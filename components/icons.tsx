@@ -112,3 +112,25 @@ export function BellIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+
+export function MenuIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M4 7h16v2H4zm0 4h16v2H4zm0 4h16v2H4z"
+      />
+    </svg>
+  );
+}
+
+export function CloseIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="m6.4 6.4 11.2 11.2-1.4 1.4L5 7.8zm11.2-1.4L6.4 16.2l1.4 1.4 11.2-11.2z"
+      />
+    </svg>
+  );
+}

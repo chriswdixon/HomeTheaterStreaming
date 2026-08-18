@@ -10,7 +10,7 @@ import {
   ListStatusIcon,
   WatchNowIconLink,
 } from "./card-action-buttons";
-import { CheckIcon, GripIcon, SharedIcon, StarIcon, TrashIcon, VoteIcon } from "./icons";
+import { CheckIcon, GripIcon, SharedIcon, StarIcon, VoteIcon } from "./icons";
 import { ProviderBadges } from "./provider-badges";
 import { TitleDetailLightbox } from "./title-detail-lightbox";
 
@@ -83,15 +83,10 @@ export function MovieCard({
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const openTarget = availability.openTarget;
-  const hasIconActions = Boolean(
-    onWatched ||
-      onRemove ||
-      onUnwatch ||
-      onCopyToShared ||
-      onSharedList ||
-      onVote,
+  const cardIconActions = Boolean(
+    onWatched || onUnwatch || onCopyToShared || onSharedList || onVote,
   );
-  const showActions = Boolean(openTarget || hasIconActions || actions);
+  const showActions = Boolean(openTarget || cardIconActions || actions);
   const canOpenDetail = tmdbMovieId != null;
 
   function stopOverlayClick(event: MouseEvent) {
@@ -109,7 +104,7 @@ export function MovieCard({
   const actionButtons = showActions ? (
     <>
       {watchNowButton}
-      {hasIconActions ? (
+      {cardIconActions ? (
         <>
           {onUnwatch ? (
             <CardIconButton
@@ -155,17 +150,6 @@ export function MovieCard({
               onClick={(event) => {
                 stopOverlayClick(event);
                 onVote();
-              }}
-            />
-          ) : null}
-          {onRemove ? (
-            <CardIconButton
-              label="Remove"
-              tone="delete"
-              icon={<TrashIcon className="h-5 w-5" />}
-              onClick={(event) => {
-                stopOverlayClick(event);
-                onRemove();
               }}
             />
           ) : null}
@@ -282,6 +266,7 @@ export function MovieCard({
           posterPath={posterPath}
           overview={overview}
           availability={availability}
+          onRemove={onRemove}
           onClose={() => setDetailOpen(false)}
         />
       ) : null}

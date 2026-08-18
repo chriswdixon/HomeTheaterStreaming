@@ -877,6 +877,91 @@ textarea.glass-input {
   display: none;
 }
 
+.app-nav-menu-button {
+  display: inline-flex;
+  height: 2.25rem;
+  width: 2.25rem;
+  shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--foreground);
+}
+
+.app-nav-menu-button:hover {
+  border-color: rgba(232, 184, 109, 0.35);
+  color: var(--accent);
+}
+
+.app-nav-brand-icon {
+  display: inline-flex;
+  height: 2.25rem;
+  width: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--accent);
+}
+
+.app-nav-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  background: rgba(2, 2, 6, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.app-nav-drawer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(3.25rem + env(safe-area-inset-top, 0px));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  background: #101018;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+}
+
+.app-nav-drawer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+}
+
+.app-nav-drawer-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 1rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--muted);
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.app-nav-drawer-link:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--foreground);
+}
+
+.app-nav-drawer-link-active {
+  background: linear-gradient(
+    135deg,
+    rgba(232, 184, 109, 0.18) 0%,
+    rgba(232, 184, 109, 0.08) 100%
+  );
+  color: var(--foreground);
+}
+
 .card-action-mobile-bar {
   display: none;
 }
