@@ -473,7 +473,7 @@ export function WatchlistView({
                     </span>
                   </button>
                   {open ? (
-                    <ul className="title-grid mt-4 overflow-visible p-1">
+                    <ul className="title-grid mt-4 p-1">
                       {section.folder.items.map((item) => (
                         <li key={item.id} className="h-full">
                           {renderItem(item, { order: item.folderOrder ?? undefined })}

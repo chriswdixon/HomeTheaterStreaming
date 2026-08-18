@@ -204,7 +204,7 @@ function FranchiseFolderPanel({
           Add franchise to Shared
         </button>
       </div>
-      <ul className="title-grid mt-5 overflow-visible p-1">
+      <ul className="title-grid mt-5 p-1">
         {folder.movies.map((movie) => {
           const availability = availabilityForViewer(
             {

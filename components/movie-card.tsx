@@ -163,7 +163,7 @@ export function MovieCard({
   ) : null;
 
   const posterBlock = (
-    <div className="relative overflow-visible">
+    <div className="movie-card-poster relative overflow-visible">
       <button
         type="button"
         onClick={handlePosterClick}

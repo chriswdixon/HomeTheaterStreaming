@@ -33,6 +33,10 @@
   --font-mono: var(--font-geist-mono);
 }
 
+html {
+  overflow-x: clip;
+}
+
 body {
   background:
     radial-gradient(900px 520px at 8% -8%, rgba(232, 184, 109, 0.16), transparent 55%),
@@ -42,6 +46,7 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   min-height: 100%;
+  overflow-x: clip;
 }
 
 a {
@@ -777,6 +782,24 @@ textarea.glass-input {
   -webkit-overflow-scrolling: touch;
 }
 
+@media (max-width: 767px) {
+  .franchise-folder-row {
+    overflow-x: visible;
+    padding-inline: 0;
+  }
+
+  .franchise-folder-row > ul {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .franchise-folder-item {
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: none;
+  }
+}
+
 .franchise-folder-item {
   flex: 0 0 min(100%, 17.5rem);
   width: min(100%, 17.5rem);
@@ -1075,37 +1098,46 @@ textarea.glass-input {
   }
 
   .mobile-filter-bar {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 0.25rem;
-    margin-inline: -0.25rem;
-    padding-inline: 0.25rem;
-  }
-
-  .mobile-filter-bar::-webkit-scrollbar {
-    display: none;
+    flex-wrap: wrap;
+    overflow-x: visible;
+    padding-bottom: 0;
+    margin-inline: 0;
+    padding-inline: 0;
+    gap: 0.5rem;
   }
 
   .mobile-filter-bar > * {
-    flex-shrink: 0;
+    flex: 1 1 calc(50% - 0.25rem);
+    min-width: calc(50% - 0.25rem);
+    max-width: 100%;
   }
 
   .mobile-filter-bar .filter-trigger {
-    min-width: 8.5rem;
+    min-width: 0;
+    width: 100%;
   }
 
-  .franchise-folder-panel,
-  .search-panel {
-    padding: 1rem;
-    border-radius: 1.25rem;
+  .title-grid {
+    overflow: hidden;
+  }
+
+  .movie-card-poster {
+    overflow: hidden;
   }
 
   .search-field {
     padding-top: 0.75rem;
     padding-bottom: 0.75rem;
+  }
+
+  .search-panel {
+    padding: 1rem;
+    border-radius: 1.25rem;
+  }
+
+  .franchise-folder-panel {
+    padding: 1rem;
+    border-radius: 1.25rem;
   }
 
   .onboarding-shell,
