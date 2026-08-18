@@ -38,6 +38,11 @@ function withAvailability(
         watchUrl: item.watchUrl,
       },
       services,
+      {
+        title: item.title,
+        tmdbMovieId: item.tmdbMovieId,
+        mediaType: item.mediaType,
+      },
     ),
     watchState,
   };

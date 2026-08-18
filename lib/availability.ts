@@ -1,9 +1,19 @@
 import type { Provider } from "./effective-services";
+import type { MediaType } from "./media";
+import { streamingOpenTarget, type StreamingOpenTarget } from "./streaming-links";
+
+export type { StreamingOpenTarget };
 
 export type CachedWatchOptions = {
   flatrate: Provider[];
   rent: Provider[];
   watchUrl: string | null;
+};
+
+export type TitleContext = {
+  title: string;
+  tmdbMovieId: number;
+  mediaType: MediaType;
 };
 
 export type RentOffer = {
@@ -15,6 +25,7 @@ export type ViewerAvailability = {
   available: boolean;
   onServices: Provider[];
   rentOffer: RentOffer | null;
+  openTarget: StreamingOpenTarget | null;
 };
 
 export function providerFamily(name: string): string {
@@ -39,6 +50,7 @@ function rentMatchesService(rentProvider: Provider, services: Provider[]): boole
 export function availabilityForViewer(
   cached: CachedWatchOptions,
   services: Provider[],
+  title?: TitleContext,
 ): ViewerAvailability {
   const serviceIds = new Set(services.map((provider) => provider.tmdbProviderId));
   const onServices = cached.flatrate.filter((provider) =>
@@ -46,7 +58,19 @@ export function availabilityForViewer(
   );
 
   if (onServices.length > 0) {
-    return { available: true, onServices, rentOffer: null };
+    const provider = onServices[0]!;
+    return {
+      available: true,
+      onServices,
+      rentOffer: null,
+      openTarget: title
+        ? streamingOpenTarget({
+            provider,
+            title: title.title,
+            watchUrl: cached.watchUrl,
+          })
+        : null,
+    };
   }
 
   const matchingRent = cached.rent.find((provider) =>
@@ -54,11 +78,35 @@ export function availabilityForViewer(
   );
   const rentProvider = matchingRent ?? cached.rent[0] ?? null;
 
+  const rentOffer = rentProvider
+    ? { provider: rentProvider, watchUrl: cached.watchUrl }
+    : null;
+
+  let openTarget: StreamingOpenTarget | null = null;
+  if (title && rentProvider) {
+    const base = streamingOpenTarget({
+      provider: rentProvider,
+      title: title.title,
+      watchUrl: cached.watchUrl,
+    });
+    openTarget =
+      base && cached.watchUrl ? { ...base, webUrl: cached.watchUrl } : base;
+  } else if (title && cached.watchUrl) {
+    openTarget = streamingOpenTarget({
+      provider: {
+        tmdbProviderId: 0,
+        name: "Watch options",
+        logoPath: null,
+      },
+      title: title.title,
+      watchUrl: cached.watchUrl,
+    });
+  }
+
   return {
     available: false,
     onServices: [],
-    rentOffer: rentProvider
-      ? { provider: rentProvider, watchUrl: cached.watchUrl }
-      : null,
+    rentOffer,
+    openTarget,
   };
 }

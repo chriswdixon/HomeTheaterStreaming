@@ -4,7 +4,7 @@ import type { MediaType } from "./media";
 export type { Provider };
 
 export const RECOMMENDATION_UNLOCK_COUNT = 10;
-export const RECOMMENDATIONS_PER_PROVIDER = 5;
+export const RECOMMENDATIONS_PER_FRANCHISE = 8;
 
 export type RecommendedMovie = {
   tmdbMovieId: number;
@@ -18,79 +18,36 @@ export type RecommendedMovie = {
 
 export type RankedMovie = RecommendedMovie & { score: number };
 
-export type RecommendationGroup = {
-  provider: Provider;
-  movies: RankedMovie[];
-};
-
 export type AffinityGroup = {
   name: string;
   movies: RankedMovie[];
 };
 
+export type { WatchOrderGroup, WatchOrderMovie } from "./franchise-watch-order";
+
 export function isRecommendationsUnlocked(personalCount: number): boolean {
   return personalCount >= RECOMMENDATION_UNLOCK_COUNT;
 }
 
-export function matchingProviders(
-  movieProviders: Provider[],
-  effectiveProviderIds: Set<number>,
-): Provider[] {
-  return movieProviders.filter((provider) =>
-    effectiveProviderIds.has(provider.tmdbProviderId),
-  );
-}
-
-export function rankAndGroupRecommendations(input: {
-  recommendationSets: RecommendedMovie[][];
+export function groupByFranchise(input: {
+  groups: { name: string; movies: RecommendedMovie[] }[];
   excludedTmdbIds: Set<number>;
-  effectiveProviderIds: Set<number>;
-  perProviderLimit?: number;
-}): RecommendationGroup[] {
-  const limit = input.perProviderLimit ?? RECOMMENDATIONS_PER_PROVIDER;
-  const scored = new Map<number, RankedMovie>();
+  perGroupLimit?: number;
+}): AffinityGroup[] {
+  const limit = input.perGroupLimit ?? RECOMMENDATIONS_PER_FRANCHISE;
 
-  for (const set of input.recommendationSets) {
-    const seenInSet = new Set<number>();
-    for (const movie of set) {
-      if (seenInSet.has(movie.tmdbMovieId)) continue;
-      seenInSet.add(movie.tmdbMovieId);
-      if (input.excludedTmdbIds.has(movie.tmdbMovieId)) continue;
-
-      const providers = matchingProviders(
-        movie.providers,
-        input.effectiveProviderIds,
-      );
-      if (providers.length === 0) continue;
-
-      const existing = scored.get(movie.tmdbMovieId);
-      if (existing) {
-        existing.score += 1;
-        continue;
+  return input.groups
+    .map((group) => {
+      const seen = new Set<number>();
+      const movies: RankedMovie[] = [];
+      for (const movie of group.movies) {
+        if (seen.has(movie.tmdbMovieId)) continue;
+        seen.add(movie.tmdbMovieId);
+        if (input.excludedTmdbIds.has(movie.tmdbMovieId)) continue;
+        movies.push({ ...movie, score: 1 });
+        if (movies.length >= limit) break;
       }
-
-      scored.set(movie.tmdbMovieId, { ...movie, providers, score: 1 });
-    }
-  }
-
-  const groups = new Map<number, RecommendationGroup>();
-  for (const movie of scored.values()) {
-    for (const provider of movie.providers) {
-      const group = groups.get(provider.tmdbProviderId) ?? {
-        provider,
-        movies: [],
-      };
-      group.movies.push(movie);
-      groups.set(provider.tmdbProviderId, group);
-    }
-  }
-
-  return [...groups.values()]
-    .map((group) => ({
-      ...group,
-      movies: group.movies
-        .sort((a, b) => b.score - a.score || a.title.localeCompare(b.title))
-        .slice(0, limit),
-    }))
-    .sort((a, b) => a.provider.name.localeCompare(b.provider.name));
+      return { name: group.name, movies };
+    })
+    .filter((group) => group.movies.length > 0);
 }

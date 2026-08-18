@@ -6,7 +6,7 @@ export const clerkAppearance = {
     colorPrimary: "#e8b86d",
     colorBackground: "#12121a",
   },
-  layout: {
+  options: {
     unsafe_disableDevelopmentModeWarnings: true,
   },
 };

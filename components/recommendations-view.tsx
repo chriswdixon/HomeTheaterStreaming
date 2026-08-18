@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { AffinityGroup, RecommendationGroup } from "@/lib/recommendations";
+import type { AffinityGroup, WatchOrderGroup } from "@/lib/recommendations";
 import type { TmdbSearchMovie } from "@/lib/tmdb";
 import { MovieCard } from "./movie-card";
 
@@ -14,7 +14,7 @@ export function RecommendationsView({
         unlocked: true;
         count: number;
         needed: number;
-        groups: RecommendationGroup[];
+        watchOrderGroups?: WatchOrderGroup[];
         affinityGroups?: AffinityGroup[];
       };
 }) {
@@ -85,62 +85,79 @@ export function RecommendationsView({
     );
   }
 
+  const watchOrderGroups = payload.watchOrderGroups ?? [];
+  const affinityGroups = payload.affinityGroups ?? [];
+  const hasRecommendations =
+    watchOrderGroups.length > 0 || affinityGroups.length > 0;
+
   return (
     <div>
       <h1 className="text-3xl font-semibold tracking-tight">Recommendations</h1>
       <p className="mt-1 text-muted">
-        Based on your personal list, grouped by the services you can actually watch
-        on.
+        Based on franchises and series on your personal list, not limited to the
+        services you subscribe to.
       </p>
       {message ? <p className="mt-4 text-sm text-accent">{message}</p> : null}
-      {payload.groups.length === 0 &&
-      (payload.affinityGroups ?? []).length === 0 ? (
+      {!hasRecommendations ? (
         <div className="mt-8 rounded-3xl border border-dashed border-white/15 px-6 py-16 text-center">
-          <h2 className="text-xl font-medium">No matches right now</h2>
+          <h2 className="text-xl font-medium">No franchise matches yet</h2>
           <p className="mt-2 text-muted">
-            We couldn&apos;t find streaming titles on your current services that
-            aren&apos;t already on a list. Add more movies or more services.
+            Add at least two titles from the same collection or franchise to see
+            more from that series.
           </p>
         </div>
       ) : (
         <div className="mt-8 space-y-12">
-          {(payload.affinityGroups ?? []).map((group) => (
+          {watchOrderGroups.map((group) => (
             <section key={group.name}>
               <p className="text-xs uppercase tracking-[0.2em] text-accent">
-                Because you added 2+
+                {group.orderLabel === "first-watch"
+                  ? "First-watch order"
+                  : "Release order"}
               </p>
               <h2 className="mb-4 text-xl font-medium">{group.name}</h2>
               <ul className="grid grid-cols-2 items-stretch gap-4 md:grid-cols-4 lg:grid-cols-5">
                 {group.movies.map((movie) => (
-                  <li key={`${group.name}-${movie.tmdbMovieId}`} className="h-full">
+                  <li
+                    key={`${group.name}-${movie.tmdbMovieId}`}
+                    className="h-full"
+                  >
                     <MovieCard
                       title={movie.title}
                       year={movie.year}
                       posterPath={movie.posterPath}
                       overview={movie.overview}
                       mediaType={movie.mediaType}
+                      order={movie.order}
                       availability={{
-                        available: true,
+                        available: movie.providers.length > 0,
                         onServices: movie.providers,
                         rentOffer: null,
+                        openTarget: null,
                       }}
                       actions={
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => addMovie(movie, "personal")}
-                            className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-black"
-                          >
-                            My list
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => addMovie(movie, "shared")}
-                            className="rounded-full border border-white/15 px-3 py-1 text-xs"
-                          >
-                            Shared
-                          </button>
-                        </>
+                        movie.onList ? (
+                          <span className="rounded-full border border-white/15 px-3 py-1 text-xs text-muted">
+                            On your list
+                          </span>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => addMovie(movie, "personal")}
+                              className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-black"
+                            >
+                              My list
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => addMovie(movie, "shared")}
+                              className="rounded-full border border-white/15 px-3 py-1 text-xs"
+                            >
+                              Shared
+                            </button>
+                          </>
+                        )
                       }
                     />
                   </li>
@@ -148,12 +165,18 @@ export function RecommendationsView({
               </ul>
             </section>
           ))}
-          {payload.groups.map((group) => (
-            <section key={group.provider.tmdbProviderId}>
-              <h2 className="mb-4 text-xl font-medium">{group.provider.name}</h2>
+          {affinityGroups.map((group) => (
+            <section key={group.name}>
+              <p className="text-xs uppercase tracking-[0.2em] text-accent">
+                Because you added 2+
+              </p>
+              <h2 className="mb-4 text-xl font-medium">{group.name}</h2>
               <ul className="grid grid-cols-2 items-stretch gap-4 md:grid-cols-4 lg:grid-cols-5">
                 {group.movies.map((movie) => (
-                  <li key={`${group.provider.tmdbProviderId}-${movie.tmdbMovieId}`} className="h-full">
+                  <li
+                    key={`${group.name}-${movie.tmdbMovieId}`}
+                    className="h-full"
+                  >
                     <MovieCard
                       title={movie.title}
                       year={movie.year}
@@ -161,9 +184,10 @@ export function RecommendationsView({
                       overview={movie.overview}
                       mediaType={movie.mediaType}
                       availability={{
-                        available: true,
+                        available: movie.providers.length > 0,
                         onServices: movie.providers,
                         rentOffer: null,
+                        openTarget: null,
                       }}
                       actions={
                         <>

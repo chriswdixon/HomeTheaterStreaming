@@ -97,6 +97,11 @@ export async function POST(request: Request) {
       watchUrl: added.item.watchUrl,
     },
     mergeEffectiveServices(household, personal),
+    {
+      title: added.item.title,
+      tmdbMovieId: added.item.tmdbMovieId,
+      mediaType: added.item.mediaType,
+    },
   );
 
   return NextResponse.json(

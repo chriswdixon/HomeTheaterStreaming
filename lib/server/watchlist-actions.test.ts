@@ -47,6 +47,7 @@ function mockTmdb(overrides: Partial<TmdbClient> = {}): TmdbClient {
     }),
     getCollectionParts: vi.fn().mockResolvedValue([]),
     discoverByKeyword: vi.fn().mockResolvedValue([]),
+    getMoviesByIds: vi.fn().mockResolvedValue([]),
     listWatchProviders: vi.fn(),
     ...overrides,
   };
@@ -200,7 +201,6 @@ describe("getRecommendationPayload", () => {
       { tmdb: mockTmdb(), store: memoryStore(personal) },
       {
         ownerUserId: "user-1",
-        effectiveProviders: [netflix],
         region: "US",
       },
     );
@@ -212,14 +212,29 @@ describe("getRecommendationPayload", () => {
     });
   });
 
-  it("returns grouped recommendations after 10 personal movies", async () => {
-    const personal = personalMovies(10);
-
+  it("groups recommendations by franchise, including titles not on subscribed services", async () => {
+    const personal = personalMovies(10).map((item, index) =>
+      index < 2
+        ? {
+            ...item,
+            collectionId: 10,
+            collectionName: "John Wick Collection",
+          }
+        : item,
+    );
+    const chapter4: RecommendedMovie = {
+      tmdbMovieId: 245891,
+      title: "John Wick: Chapter 4",
+      year: "2023",
+      posterPath: "/jw4.jpg",
+      overview: "Guns",
+      providers: [],
+    };
     const tmdb = mockTmdb({
-      getTitleRecommendations: vi.fn().mockResolvedValue([dune]),
+      getCollectionParts: vi.fn().mockResolvedValue([chapter4]),
       getWatchProviders: vi.fn().mockResolvedValue({
         ...emptyWatch,
-        flatrate: [netflix],
+        flatrate: [{ tmdbProviderId: 15, name: "Hulu", logoPath: "/hulu.png" }],
       }),
     });
 
@@ -227,20 +242,32 @@ describe("getRecommendationPayload", () => {
       { tmdb, store: memoryStore(personal) },
       {
         ownerUserId: "user-1",
-        effectiveProviders: [netflix],
         region: "US",
       },
     );
 
     expect(payload.unlocked).toBe(true);
     if (payload.unlocked) {
-      expect(payload.groups[0]?.provider.tmdbProviderId).toBe(8);
-      expect(payload.groups[0]?.movies[0]?.tmdbMovieId).toBe(101);
+      expect(payload.watchOrderGroups).toEqual([]);
+      expect(payload.affinityGroups.map((group) => group.name)).toEqual([
+        "John Wick Collection",
+      ]);
+      expect(
+        payload.affinityGroups[0]?.movies.map((movie) => movie.tmdbMovieId),
+      ).toEqual([245891]);
     }
   });
 
-  it("keeps recommendations when some TMDB watch-provider lookups fail", async () => {
-    const personal = personalMovies(10);
+  it("keeps franchise recommendations when some TMDB watch-provider lookups fail", async () => {
+    const personal = personalMovies(10).map((item, index) =>
+      index < 2
+        ? {
+            ...item,
+            collectionId: 10,
+            collectionName: "John Wick Collection",
+          }
+        : item,
+    );
     const flop: RecommendedMovie = {
       tmdbMovieId: 14831,
       title: "The Flop",
@@ -250,53 +277,58 @@ describe("getRecommendationPayload", () => {
       providers: [],
     };
     const tmdb = mockTmdb({
-      getTitleRecommendations: vi.fn().mockResolvedValue([
-        { ...dune, providers: [] },
-        flop,
-      ]),
-      getWatchProviders: vi.fn().mockImplementation(async (id: number) => {
-        if (id === flop.tmdbMovieId) {
-          throw new Error("TMDB request failed (429) for /movie/14831/watch/providers");
-        }
-        return { ...emptyWatch, flatrate: [netflix] };
-      }),
+      getCollectionParts: vi.fn().mockResolvedValue([flop]),
+      getWatchProviders: vi.fn().mockRejectedValue(
+        new Error("TMDB request failed (429) for /movie/14831/watch/providers"),
+      ),
     });
 
     const payload = await getRecommendationPayload(
       { tmdb, store: memoryStore(personal) },
       {
         ownerUserId: "user-1",
-        effectiveProviders: [netflix],
         region: "US",
       },
     );
 
     expect(payload.unlocked).toBe(true);
     if (payload.unlocked) {
-      expect(payload.groups[0]?.movies.map((movie) => movie.tmdbMovieId)).toEqual([
-        101,
-      ]);
+      expect(
+        payload.affinityGroups[0]?.movies.map((movie) => movie.tmdbMovieId),
+      ).toEqual([14831]);
     }
   });
 
-  it("looks up watch providers for the most recommended titles first, not every unique id", async () => {
-    const personal = personalMovies(10);
-    const crowdFavorites = Array.from({ length: 40 }, (_, index) => ({
-      tmdbMovieId: 1000 + index,
-      title: `Popular ${index}`,
+  it("looks up watch providers for franchise titles, not every similar-movie id", async () => {
+    const personal = personalMovies(10).map((item, index) =>
+      index < 2
+        ? {
+            ...item,
+            collectionId: 10,
+            collectionName: "John Wick Collection",
+          }
+        : item,
+    );
+    const parts = Array.from({ length: 12 }, (_, index) => ({
+      tmdbMovieId: 2000 + index,
+      title: `Wick ${index}`,
       year: "2024",
       posterPath: null,
       overview: "",
       providers: [] as Provider[],
     }));
     const tmdb = mockTmdb({
-      getTitleRecommendations: vi.fn().mockImplementation(async (movieId: number) => {
-        const uncachedDune = { ...dune, providers: [] };
-        if (movieId === 1) {
-          return [uncachedDune, ...crowdFavorites];
-        }
-        return [uncachedDune];
-      }),
+      getTitleRecommendations: vi.fn().mockResolvedValue(
+        Array.from({ length: 40 }, (_, index) => ({
+          tmdbMovieId: 1000 + index,
+          title: `Popular ${index}`,
+          year: "2024",
+          posterPath: null,
+          overview: "",
+          providers: [] as Provider[],
+        })),
+      ),
+      getCollectionParts: vi.fn().mockResolvedValue(parts),
       getWatchProviders: vi.fn().mockResolvedValue({
         ...emptyWatch,
         flatrate: [netflix],
@@ -307,13 +339,158 @@ describe("getRecommendationPayload", () => {
       { tmdb, store: memoryStore(personal) },
       {
         ownerUserId: "user-1",
-        effectiveProviders: [netflix],
         region: "US",
       },
     );
 
     const lookedUp = vi.mocked(tmdb.getWatchProviders).mock.calls.map(([id]) => id);
     expect(lookedUp.length).toBeLessThanOrEqual(MAX_WATCH_PROVIDER_LOOKUPS);
-    expect(lookedUp[0]).toBe(101);
+    expect(lookedUp.every((id) => id >= 2000 && id < 2012)).toBe(true);
+  });
+
+  it("shows a numbered MCU path when three or more personal titles match", async () => {
+    const mcuKeyword = {
+      tmdbKeywordId: 180547,
+      name: "marvel cinematic universe",
+    };
+    const mcuIds = [1726, 24428, 299534];
+    const personal = personalMovies(10).map((item, index) =>
+      index < 3
+        ? {
+            ...item,
+            tmdbMovieId: mcuIds[index]!,
+            title: `MCU ${index}`,
+            keywords: [mcuKeyword],
+          }
+        : item,
+    );
+    const tmdb = mockTmdb({
+      getMoviesByIds: vi.fn().mockImplementation(async (ids: number[]) =>
+        ids.map((id) => ({
+          tmdbMovieId: id,
+          mediaType: "movie" as const,
+          title: `Movie ${id}`,
+          year: "2012",
+          posterPath: null,
+          overview: "",
+        })),
+      ),
+    });
+
+    const payload = await getRecommendationPayload(
+      { tmdb, store: memoryStore(personal) },
+      { ownerUserId: "user-1", region: "US" },
+    );
+
+    expect(payload.unlocked).toBe(true);
+    if (payload.unlocked) {
+      expect(payload.watchOrderGroups).toHaveLength(1);
+      expect(payload.watchOrderGroups[0]?.name).toBe("Marvel Cinematic Universe");
+      expect(payload.watchOrderGroups[0]?.orderLabel).toBe("first-watch");
+      expect(payload.watchOrderGroups[0]?.movies[0]?.tmdbMovieId).toBe(1726);
+      expect(payload.watchOrderGroups[0]?.movies[0]?.order).toBe(1);
+      expect(
+        payload.watchOrderGroups[0]?.movies.find((movie) => movie.tmdbMovieId === 1726)
+          ?.onList,
+      ).toBe(true);
+      expect(
+        payload.watchOrderGroups[0]?.movies.find((movie) => movie.tmdbMovieId === 24428)
+          ?.onList,
+      ).toBe(true);
+      expect(
+        payload.watchOrderGroups[0]?.movies.find((movie) => movie.tmdbMovieId === 1724)
+          ?.onList,
+      ).toBe(false);
+      expect(payload.affinityGroups).toEqual([]);
+    }
+  });
+
+  it("does not show a watch path for only two franchise titles", async () => {
+    const mcuKeyword = {
+      tmdbKeywordId: 180547,
+      name: "marvel cinematic universe",
+    };
+    const personal = personalMovies(10).map((item, index) =>
+      index < 2
+        ? { ...item, keywords: [mcuKeyword] }
+        : item,
+    );
+    const discoverHit = {
+      tmdbMovieId: 999,
+      mediaType: "movie" as const,
+      title: "Extra MCU",
+      year: "2024",
+      posterPath: null,
+      overview: "",
+    };
+    const tmdb = mockTmdb({
+      discoverByKeyword: vi.fn().mockResolvedValue([discoverHit]),
+    });
+
+    const payload = await getRecommendationPayload(
+      { tmdb, store: memoryStore(personal) },
+      { ownerUserId: "user-1", region: "US" },
+    );
+
+    expect(payload.unlocked).toBe(true);
+    if (payload.unlocked) {
+      expect(payload.watchOrderGroups).toEqual([]);
+      expect(payload.affinityGroups[0]?.movies.map((movie) => movie.tmdbMovieId)).toEqual([
+        999,
+      ]);
+    }
+  });
+
+  it("hides collection leftovers that overlap a franchise watch path", async () => {
+    const mcuKeyword = {
+      tmdbKeywordId: 180547,
+      name: "marvel cinematic universe",
+    };
+    const mcuIds = [1726, 24428, 299534];
+    const personal = personalMovies(10).map((item, index) => {
+      if (index < 3) {
+        return {
+          ...item,
+          tmdbMovieId: mcuIds[index]!,
+          keywords: [mcuKeyword],
+          collectionId: 10,
+          collectionName: "Avengers Collection",
+        };
+      }
+      return item;
+    });
+    const tmdb = mockTmdb({
+      getMoviesByIds: vi.fn().mockImplementation(async (ids: number[]) =>
+        ids.map((id) => ({
+          tmdbMovieId: id,
+          mediaType: "movie" as const,
+          title: `Movie ${id}`,
+          year: "2012",
+          posterPath: null,
+          overview: "",
+        })),
+      ),
+      getCollectionParts: vi.fn().mockResolvedValue([
+        {
+          tmdbMovieId: 24428,
+          mediaType: "movie" as const,
+          title: "Avengers",
+          year: "2012",
+          posterPath: null,
+          overview: "",
+        },
+      ]),
+    });
+
+    const payload = await getRecommendationPayload(
+      { tmdb, store: memoryStore(personal) },
+      { ownerUserId: "user-1", region: "US" },
+    );
+
+    expect(payload.unlocked).toBe(true);
+    if (payload.unlocked) {
+      expect(payload.watchOrderGroups).toHaveLength(1);
+      expect(payload.affinityGroups).toEqual([]);
+    }
   });
 });

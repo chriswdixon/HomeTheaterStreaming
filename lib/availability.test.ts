@@ -24,6 +24,11 @@ const appleTv = {
 };
 
 const watchUrl = "https://www.themoviedb.org/movie/550/watch?locale=US";
+const title = {
+  title: "Fight Club",
+  tmdbMovieId: 550,
+  mediaType: "movie" as const,
+};
 
 describe("availabilityForViewer", () => {
   it("returns the subset of cached providers the viewer subscribes to", () => {
@@ -36,6 +41,21 @@ describe("availabilityForViewer", () => {
       available: true,
       onServices: [netflix],
       rentOffer: null,
+      openTarget: null,
+    });
+  });
+
+  it("builds a streaming open target when title context is provided", () => {
+    const availability = availabilityForViewer(
+      { flatrate: [netflix], rent: [], watchUrl },
+      [netflix],
+      title,
+    );
+
+    expect(availability.openTarget).toEqual({
+      provider: netflix,
+      appUrl: "nflx://www.netflix.com/search?q=Fight%20Club",
+      webUrl: "https://www.netflix.com/search?q=Fight%20Club",
     });
   });
 
@@ -49,7 +69,19 @@ describe("availabilityForViewer", () => {
       available: false,
       onServices: [],
       rentOffer: { provider: amazonVideo, watchUrl },
+      openTarget: null,
     });
+  });
+
+  it("builds a rent open target using the TMDB watch page as browser fallback", () => {
+    const availability = availabilityForViewer(
+      { flatrate: [max], rent: [amazonVideo], watchUrl },
+      [netflix],
+      title,
+    );
+
+    expect(availability.openTarget?.webUrl).toBe(watchUrl);
+    expect(availability.openTarget?.provider).toEqual(amazonVideo);
   });
 
   it("falls back to the first rental store when none of the viewer's services offer a rent option", () => {
@@ -62,6 +94,7 @@ describe("availabilityForViewer", () => {
       available: false,
       onServices: [],
       rentOffer: { provider: appleTv, watchUrl },
+      openTarget: null,
     });
   });
 
@@ -72,6 +105,25 @@ describe("availabilityForViewer", () => {
       available: false,
       onServices: [],
       rentOffer: null,
+      openTarget: null,
+    });
+  });
+
+  it("opens the TMDB watch page when nothing streams but a watch page exists", () => {
+    const availability = availabilityForViewer(
+      { flatrate: [max], rent: [], watchUrl },
+      [netflix],
+      title,
+    );
+
+    expect(availability.openTarget).toEqual({
+      provider: {
+        tmdbProviderId: 0,
+        name: "Watch options",
+        logoPath: null,
+      },
+      appUrl: watchUrl,
+      webUrl: watchUrl,
     });
   });
 });

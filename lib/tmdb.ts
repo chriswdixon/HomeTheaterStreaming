@@ -40,6 +40,7 @@ export type TmdbClient = {
   getTitleMeta: (movieId: number, mediaType: MediaType) => Promise<TitleMeta>;
   getCollectionParts: (collectionId: number) => Promise<TmdbSearchMovie[]>;
   discoverByKeyword: (keywordId: number) => Promise<TmdbSearchMovie[]>;
+  getMoviesByIds: (ids: number[]) => Promise<TmdbSearchMovie[]>;
   listWatchProviders: (region: string) => Promise<Provider[]>;
 };
 
@@ -250,10 +251,25 @@ export function createTmdbClient(
     async discoverByKeyword(keywordId) {
       const data = await tmdbGet<{ results: TmdbMoviePayload[] }>("/discover/movie", {
         with_keywords: String(keywordId),
-        sort_by: "popularity.desc",
+        sort_by: "primary_release_date.asc",
         include_adult: "false",
       });
       return (data.results ?? []).map((payload) => mapTitle(payload, "movie"));
+    },
+
+    async getMoviesByIds(ids) {
+      const unique = [...new Set(ids)];
+      const movies = await Promise.all(
+        unique.map(async (id) => {
+          try {
+            const data = await tmdbGet<TmdbMoviePayload>(`/movie/${id}`);
+            return mapTitle(data, "movie");
+          } catch {
+            return null;
+          }
+        }),
+      );
+      return movies.filter((movie): movie is TmdbSearchMovie => movie != null);
     },
 
     async listWatchProviders(region) {

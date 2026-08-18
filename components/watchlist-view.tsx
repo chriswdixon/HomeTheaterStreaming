@@ -8,6 +8,7 @@ import {
   reorderIds,
   visibleWatchlistItems,
 } from "@/lib/list-query";
+import { openStreamingTarget } from "@/lib/open-streaming";
 import type { StoredWatchlistItem } from "@/lib/server/watchlist-actions";
 import type { TmdbSearchMovie } from "@/lib/tmdb";
 import type { WatchState } from "@/lib/watch-state";
@@ -274,6 +275,11 @@ export function WatchlistView({
                 mediaType={item.mediaType}
                 rating={item.watchState?.rating}
                 draggable={allowDrag && !showWatched}
+                onOpen={
+                  item.availability.openTarget
+                    ? () => openStreamingTarget(item.availability.openTarget!)
+                    : undefined
+                }
                 onWatched={
                   item.watchState ? undefined : () => setRatingItem(item)
                 }

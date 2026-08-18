@@ -45,8 +45,7 @@ a {
 .cl-footerActionText,
 .cl-identityPreviewText,
 .cl-socialButtonsBlockButtonText,
-.cl-formButtonPrimary,
-.cl-internal-b3fm6y {
+.cl-formButtonPrimary {
   color: var(--foreground);
 }
 
@@ -60,4 +59,8 @@ a {
 .cl-footerActionText,
 .cl-formFieldInfoText {
   color: var(--muted);
+}
+
+.cl-internal-b3fm6y {
+  display: none;
 }
