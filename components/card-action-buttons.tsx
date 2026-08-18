@@ -38,7 +38,7 @@ export function CardIconButton({
       title={label}
       disabled={disabled}
       onClick={onClick}
-      className={`card-action-icon action-btn-pill ${toneClass[tone]} ${
+      className={`card-action-icon ${toneClass[tone]} ${
         disabled ? "card-action-icon-muted" : ""
       }`}
     >
@@ -68,7 +68,7 @@ export function CardIconLink({
       aria-label={label}
       title={label}
       onClick={onClick}
-      className={`card-action-icon action-btn-pill ${toneClass[tone]} no-underline`}
+      className={`card-action-icon ${toneClass[tone]} no-underline`}
     >
       {icon}
     </a>
