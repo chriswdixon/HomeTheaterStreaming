@@ -64,9 +64,7 @@ export function WatchlistView({
   const [ratingItem, setRatingItem] = useState<WatchlistItemView | null>(null);
   const [removeItem, setRemoveItem] = useState<WatchlistItemView | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(
-    () => new Set(),
-  );
+  const [openFolderName, setOpenFolderName] = useState<string | null>(null);
 
   const states = items
     .map((item) => item.watchState)
@@ -97,12 +95,7 @@ export function WatchlistView({
   );
 
   function toggleFolder(name: string) {
-    setCollapsedFolders((current) => {
-      const next = new Set(current);
-      if (next.has(name)) next.delete(name);
-      else next.add(name);
-      return next;
-    });
+    setOpenFolderName((current) => (current === name ? null : name));
   }
 
   function renderItem(
@@ -358,32 +351,35 @@ export function WatchlistView({
         <div className="mt-8 space-y-8">
           {sections.map((section) => {
             if (section.type === "folder") {
-              const collapsed = collapsedFolders.has(section.folder.name);
+              const open = openFolderName === section.folder.name;
               return (
                 <section
                   key={section.folder.name}
-                  className="glass rounded-3xl p-4 sm:p-5"
+                  className="franchise-folder-panel"
                 >
                   <button
                     type="button"
                     onClick={() => toggleFolder(section.folder.name)}
                     className="flex w-full items-center justify-between gap-3 text-left"
+                    aria-expanded={open}
                   >
                     <div>
                       <p className="text-xs uppercase tracking-[0.2em] text-accent">
-                        Franchise folder
+                        Folder
                       </p>
                       <h2 className="mt-1 text-lg font-medium">
                         {section.folder.name}
                       </h2>
+                      <p className="mt-1 text-sm text-muted">
+                        {open ? "Open" : "Click to open folder"}
+                      </p>
                     </div>
                     <span className="shrink-0 text-sm text-muted">
-                      {section.folder.items.length} titles{" "}
-                      {collapsed ? "▸" : "▾"}
+                      {section.folder.items.length} titles {open ? "▾" : "▸"}
                     </span>
                   </button>
-                  {!collapsed ? (
-                    <ul className="mt-4 grid grid-cols-2 items-stretch gap-4 md:grid-cols-4 lg:grid-cols-5">
+                  {open ? (
+                    <ul className="mt-4 grid grid-cols-2 items-stretch gap-4 overflow-visible p-1 md:grid-cols-4 lg:grid-cols-5">
                       {section.folder.items.map((item) => (
                         <li key={item.id} className="h-full">
                           {renderItem(item, { order: item.folderOrder ?? undefined })}

@@ -483,6 +483,69 @@ textarea.glass-input {
   display: none;
 }
 
+.franchise-folder-row {
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 0.35rem 0.35rem 0.5rem;
+  scroll-padding-inline: 0.35rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.franchise-folder-item {
+  flex: 0 0 min(100%, 17.5rem);
+  width: min(100%, 17.5rem);
+}
+
+.franchise-folder-card {
+  box-sizing: border-box;
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: #14141e;
+  padding: 1rem 1.1rem 1.15rem;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32);
+}
+
+.franchise-folder-card-open {
+  border-color: rgba(232, 184, 109, 0.55);
+  box-shadow:
+    0 0 0 1px rgba(232, 184, 109, 0.35),
+    0 12px 32px rgba(0, 0, 0, 0.32);
+}
+
+.franchise-folder-tab {
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(232, 184, 109, 0.12);
+  padding: 0.15rem 0.55rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.franchise-folder-panel {
+  overflow: visible;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #101018;
+  padding: 1.25rem 1.35rem 1.5rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.38);
+}
+
+.franchise-folder-close {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.franchise-folder-close:hover {
+  border-color: rgba(232, 184, 109, 0.4);
+  color: var(--foreground);
+}
+
 .title-lightbox-overlay {
   background: rgba(2, 2, 6, 0.88);
   backdrop-filter: blur(10px);

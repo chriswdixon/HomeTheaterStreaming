@@ -14,6 +14,10 @@ import type {
   WatchOrderGroup,
 } from "@/lib/recommendations";
 import type { TmdbSearchMovie } from "@/lib/tmdb";
+import {
+  FranchiseFolderRow,
+  type FranchiseFolderData,
+} from "./franchise-folder";
 import { MovieCard } from "./movie-card";
 import { MultiSelectFilter } from "./multi-select-filter";
 
@@ -40,16 +44,7 @@ export function RecommendationsView({
   const [payload, setPayload] = useState(initial);
   const [message, setMessage] = useState<string | null>(null);
   const [selectedServiceIds, setSelectedServiceIds] = useState<number[]>([]);
-  const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
-
-  function toggleFolder(key: string) {
-    setCollapsedFolders((current) => {
-      const next = new Set(current);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  }
+  const [openFolderKey, setOpenFolderKey] = useState<string | null>(null);
 
   async function addFranchise(
     group: {
@@ -96,7 +91,7 @@ export function RecommendationsView({
     router.refresh();
     const listLabel = list === "personal" ? "your list" : "the shared list";
     setMessage(
-      `Added ${group.name} to ${listLabel} (${data.added ?? 0} new, ${data.updated ?? 0} grouped)`,
+      `Added ${group.name} to ${listLabel} (${data.added ?? 0} new, ${data.updated ?? 0} in folder)`,
     );
   }
 
@@ -181,26 +176,27 @@ export function RecommendationsView({
     [generalRecs, selectedServiceIds, viewerServices],
   );
 
-  const franchiseFolders = useMemo(
-    () => [
+  const franchiseFolders = useMemo((): FranchiseFolderData[] => {
+    return [
       ...filteredWatchOrderGroups.map((group) => ({
         key: `watch-order-${group.name}`,
-        group,
+        name: group.name,
         subtitle:
           group.orderLabel === "first-watch"
             ? "First-watch order"
             : "Release order",
         showOrder: true as const,
+        movies: group.movies,
       })),
       ...filteredAffinityGroups.map((group) => ({
         key: `affinity-${group.name}`,
-        group,
-        subtitle: "Because you added 2+ titles from this franchise",
+        name: group.name,
+        subtitle: "From titles on your list",
         showOrder: false as const,
+        movies: group.movies,
       })),
-    ],
-    [filteredAffinityGroups, filteredWatchOrderGroups],
-  );
+    ];
+  }, [filteredAffinityGroups, filteredWatchOrderGroups]);
 
   if (!unlocked) {
     const remaining = payload.needed - payload.count;
@@ -286,19 +282,14 @@ export function RecommendationsView({
                   From collections on your list
                 </h2>
               </div>
-              {franchiseFolders.map(({ key, group, subtitle, showOrder }) => (
-                <FranchiseFolder
-                  key={key}
-                  group={group}
-                  subtitle={subtitle}
-                  collapsed={collapsedFolders.has(key)}
-                  onToggle={() => toggleFolder(key)}
-                  onAddFranchise={addFranchise}
-                  onAddMovie={addMovie}
-                  viewerServices={viewerServices}
-                  showOrder={showOrder}
-                />
-              ))}
+              <FranchiseFolderRow
+                folders={franchiseFolders}
+                openKey={openFolderKey}
+                onOpenKeyChange={setOpenFolderKey}
+                onAddFranchise={addFranchise}
+                onAddMovie={addMovie}
+                viewerServices={viewerServices}
+              />
             </div>
           ) : null}
           {filteredGeneralRecs.length > 0 ? (
@@ -321,172 +312,6 @@ export function RecommendationsView({
           ) : null}
         </div>
       )}
-    </div>
-  );
-}
-
-type FranchiseGroup = {
-  name: string;
-  movies: Array<{
-    tmdbMovieId: number;
-    mediaType?: TmdbSearchMovie["mediaType"];
-    title: string;
-    year: string | null;
-    posterPath: string | null;
-    overview: string;
-    order?: number;
-    onList?: boolean;
-    providers: { tmdbProviderId: number; name: string; logoPath: string | null }[];
-    rentProviders?: { tmdbProviderId: number; name: string; logoPath: string | null }[];
-  }>;
-};
-
-function FranchiseFolder({
-  group,
-  subtitle,
-  collapsed,
-  onToggle,
-  onAddFranchise,
-  onAddMovie,
-  viewerServices,
-  showOrder,
-}: {
-  group: FranchiseGroup;
-  subtitle: string;
-  collapsed: boolean;
-  onToggle: () => void;
-  onAddFranchise: (
-    group: {
-      name: string;
-      movies: Array<{
-        tmdbMovieId: number;
-        mediaType?: TmdbSearchMovie["mediaType"];
-        title: string;
-        year: string | null;
-        posterPath: string | null;
-        overview: string;
-        order: number;
-      }>;
-    },
-    list: "personal" | "shared",
-  ) => void;
-  onAddMovie: (
-    movie: {
-      tmdbMovieId: number;
-      mediaType?: TmdbSearchMovie["mediaType"];
-      title: string;
-      year: string | null;
-      posterPath: string | null;
-      overview?: string;
-    },
-    list: "personal" | "shared",
-  ) => void;
-  viewerServices: Provider[];
-  showOrder: boolean;
-}) {
-  return (
-    <section className="glass rounded-3xl p-4 sm:p-5">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-center justify-between gap-3 text-left"
-      >
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-accent">
-            Franchise folder
-          </p>
-          <h2 className="mt-1 text-lg font-medium">{group.name}</h2>
-          <p className="mt-1 text-sm text-muted">{subtitle}</p>
-        </div>
-        <span className="shrink-0 text-sm text-muted">
-          {group.movies.length} titles {collapsed ? "▸" : "▾"}
-        </span>
-      </button>
-      {!collapsed ? (
-        <div className="mt-4 space-y-4">
-          <FranchiseAddButtons group={group} onAdd={onAddFranchise} />
-          <RecommendationGrid
-            movies={group.movies}
-            getKey={(movie) => `${group.name}-${movie.tmdbMovieId}`}
-            renderActions={(movie) =>
-              movie.onList ? (
-                <span className="action-btn-pill card-action-button w-full border border-white/15 text-center text-sm text-muted">
-                  On your list
-                </span>
-              ) : (
-                <AddButtons movie={movie} onAdd={onAddMovie} />
-              )
-            }
-            getOrder={showOrder ? (movie) => movie.order : undefined}
-            viewerServices={viewerServices}
-          />
-        </div>
-      ) : null}
-    </section>
-  );
-}
-
-function FranchiseAddButtons({
-  group,
-  onAdd,
-}: {
-  group: {
-    name: string;
-    movies: Array<{
-      tmdbMovieId: number;
-      mediaType?: TmdbSearchMovie["mediaType"];
-      title: string;
-      year: string | null;
-      posterPath: string | null;
-      overview: string;
-      order?: number;
-    }>;
-  };
-  onAdd: (
-    group: {
-      name: string;
-      movies: Array<{
-        tmdbMovieId: number;
-        mediaType?: TmdbSearchMovie["mediaType"];
-        title: string;
-        year: string | null;
-        posterPath: string | null;
-        overview: string;
-        order: number;
-      }>;
-    },
-    list: "personal" | "shared",
-  ) => void;
-}) {
-  const payload = {
-    name: group.name,
-    movies: group.movies.map((movie, index) => ({
-      tmdbMovieId: movie.tmdbMovieId,
-      mediaType: movie.mediaType,
-      title: movie.title,
-      year: movie.year,
-      posterPath: movie.posterPath,
-      overview: movie.overview,
-      order: movie.order ?? index + 1,
-    })),
-  };
-
-  return (
-    <div className="mb-4 flex flex-wrap gap-2">
-      <button
-        type="button"
-        onClick={() => onAdd(payload, "personal")}
-        className="action-btn-pill action-btn-add px-3 py-1.5 text-xs"
-      >
-        Add franchise to My list
-      </button>
-      <button
-        type="button"
-        onClick={() => onAdd(payload, "shared")}
-        className="action-btn-pill action-btn-add px-3 py-1.5 text-xs"
-      >
-        Add franchise to Shared
-      </button>
     </div>
   );
 }
