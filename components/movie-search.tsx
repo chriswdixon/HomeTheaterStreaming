@@ -61,15 +61,15 @@ export function MovieSearch({
       <label htmlFor="movie-search" className="sr-only">
         Search movies and series to add
       </label>
-      <div className="relative">
-        <SearchIcon className="pointer-events-none absolute top-1/2 left-5 h-5 w-5 -translate-y-1/2 text-accent" />
+      <div className="glass-input flex items-center gap-3 py-4 pr-5 pl-5">
+        <SearchIcon className="h-5 w-5 shrink-0 text-accent" />
         <input
           id="movie-search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           onFocus={() => visibleResults.length > 0 && setOpen(true)}
           placeholder="Search movies and series to add…"
-          className="glass-input py-4 pr-5 pl-12 text-base"
+          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-base text-foreground outline-none placeholder:text-muted"
         />
       </div>
       {error ? <p className="mt-2 text-sm text-red-300">{error}</p> : null}

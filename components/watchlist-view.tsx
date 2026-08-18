@@ -263,8 +263,8 @@ export function WatchlistView({
         </div>
       ) : null}
       {mode === "queue" || genres.length > 0 ? (
-        <div className="mt-4 flex items-center gap-3">
-          <div className="flex min-w-0 flex-1 flex-wrap gap-2">
+        <div className="mt-4 flex items-start gap-3">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
             {genres.length > 0 ? (
               <>
                 <FilterChip
@@ -292,7 +292,7 @@ export function WatchlistView({
               type="button"
               onClick={() => setShowWatched((current) => !current)}
               title={showWatched ? "Show unwatched" : "Show watched"}
-              className="group relative ml-auto shrink-0 glass-chip glass-chip-active !text-foreground"
+              className="group relative shrink-0 rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-black transition-colors hover:bg-accent/80"
             >
               {showWatched ? "Watched" : "Unwatched"}
               <span

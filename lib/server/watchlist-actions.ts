@@ -29,6 +29,7 @@ import {
 import type { TmdbClient } from "../tmdb";
 import { isDuplicateWatchlistItem, type WatchlistKind } from "../watchlist";
 import { franchiseSortOrders } from "../watchlist-folders";
+import { mergeRentalProviders } from "../watch-providers";
 
 export type StoredWatchlistItem = {
   id: string;
@@ -144,7 +145,7 @@ export async function addWatchlistItem(
     folderOrder: null,
     sortOrder,
     cachedFlatrateProviders: watch.flatrate,
-    cachedRentProviders: watch.rent,
+    cachedRentProviders: mergeRentalProviders(watch.rent, watch.buy),
     watchUrl: watch.watchUrl,
     addedByUserId: input.addedByUserId,
   });
@@ -229,7 +230,7 @@ export async function addFranchiseFolderToWatchlist(
       folderOrder,
       sortOrder,
       cachedFlatrateProviders: watch.flatrate,
-      cachedRentProviders: watch.rent,
+      cachedRentProviders: mergeRentalProviders(watch.rent, watch.buy),
       watchUrl: watch.watchUrl,
       addedByUserId: input.addedByUserId,
     });

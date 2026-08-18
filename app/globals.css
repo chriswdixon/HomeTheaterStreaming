@@ -142,7 +142,8 @@ a {
   outline: none;
 }
 
-.glass-input:focus {
+.glass-input:focus,
+.glass-input:focus-within {
   border-color: rgba(126, 184, 255, 0.55);
   box-shadow:
     0 0 0 3px rgba(126, 184, 255, 0.18),

@@ -6,6 +6,8 @@ import type {
   WatchlistStore,
 } from "@/lib/server/watchlist-actions";
 import type { WatchlistKind } from "@/lib/watchlist";
+import { mergeRentalProviders, needsWatchProviderBackfill } from "@/lib/watch-providers";
+import type { WatchOptions } from "@/lib/tmdb";
 import { createTmdbClient } from "@/lib/tmdb";
 
 export function mapWatchlistRow(
@@ -145,6 +147,14 @@ export async function saveWatchlistOrder(
   );
 }
 
+function watchOptionsForStorage(watch: WatchOptions) {
+  return {
+    flatrate: watch.flatrate,
+    rent: mergeRentalProviders(watch.rent, watch.buy),
+    watchUrl: watch.watchUrl,
+  };
+}
+
 function watchCacheUnchanged(
   row: typeof watchlistItems.$inferSelect,
   watch: {
@@ -170,7 +180,9 @@ export async function syncItemWatchCache(
   const mediaType = row.mediaType === "tv" ? "tv" : "movie";
   let watch;
   try {
-    watch = await tmdb.getWatchProviders(row.tmdbMovieId, region, mediaType);
+    watch = watchOptionsForStorage(
+      await tmdb.getWatchProviders(row.tmdbMovieId, region, mediaType),
+    );
   } catch {
     return row;
   }
@@ -251,5 +263,42 @@ export async function backfillMissingTitleMeta(
   }
 
   await Promise.all([worker(), worker()]);
+  return rows.map((row) => updated.get(row.id) ?? row);
+}
+
+const WATCH_PROVIDER_BACKFILL_LIMIT = 12;
+const WATCH_PROVIDER_BACKFILL_CONCURRENCY = 3;
+
+export async function backfillMissingWatchProviders(
+  rows: (typeof watchlistItems.$inferSelect)[],
+  region: string,
+): Promise<(typeof watchlistItems.$inferSelect)[]> {
+  const stale = rows
+    .filter((row) => needsWatchProviderBackfill(row))
+    .slice(0, WATCH_PROVIDER_BACKFILL_LIMIT);
+  if (stale.length === 0) return rows;
+
+  const updated = new Map<string, (typeof watchlistItems.$inferSelect)>();
+  let next = 0;
+
+  async function worker() {
+    while (next < stale.length) {
+      const row = stale[next++];
+      if (!row) return;
+      try {
+        const saved = await syncItemWatchCache(row, region);
+        updated.set(row.id, saved);
+      } catch {
+        // Keep going when one title cannot refresh.
+      }
+    }
+  }
+
+  const workerCount = Math.min(
+    WATCH_PROVIDER_BACKFILL_CONCURRENCY,
+    stale.length,
+  );
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+
   return rows.map((row) => updated.get(row.id) ?? row);
 }

@@ -38,6 +38,23 @@ export function ProviderBadges({
     );
   }
 
+  if (availability.openTarget) {
+    const label = `View on ${availability.openTarget.provider.name}`;
+    return (
+      <a
+        href={availability.openTarget.webUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex text-xs text-accent underline-offset-2 hover:underline"
+      >
+        <ProviderChip
+          provider={availability.openTarget.provider}
+          label={label}
+        />
+      </a>
+    );
+  }
+
   return <p className="text-xs text-muted">No stream or rental found</p>;
 }
 

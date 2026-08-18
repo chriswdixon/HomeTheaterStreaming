@@ -7,6 +7,7 @@ export default async function RecentlyWatchedPage() {
   const { items, warning } = await loadRecentlyWatchedSafe(
     userId,
     membership.householdId,
+    membership.household.region,
   );
 
   return (

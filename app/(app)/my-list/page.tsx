@@ -8,6 +8,7 @@ export default async function MyListPage() {
     userId,
     membership.householdId,
     "personal",
+    membership.household.region,
   );
 
   return (

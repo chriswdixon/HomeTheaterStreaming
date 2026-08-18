@@ -8,6 +8,7 @@ export default async function SharedListPage() {
     userId,
     membership.householdId,
     "shared",
+    membership.household.region,
   );
 
   return (

@@ -35,6 +35,7 @@ export async function GET(request: Request) {
     result.userId,
     result.membership.householdId,
     list,
+    result.membership.household.region,
   );
   return jsonOk({ items });
 }

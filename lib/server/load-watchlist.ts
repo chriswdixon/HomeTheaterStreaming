@@ -9,6 +9,7 @@ import {
 } from "@/lib/server/membership";
 import {
   backfillMissingTitleMeta,
+  backfillMissingWatchProviders,
   mapWatchlistRow,
 } from "@/lib/server/watchlist-store";
 import type { WatchState } from "@/lib/watch-state";
@@ -72,6 +73,7 @@ export async function loadWatchlist(
   userId: string,
   householdId: string,
   list: WatchlistKind,
+  region: string,
 ): Promise<WatchlistItemView[]> {
   const db = getDb();
   const rows = await db
@@ -91,7 +93,10 @@ export async function loadWatchlist(
     )
     .orderBy(asc(watchlistItems.sortOrder), desc(watchlistItems.createdAt));
 
-  const hydrated = await backfillMissingTitleMeta(rows).catch(() => rows);
+  const withWatchProviders = await backfillMissingWatchProviders(rows, region);
+  const hydrated = await backfillMissingTitleMeta(withWatchProviders).catch(
+    () => withWatchProviders,
+  );
 
   const [services, states] = await Promise.all([
     servicesFor(userId, householdId),
@@ -115,9 +120,10 @@ export async function loadWatchlistSafe(
   userId: string,
   householdId: string,
   list: WatchlistKind,
+  region: string,
 ): Promise<{ items: WatchlistItemView[]; warning?: string }> {
   try {
-    const items = await loadWatchlist(userId, householdId, list);
+    const items = await loadWatchlist(userId, householdId, list, region);
     return { items };
   } catch (error) {
     console.error("loadWatchlist failed", error);
@@ -132,6 +138,7 @@ export async function loadWatchlistSafe(
 export async function loadRecentlyWatched(
   userId: string,
   householdId: string,
+  region: string,
 ): Promise<WatchlistItemView[]> {
   const db = getDb();
   const rows = await db
@@ -139,7 +146,9 @@ export async function loadRecentlyWatched(
     .from(watchlistItems)
     .where(eq(watchlistItems.householdId, householdId));
 
-  const visible = rows.filter(
+  const withWatchProviders = await backfillMissingWatchProviders(rows, region);
+
+  const visible = withWatchProviders.filter(
     (row) =>
       row.list === "shared" ||
       (row.list === "personal" && row.ownerUserId === userId),
@@ -161,9 +170,10 @@ export async function loadRecentlyWatched(
 export async function loadRecentlyWatchedSafe(
   userId: string,
   householdId: string,
+  region: string,
 ): Promise<{ items: WatchlistItemView[]; warning?: string }> {
   try {
-    const items = await loadRecentlyWatched(userId, householdId);
+    const items = await loadRecentlyWatched(userId, householdId, region);
     return { items };
   } catch (error) {
     console.error("loadRecentlyWatched failed", error);
