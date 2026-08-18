@@ -1,0 +1,13 @@
+---
+description: Always commit and push code changes after completing work
+alwaysApply: true
+---
+
+# Commit and push by default
+
+After making code changes the user requested, always commit and push to the remote without waiting to be asked.
+
+- Follow the repository's commit message style (concise, why-focused).
+- Do not commit secrets (.env, credentials, etc.).
+- Push to the current branch with `git push` (or `git push -u origin HEAD` if no upstream).
+- Only skip commit/push when the user explicitly says not to, or when there are no changes to commit.
