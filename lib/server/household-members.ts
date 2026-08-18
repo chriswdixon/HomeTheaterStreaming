@@ -12,7 +12,14 @@ export type HouseholdMemberView = {
   isCurrentUser: boolean;
 };
 
-export function householdMemberDisplayName(user: Pick<User, "firstName" | "fullName" | "username" | "primaryEmailAddress">) {
+type HouseholdMemberNameSource = Pick<
+  User,
+  "firstName" | "fullName" | "username"
+> & {
+  primaryEmailAddress?: { emailAddress: string } | null;
+};
+
+export function householdMemberDisplayName(user: HouseholdMemberNameSource) {
   if (user.firstName?.trim()) return user.firstName.trim();
 
   const fullName = user.fullName?.trim();
