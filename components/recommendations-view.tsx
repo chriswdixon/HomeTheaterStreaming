@@ -97,7 +97,7 @@ export function RecommendationsView({
     router.refresh();
     const listLabel = list === "personal" ? "your list" : "the shared list";
     setMessage(
-      `Added ${group.name} to ${listLabel} (${data.added ?? 0} new, ${data.updated ?? 0} in folder)`,
+      `Added ${group.name} to ${listLabel} (${data.added ?? 0} new, ${data.updated ?? 0} in franchise)`,
     );
   }
 

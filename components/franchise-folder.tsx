@@ -122,7 +122,7 @@ function FranchiseFolderCard({
         className="flex w-full flex-col items-start gap-2 text-left"
         aria-expanded={open}
       >
-        <span className="franchise-folder-tab">Folder</span>
+        <span className="franchise-folder-tab">Franchise</span>
         <span className="text-lg font-medium leading-snug">{folder.name}</span>
         <span className="text-sm text-muted">{folder.subtitle}</span>
         <span className="text-xs text-muted">
@@ -135,14 +135,14 @@ function FranchiseFolderCard({
           onClick={() => onAddFranchise(payload, "personal")}
           className="action-btn-pill action-btn-add w-full px-3 py-2 text-xs"
         >
-          Add folder to My list
+          Add franchise to My list
         </button>
         <button
           type="button"
           onClick={() => onAddFranchise(payload, "shared")}
           className="action-btn-pill action-btn-add w-full px-3 py-2 text-xs"
         >
-          Add folder to Shared
+          Add franchise to Shared
         </button>
       </div>
     </article>
@@ -176,7 +176,7 @@ function FranchiseFolderPanel({
     <section className="franchise-folder-panel">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-accent">Open folder</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-accent">Franchise</p>
           <h3 className="mt-1 text-xl font-medium">{folder.name}</h3>
           <p className="mt-1 text-sm text-muted">{folder.subtitle}</p>
         </div>
@@ -185,7 +185,7 @@ function FranchiseFolderPanel({
           onClick={onClose}
           className="franchise-folder-close rounded-full px-3 py-1.5 text-sm text-muted"
         >
-          Close folder
+          Close
         </button>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
@@ -194,14 +194,14 @@ function FranchiseFolderPanel({
           onClick={() => onAddFranchise(payload, "personal")}
           className="action-btn-pill action-btn-add px-3 py-1.5 text-xs"
         >
-          Add folder to My list
+          Add franchise to My list
         </button>
         <button
           type="button"
           onClick={() => onAddFranchise(payload, "shared")}
           className="action-btn-pill action-btn-add px-3 py-1.5 text-xs"
         >
-          Add folder to Shared
+          Add franchise to Shared
         </button>
       </div>
       <ul className="mt-5 grid grid-cols-2 items-stretch gap-4 overflow-visible p-1 md:grid-cols-4 lg:grid-cols-5">

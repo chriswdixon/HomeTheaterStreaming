@@ -402,13 +402,13 @@ export function WatchlistView({
                   >
                     <div>
                       <p className="text-xs uppercase tracking-[0.2em] text-accent">
-                        Folder
+                        Franchise
                       </p>
                       <h2 className="mt-1 text-lg font-medium">
                         {section.folder.name}
                       </h2>
                       <p className="mt-1 text-sm text-muted">
-                        {open ? "Open" : "Click to open folder"}
+                        {open ? "Open" : "Click to open"}
                       </p>
                     </div>
                     <span className="shrink-0 text-sm text-muted">
