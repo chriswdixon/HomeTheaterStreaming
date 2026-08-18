@@ -1,3 +1,4 @@
+import type { User } from "@clerk/backend";
 import { asc, eq } from "drizzle-orm";
 import { clerkClient } from "@clerk/nextjs/server";
 import { getDb } from "@/db";
@@ -10,6 +11,23 @@ export type HouseholdMemberView = {
   imageUrl: string | null;
   isCurrentUser: boolean;
 };
+
+export function householdMemberDisplayName(user: Pick<User, "firstName" | "fullName" | "username" | "primaryEmailAddress">) {
+  if (user.firstName?.trim()) return user.firstName.trim();
+
+  const fullName = user.fullName?.trim();
+  if (fullName) {
+    const [firstName] = fullName.split(/\s+/);
+    if (firstName) return firstName;
+  }
+
+  if (user.username?.trim()) return user.username.trim();
+
+  const email = user.primaryEmailAddress?.emailAddress;
+  if (email) return email.split("@")[0] ?? email;
+
+  return "Member";
+}
 
 export async function loadHouseholdMembers(
   householdId: string,
@@ -31,11 +49,7 @@ export async function loadHouseholdMembers(
       const role = row.role === "owner" ? "owner" : "member";
       try {
         const user = await client.users.getUser(row.userId);
-        const displayName =
-          user.fullName?.trim() ||
-          user.username ||
-          user.primaryEmailAddress?.emailAddress ||
-          "Member";
+        const displayName = householdMemberDisplayName(user);
 
         return {
           userId: row.userId,
