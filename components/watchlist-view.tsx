@@ -191,39 +191,47 @@ export function WatchlistView({
         <p className="text-sm text-muted">{displayed.length} titles</p>
       </div>
       {showSearch && list ? <MovieSearch onSelect={addMovie} /> : null}
-      {mode === "queue" ? (
-        <div className="mt-4 flex flex-wrap gap-2">
-          <FilterChip
-            active={!showWatched}
-            onClick={() => setShowWatched(false)}
-            label="Unwatched"
-          />
-          <FilterChip
-            active={showWatched}
-            onClick={() => setShowWatched(true)}
-            label="Watched"
-          />
-        </div>
-      ) : null}
-      {genres.length > 0 ? (
-        <div className="mt-3 flex flex-wrap gap-2">
-          <FilterChip
-            active={genreId == null}
-            onClick={() => setGenreId(null)}
-            label="All genres"
-          />
-          {genres.map((genre) => (
-            <FilterChip
-              key={genre.tmdbGenreId}
-              active={genreId === genre.tmdbGenreId}
-              onClick={() =>
-                setGenreId(
-                  genreId === genre.tmdbGenreId ? null : genre.tmdbGenreId,
-                )
-              }
-              label={genre.name}
-            />
-          ))}
+      {mode === "queue" || genres.length > 0 ? (
+        <div className="mt-4 flex items-center gap-3">
+          <div className="flex min-w-0 flex-1 flex-wrap gap-2">
+            {genres.length > 0 ? (
+              <>
+                <FilterChip
+                  active={genreId == null}
+                  onClick={() => setGenreId(null)}
+                  label="All genres"
+                />
+                {genres.map((genre) => (
+                  <FilterChip
+                    key={genre.tmdbGenreId}
+                    active={genreId === genre.tmdbGenreId}
+                    onClick={() =>
+                      setGenreId(
+                        genreId === genre.tmdbGenreId ? null : genre.tmdbGenreId,
+                      )
+                    }
+                    label={genre.name}
+                  />
+                ))}
+              </>
+            ) : null}
+          </div>
+          {mode === "queue" ? (
+            <button
+              type="button"
+              onClick={() => setShowWatched((current) => !current)}
+              title={showWatched ? "Show unwatched" : "Show watched"}
+              className="group relative ml-auto shrink-0 rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-black transition-colors hover:bg-accent/80"
+            >
+              {showWatched ? "Watched" : "Unwatched"}
+              <span
+                role="tooltip"
+                className="pointer-events-none absolute bottom-[calc(100%+0.4rem)] right-0 z-10 whitespace-nowrap rounded-md bg-black px-2 py-1 text-[11px] font-normal text-foreground opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
+              >
+                {showWatched ? "Show unwatched" : "Show watched"}
+              </span>
+            </button>
+          ) : null}
         </div>
       ) : null}
       {message ? (
