@@ -159,7 +159,7 @@ export function MovieCard({
   ) : null;
 
   const posterBlock = (
-    <div className="relative">
+    <div className="relative overflow-visible">
       <MoviePoster title={title} posterPath={posterPath} />
       {order != null ? (
         <span className="glass-badge absolute left-2 top-2 z-20 flex h-7 w-7 items-center justify-center font-semibold text-foreground">

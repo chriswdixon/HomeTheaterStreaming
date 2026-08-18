@@ -18,6 +18,26 @@ const toneClass: Record<ActionTone, string> = {
   watch: "action-btn-watch",
 };
 
+function CardActionTooltip({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <span className="group/action relative inline-flex">
+      {children}
+      <span
+        role="tooltip"
+        className="card-action-tooltip app-tooltip pointer-events-none absolute left-1/2 bottom-[calc(100%+0.4rem)] z-30 -translate-x-1/2 whitespace-nowrap opacity-0 transition-opacity group-hover/action:opacity-100 group-focus-within/action:opacity-100"
+      >
+        {label}
+      </span>
+    </span>
+  );
+}
+
 export function CardIconButton({
   label,
   onClick,
@@ -32,18 +52,19 @@ export function CardIconButton({
   disabled?: boolean;
 }) {
   return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      disabled={disabled}
-      onClick={onClick}
-      className={`card-action-icon ${toneClass[tone]} ${
-        disabled ? "card-action-icon-muted" : ""
-      }`}
-    >
-      {icon}
-    </button>
+    <CardActionTooltip label={label}>
+      <button
+        type="button"
+        aria-label={label}
+        disabled={disabled}
+        onClick={onClick}
+        className={`card-action-icon ${toneClass[tone]} ${
+          disabled ? "card-action-icon-muted" : ""
+        }`}
+      >
+        {icon}
+      </button>
+    </CardActionTooltip>
   );
 }
 
@@ -61,17 +82,18 @@ export function CardIconLink({
   tone: ActionTone;
 }) {
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={label}
-      title={label}
-      onClick={onClick}
-      className={`card-action-icon ${toneClass[tone]} no-underline`}
-    >
-      {icon}
-    </a>
+    <CardActionTooltip label={label}>
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={label}
+        onClick={onClick}
+        className={`card-action-icon ${toneClass[tone]} no-underline`}
+      >
+        {icon}
+      </a>
+    </CardActionTooltip>
   );
 }
 
