@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import {
   householdMembers,
@@ -22,23 +22,20 @@ export type Membership = {
   };
 };
 
-export async function getMembership(userId: string): Promise<Membership | null> {
-  const db = getDb();
-  const [row] = await db
-    .select({
-      userId: householdMembers.userId,
-      householdId: householdMembers.householdId,
-      role: householdMembers.role,
-      defaultListView: householdMembers.defaultListView,
-      household: households,
-    })
-    .from(householdMembers)
-    .innerJoin(households, eq(householdMembers.householdId, households.id))
-    .where(eq(householdMembers.userId, userId))
-    .limit(1);
+type MembershipRow = {
+  userId: string;
+  householdId: string;
+  role: string;
+  defaultListView: string;
+  household: {
+    id: string;
+    name: string;
+    inviteCode: string;
+    region: string;
+  };
+};
 
-  if (!row) return null;
-
+function mapMembershipRow(row: MembershipRow): Membership {
   return {
     userId: row.userId,
     householdId: row.householdId,
@@ -52,6 +49,67 @@ export async function getMembership(userId: string): Promise<Membership | null> 
       region: row.household.region,
     },
   };
+}
+
+export function resolveActiveMembership(
+  memberships: Membership[],
+  preferredHouseholdId?: string | null,
+): Membership | null {
+  if (memberships.length === 0) return null;
+
+  if (preferredHouseholdId) {
+    const match = memberships.find(
+      (membership) => membership.householdId === preferredHouseholdId,
+    );
+    if (match) return match;
+  }
+
+  return memberships[0] ?? null;
+}
+
+export async function getMemberships(userId: string): Promise<Membership[]> {
+  const db = getDb();
+  const rows = await db
+    .select({
+      userId: householdMembers.userId,
+      householdId: householdMembers.householdId,
+      role: householdMembers.role,
+      defaultListView: householdMembers.defaultListView,
+      household: households,
+    })
+    .from(householdMembers)
+    .innerJoin(households, eq(householdMembers.householdId, households.id))
+    .where(eq(householdMembers.userId, userId))
+    .orderBy(asc(householdMembers.createdAt));
+
+  return rows.map(mapMembershipRow);
+}
+
+export async function getMembership(
+  userId: string,
+  preferredHouseholdId?: string | null,
+): Promise<Membership | null> {
+  const memberships = await getMemberships(userId);
+  return resolveActiveMembership(memberships, preferredHouseholdId);
+}
+
+export async function userBelongsToHousehold(
+  userId: string,
+  householdId: string,
+): Promise<boolean> {
+  const db = getDb();
+  const [row] = await db
+    .select({ householdId: householdMembers.householdId })
+    .from(householdMembers)
+    .where(
+      and(
+        eq(householdMembers.userId, userId),
+        eq(householdMembers.householdId, householdId),
+      ),
+    )
+    .limit(1);
+
+  return Boolean(row);
 }
 
 export async function getHouseholdProviders(
@@ -97,6 +155,7 @@ export async function getHouseholdInvitePreview(code: string) {
   const db = getDb();
   const [household] = await db
     .select({
+      id: households.id,
       name: households.name,
       region: households.region,
     })

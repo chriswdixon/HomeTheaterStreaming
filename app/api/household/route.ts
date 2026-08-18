@@ -9,7 +9,9 @@ import {
 import { generateInviteCode } from "@/lib/invite-code";
 import { isWatchRegion } from "@/lib/regions";
 import { jsonError, requireUserId } from "@/lib/server/api";
-import { getMembership } from "@/lib/server/membership";
+import { buildActiveHouseholdCookie } from "@/lib/server/active-household";
+import { getActiveHouseholdIdFromCookies } from "@/lib/server/active-household";
+import { getMembership, getMemberships } from "@/lib/server/membership";
 import { refreshHouseholdAvailability } from "@/lib/server/watchlist-store";
 import type { Provider } from "@/lib/effective-services";
 
@@ -17,22 +19,31 @@ export async function GET() {
   const authResult = await requireUserId();
   if ("error" in authResult) return authResult.error;
 
-  const membership = await getMembership(authResult.userId);
-  if (!membership) {
-    return NextResponse.json({ household: null });
+  const memberships = await getMemberships(authResult.userId);
+  if (memberships.length === 0) {
+    return NextResponse.json({ household: null, households: [] });
   }
 
-  return NextResponse.json({ household: membership.household, role: membership.role });
+  const activeHouseholdId = await getActiveHouseholdIdFromCookies();
+  const membership = await getMembership(authResult.userId, activeHouseholdId);
+
+  return NextResponse.json({
+    household: membership?.household ?? null,
+    role: membership?.role ?? null,
+    households: memberships.map((row) => ({
+      id: row.household.id,
+      name: row.household.name,
+      inviteCode: row.household.inviteCode,
+      region: row.household.region,
+      role: row.role,
+    })),
+    activeHouseholdId: membership?.householdId ?? null,
+  });
 }
 
 export async function POST(request: Request) {
   const authResult = await requireUserId();
   if ("error" in authResult) return authResult.error;
-
-  const existing = await getMembership(authResult.userId);
-  if (existing) {
-    return jsonError("You already belong to a household", 409);
-  }
 
   const body = (await request.json()) as {
     name?: string;
@@ -83,7 +94,13 @@ export async function POST(request: Request) {
         );
       }
 
-      return NextResponse.json({ household, role: "owner" }, { status: 201 });
+      return NextResponse.json(
+        { household, role: "owner" },
+        {
+          status: 201,
+          headers: { "Set-Cookie": buildActiveHouseholdCookie(household.id) },
+        },
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message.toLowerCase() : "";
       if (message.includes("unique") || message.includes("duplicate")) {
@@ -100,7 +117,8 @@ export async function PATCH(request: Request) {
   const authResult = await requireUserId();
   if ("error" in authResult) return authResult.error;
 
-  const membership = await getMembership(authResult.userId);
+  const activeHouseholdId = await getActiveHouseholdIdFromCookies();
+  const membership = await getMembership(authResult.userId, activeHouseholdId);
   if (!membership) {
     return jsonError("Join or create a household first", 409);
   }

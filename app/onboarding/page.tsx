@@ -7,20 +7,20 @@ import { getMembership } from "@/lib/server/membership";
 export default async function OnboardingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ code?: string }>;
+  searchParams: Promise<{ code?: string; add?: string }>;
 }) {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
+  const { code, add } = await searchParams;
+  const addingAnother = add === "1";
   const membership = await getMembership(userId);
-  if (membership) redirect("/start");
-
-  const { code } = await searchParams;
+  if (membership && !addingAnother) redirect("/start");
   const initialCode = code ? normalizeInviteCode(code) : undefined;
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
       <main className="mx-auto flex w-full max-w-4xl flex-1 items-center px-4 py-10 md:py-16">
-        <OnboardingForm initialCode={initialCode} />
+        <OnboardingForm initialCode={initialCode} addingAnother={addingAnother} />
       </main>
     </div>
   );

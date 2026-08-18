@@ -1,19 +1,15 @@
+import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { householdMembers, households } from "@/db/schema";
 import { jsonError, requireUserId } from "@/lib/server/api";
-import { getMembership } from "@/lib/server/membership";
+import { buildActiveHouseholdCookie } from "@/lib/server/active-household";
 import { notifyHouseholdMemberJoined } from "@/lib/server/notifications";
-import { eq } from "drizzle-orm";
+import { userBelongsToHousehold } from "@/lib/server/membership";
 
 export async function POST(request: Request) {
   const authResult = await requireUserId();
   if ("error" in authResult) return authResult.error;
-
-  const existing = await getMembership(authResult.userId);
-  if (existing) {
-    return jsonError("You already belong to a household", 409);
-  }
 
   const body = (await request.json()) as { code?: string };
   const code = body.code?.trim().toUpperCase();
@@ -30,6 +26,14 @@ export async function POST(request: Request) {
     return jsonError("No household matches that invite code", 404);
   }
 
+  const alreadyMember = await userBelongsToHousehold(
+    authResult.userId,
+    household.id,
+  );
+  if (alreadyMember) {
+    return jsonError("You are already in this shared list", 409);
+  }
+
   await db.insert(householdMembers).values({
     householdId: household.id,
     userId: authResult.userId,
@@ -38,5 +42,8 @@ export async function POST(request: Request) {
 
   await notifyHouseholdMemberJoined(household.id, authResult.userId);
 
-  return NextResponse.json({ household, role: "member" });
+  return NextResponse.json(
+    { household, role: "member" },
+    { headers: { "Set-Cookie": buildActiveHouseholdCookie(household.id) } },
+  );
 }

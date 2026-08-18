@@ -12,7 +12,7 @@ export const revalidate = 0;
 export const fetchCache = "force-no-store";
 
 export default async function AppShell({ children }: { children: ReactNode }) {
-  const { userId, membership } = await requirePageMembership();
+  const { userId, membership, memberships } = await requirePageMembership();
   const [initialNotifications, initialUnreadCount] = await Promise.all([
     loadNotifications(userId),
     countUnreadNotifications(userId),
@@ -26,6 +26,12 @@ export default async function AppShell({ children }: { children: ReactNode }) {
           inviteCode: membership.household.inviteCode,
           region: membership.household.region,
         }}
+        households={memberships.map((row) => ({
+          id: row.householdId,
+          name: row.household.name,
+          role: row.role,
+        }))}
+        activeHouseholdId={membership.householdId}
         initialNotifications={initialNotifications}
         initialUnreadCount={initialUnreadCount}
       />

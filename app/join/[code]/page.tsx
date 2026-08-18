@@ -11,7 +11,8 @@ import {
 import { WATCH_REGIONS } from "@/lib/regions";
 import {
   getHouseholdInvitePreview,
-  getMembership,
+  getMemberships,
+  userBelongsToHousehold,
 } from "@/lib/server/membership";
 
 function regionLabel(code: string) {
@@ -42,7 +43,7 @@ export default async function JoinHouseholdPage({
             <p className="page-kicker">You&apos;re invited</p>
             <h1 className="page-title mt-2">Join {preview.name}</h1>
             <p className="mt-2 text-sm text-muted md:text-base">
-              Create an account or sign in to join this household on ScreenStack.
+              Create an account or sign in to join this shared list on ScreenStack.
             </p>
             <p className="mt-1 text-sm text-muted">{regionLabel(preview.region)}</p>
             <div className="mt-8 flex flex-col gap-3">
@@ -54,7 +55,7 @@ export default async function JoinHouseholdPage({
               </Link>
               <Link
                 href={`/sign-in?redirect_url=${redirectUrl}`}
-                className="rounded-full border border-white/15 px-6 py-3 text-center text-sm"
+                className="rounded-full border border-white/15 px-6 py-3 text-center text-sm font-medium"
               >
                 Sign in to join
               </Link>
@@ -65,23 +66,22 @@ export default async function JoinHouseholdPage({
     );
   }
 
-  const membership = await getMembership(userId);
-  if (membership) {
+  const alreadyMember = await userBelongsToHousehold(userId, preview.id);
+  if (alreadyMember) {
     return (
       <div className="flex min-h-full flex-1 flex-col">
         <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-10 md:py-16">
           <div className="invite-shell rounded-3xl border border-white/10 bg-card/90 p-8 shadow-2xl">
-            <p className="page-kicker">Household invite</p>
-            <h1 className="page-title mt-2">You&apos;re already in a household</h1>
+            <p className="page-kicker">Shared list invite</p>
+            <h1 className="page-title mt-2">You&apos;re already in {preview.name}</h1>
             <p className="mt-2 text-sm text-muted md:text-base">
-              You belong to {membership.household.name}. Leave that household before
-              joining {preview.name}.
+              Switch to this shared list from the menu to view its queue and members.
             </p>
             <Link
-              href="/start"
+              href="/shared"
               className="mt-8 inline-block w-full rounded-full bg-accent px-6 py-3 text-center text-sm font-medium text-black sm:w-auto"
             >
-              Go to your lists
+              Open shared list
             </Link>
           </div>
         </main>
@@ -89,10 +89,16 @@ export default async function JoinHouseholdPage({
     );
   }
 
+  const memberships = await getMemberships(userId);
+
   return (
     <div className="flex min-h-full flex-1 flex-col">
       <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-10 md:py-16">
-        <JoinHouseholdInvite householdName={preview.name} inviteCode={inviteCode} />
+        <JoinHouseholdInvite
+          householdName={preview.name}
+          inviteCode={inviteCode}
+          existingListCount={memberships.length}
+        />
       </main>
     </div>
   );

@@ -77,6 +77,109 @@ a {
   -webkit-backdrop-filter: blur(16px) saturate(160%);
 }
 
+.household-switcher {
+  position: relative;
+  min-width: 0;
+}
+
+.household-switcher-trigger {
+  display: inline-flex;
+  max-width: min(12rem, 40vw);
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--foreground);
+}
+
+.household-switcher-trigger:hover {
+  border-color: rgba(232, 184, 109, 0.35);
+  color: var(--accent);
+}
+
+.household-switcher-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.household-switcher-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  z-index: 60;
+  width: min(18rem, calc(100vw - 2rem));
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #101018;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+}
+
+.household-switcher-heading {
+  padding: 0.75rem 1rem 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.household-switcher-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem 0.5rem;
+}
+
+.household-switcher-option {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+  border-radius: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  text-align: left;
+  color: var(--foreground);
+}
+
+.household-switcher-option:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.household-switcher-option-active {
+  background: rgba(232, 184, 109, 0.14);
+}
+
+.household-switcher-add {
+  display: block;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.75rem 1rem;
+  font-size: 0.8125rem;
+  color: var(--accent);
+}
+
+.household-switcher-add:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.app-nav-drawer .household-switcher-menu {
+  position: static;
+  width: 100%;
+  margin-top: 0.5rem;
+  box-shadow: none;
+}
+
+.app-nav-drawer .household-switcher-trigger {
+  max-width: none;
+  width: 100%;
+  justify-content: space-between;
+}
+
 .glass-nav {
   background: var(--background);
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);

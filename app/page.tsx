@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getActiveHouseholdIdFromCookies } from "@/lib/server/active-household";
 import { getMembership } from "@/lib/server/membership";
 import { defaultListPath } from "@/lib/default-list-view";
 
@@ -10,7 +11,8 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   const { userId } = await auth();
   if (userId) {
-    const membership = await getMembership(userId);
+    const activeHouseholdId = await getActiveHouseholdIdFromCookies();
+    const membership = await getMembership(userId, activeHouseholdId);
     redirect(membership ? defaultListPath(membership.defaultListView) : "/onboarding");
   }
 

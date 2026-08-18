@@ -5,6 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { HouseholdSharingLightbox } from "./household-sharing-lightbox";
+import {
+  HouseholdSwitcher,
+  type HouseholdOption,
+} from "./household-switcher";
 import { CloseIcon, MenuIcon, SharedIcon } from "./icons";
 import { NotificationsBell } from "./notifications-bell";
 import {
@@ -25,10 +29,14 @@ const LINKS = [
 
 export function AppNav({
   household,
+  households,
+  activeHouseholdId,
   initialNotifications,
   initialUnreadCount,
 }: {
   household: { name: string; inviteCode: string; region: string };
+  households: HouseholdOption[];
+  activeHouseholdId: string;
   initialNotifications: UserNotificationView[];
   initialUnreadCount: number;
 }) {
@@ -104,23 +112,21 @@ export function AppNav({
             })}
           </nav>
 
-          <div className="ml-auto flex shrink-0 items-center gap-1.5 md:ml-0 md:gap-2">
+          <div className="ml-auto flex min-w-0 shrink items-center gap-1.5 md:ml-0 md:gap-2">
+            <div className="hidden min-w-0 md:block">
+              <HouseholdSwitcher
+                households={households}
+                activeHouseholdId={activeHouseholdId}
+              />
+            </div>
             <button
               type="button"
               onClick={() => setShowHouseholdInvite(true)}
-              className="household-nav-button lg:hidden"
-              title={`Household: ${household.name}`}
-              aria-label={`Household: ${household.name}`}
+              className="household-nav-button md:hidden"
+              title={`Shared list: ${household.name}`}
+              aria-label={`Shared list: ${household.name}`}
             >
               <SharedIcon className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowHouseholdInvite(true)}
-              className="household-name-button hidden lg:inline"
-              title="View household invite code"
-            >
-              {household.name}
             </button>
             <NotificationsBell
               initialNotifications={initialNotifications}
@@ -146,6 +152,12 @@ export function AppNav({
             aria-label="Main navigation"
             onClick={(event) => event.stopPropagation()}
           >
+            <div className="border-b border-white/10 px-3 pb-3">
+              <HouseholdSwitcher
+                households={households}
+                activeHouseholdId={activeHouseholdId}
+              />
+            </div>
             <ul className="app-nav-drawer-list">
               {LINKS.map((link) => {
                 const active = pathname === link.href;

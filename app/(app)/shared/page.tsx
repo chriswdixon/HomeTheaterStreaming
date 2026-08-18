@@ -18,7 +18,7 @@ export default async function SharedListPage() {
   return (
     <WatchlistView
       list="shared"
-      title="Shared list"
+      title={`${membership.household.name} · Shared list`}
       description="Vote for what to watch next. The most-voted titles rise to the top."
       initialItems={items}
       warning={warning}

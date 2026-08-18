@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { jsonError, requireUserId } from "@/lib/server/api";
+import { getActiveHouseholdIdFromCookies } from "@/lib/server/active-household";
 import { getMembership } from "@/lib/server/membership";
 import { isWatchRegion } from "@/lib/regions";
 import { createTmdbClient } from "@/lib/tmdb";
@@ -12,7 +13,8 @@ export async function GET(request: Request) {
   let region = searchParams.get("region")?.toUpperCase();
 
   if (!region) {
-    const membership = await getMembership(authResult.userId);
+    const activeHouseholdId = await getActiveHouseholdIdFromCookies();
+    const membership = await getMembership(authResult.userId, activeHouseholdId);
     region = membership?.household.region ?? "US";
   }
 

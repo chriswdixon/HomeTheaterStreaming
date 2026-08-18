@@ -9,7 +9,13 @@ import { tmdbImageUrl } from "@/lib/tmdb";
 
 type Mode = "choose" | "create" | "join";
 
-export function OnboardingForm({ initialCode }: { initialCode?: string }) {
+export function OnboardingForm({
+  initialCode,
+  addingAnother = false,
+}: {
+  initialCode?: string;
+  addingAnother?: boolean;
+}) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>(initialCode ? "join" : "choose");
   const [name, setName] = useState("");
@@ -128,11 +134,14 @@ export function OnboardingForm({ initialCode }: { initialCode?: string }) {
 
   return (
     <div className="onboarding-shell mx-auto w-full max-w-3xl rounded-3xl border border-white/10 bg-card/90 p-8 shadow-2xl">
-      <p className="page-kicker">Get started</p>
-      <h1 className="page-title mt-2">Set up your household</h1>
+      <p className="page-kicker">{addingAnother ? "Add a shared list" : "Get started"}</p>
+      <h1 className="page-title mt-2">
+        {addingAnother ? "Join or create another shared list" : "Set up your household"}
+      </h1>
       <p className="mt-2 text-sm text-muted md:text-base">
-        Share a watchlist, pick the services you subscribe to, and keep a personal
-        list of your own.
+        {addingAnother
+          ? "Join with an invite code or create a new shared list. Your personal list stays separate for each one."
+          : "Share a watchlist, pick the services you subscribe to, and keep a personal list of your own."}
       </p>
 
       {error ? (

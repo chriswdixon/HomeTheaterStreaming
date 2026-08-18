@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { jsonResponse, NO_STORE_HEADERS } from "@/lib/http-cache";
+import { getActiveHouseholdIdFromCookies } from "./active-household";
 import { getMembership, type Membership } from "./membership";
 
 export function jsonError(message: string, status: number) {
@@ -32,7 +33,8 @@ export async function requireHousehold(): Promise<
   const result = await requireUserId();
   if ("error" in result) return result;
 
-  const membership = await getMembership(result.userId);
+  const activeHouseholdId = await getActiveHouseholdIdFromCookies();
+  const membership = await getMembership(result.userId, activeHouseholdId);
   if (!membership) {
     return { error: jsonError("Join or create a household first", 409) };
   }

@@ -6,9 +6,11 @@ import { useState } from "react";
 export function JoinHouseholdInvite({
   householdName,
   inviteCode,
+  existingListCount = 0,
 }: {
   householdName: string;
   inviteCode: string;
+  existingListCount?: number;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -39,7 +41,11 @@ export function JoinHouseholdInvite({
       <p className="page-kicker">Household invite</p>
       <h1 className="page-title mt-2">Join {householdName}</h1>
       <p className="mt-2 text-sm text-muted md:text-base">
-        Accept this invite to share the household watchlist and streaming services.
+        Accept this invite to share the watchlist and streaming services for{" "}
+        {householdName}.
+        {existingListCount > 0
+          ? " You'll keep your other shared lists and can switch between them anytime."
+          : null}
       </p>
       {error ? (
         <p className="mt-4 rounded-xl border border-red-400/30 bg-red-950/40 px-4 py-3 text-sm text-red-200">
