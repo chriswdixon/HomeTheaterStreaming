@@ -32,11 +32,14 @@ export function AppNav({
   return (
     <>
       <header className="glass-nav sticky top-0 z-50">
-        <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
-        <Link href="/start" className="pr-2 text-lg font-semibold tracking-tight">
+        <div className="app-nav-inner mx-auto flex max-w-6xl items-center gap-2 px-3 py-2 md:gap-4 md:px-4 md:py-3">
+        <Link
+          href="/start"
+          className="app-nav-logo shrink-0 text-base font-semibold tracking-tight md:text-lg"
+        >
           ScreenStack
         </Link>
-        <nav className="flex flex-1 flex-wrap items-center gap-1">
+        <nav className="app-nav-links flex min-w-0 flex-1 items-center gap-0.5">
           {LINKS.map((link) => {
             const active = pathname === link.href;
             const hasIcon = link.href in NAV_ICONS;
@@ -45,15 +48,16 @@ export function AppNav({
                 key={link.href}
                 href={link.href}
                 title={link.label}
+                aria-label={link.label}
                 className={`glass-nav-link ${active ? "glass-nav-link-active" : ""}`}
               >
                 {hasIcon ? <NavGlassIcon href={link.href} /> : null}
-                <span className="hidden md:inline">{link.label}</span>
-                <span className="md:hidden">{link.short}</span>
+                <span className="hidden xl:inline">{link.label}</span>
               </Link>
             );
           })}
         </nav>
+        <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
         <button
           type="button"
           onClick={() => setShowHouseholdInvite(true)}
@@ -75,6 +79,7 @@ export function AppNav({
             />
           </UserButton.MenuItems>
         </UserButton>
+        </div>
         </div>
       </header>
       {showHouseholdInvite ? (

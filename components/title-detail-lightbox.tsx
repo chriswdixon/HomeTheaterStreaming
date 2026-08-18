@@ -90,15 +90,15 @@ export function TitleDetailLightbox({
 
   return (
     <div
-      className="title-lightbox-overlay fixed inset-0 z-[60] flex items-center justify-center p-4 md:p-8"
+      className="title-lightbox-overlay fixed inset-0 z-[60] flex items-end justify-center p-0 md:items-center md:p-8"
       onClick={onClose}
       role="presentation"
     >
       <div
         role="dialog"
         aria-modal="true"
-        aria-labelledby="title-lightbox-heading"
-        className="title-lightbox-panel relative flex max-h-[min(92vh,920px)] w-full max-w-5xl flex-col overflow-hidden rounded-3xl md:flex-row"
+        aria-label={displayTitle}
+        className="title-lightbox-panel relative flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-t-3xl md:max-h-[min(92vh,920px)] md:flex-row md:rounded-3xl"
         onClick={(event) => event.stopPropagation()}
       >
         <button
@@ -110,7 +110,34 @@ export function TitleDetailLightbox({
           ×
         </button>
 
-        <div className="title-lightbox-poster shrink-0 md:w-[min(38%,320px)]">
+        <div className="title-lightbox-mobile-header flex gap-3 border-b border-white/10 p-4 md:hidden">
+          {posterSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={posterSrc}
+              alt=""
+              className="h-24 w-16 shrink-0 rounded-xl object-cover"
+            />
+          ) : (
+            <div className="flex h-24 w-16 shrink-0 items-center justify-center rounded-xl bg-white/5 p-2 text-center text-xs text-muted">
+              {displayTitle}
+            </div>
+          )}
+          <div className="min-w-0 pr-8">
+            <p className="text-xs uppercase tracking-wide text-muted">
+              {mediaType === "tv" ? "Series" : "Movie"}
+              {details?.contentRating ? ` · ${details.contentRating}` : ""}
+            </p>
+            <h2 className="mt-1 text-lg font-semibold leading-tight">
+              {displayTitle}
+            </h2>
+            <p className="mt-1 text-sm text-muted">
+              {formatReleaseLabel(displayYear)}
+            </p>
+          </div>
+        </div>
+
+        <div className="title-lightbox-poster hidden shrink-0 md:block md:w-[min(38%,320px)]">
           {posterSrc ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -125,16 +152,13 @@ export function TitleDetailLightbox({
           )}
         </div>
 
-        <div className="title-lightbox-body flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5 md:p-6">
-          <div>
+        <div className="title-lightbox-body flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4 md:p-6">
+          <div className="hidden md:block">
             <p className="text-xs uppercase tracking-wide text-muted">
               {mediaType === "tv" ? "Series" : "Movie"}
               {details?.contentRating ? ` · ${details.contentRating}` : ""}
             </p>
-            <h2
-              id="title-lightbox-heading"
-              className="mt-1 text-2xl font-semibold leading-tight md:text-3xl"
-            >
+            <h2 className="mt-1 text-2xl font-semibold leading-tight md:text-3xl">
               {displayTitle}
             </h2>
             <p className="mt-1 text-sm text-muted">

@@ -4,7 +4,6 @@ import { useState, type MouseEvent, type ReactNode } from "react";
 import type { ViewerAvailability } from "@/lib/availability";
 import type { MediaType } from "@/lib/media";
 import { formatReleaseLabel } from "@/lib/release-label";
-import type { StreamingOpenTarget } from "@/lib/streaming-links";
 import { tmdbImageUrl } from "@/lib/tmdb";
 import {
   CardIconButton,
@@ -92,104 +91,104 @@ export function MovieCard({
       onSharedList ||
       onVote,
   );
-  const showOverlay = Boolean(openTarget || hasIconActions || actions);
+  const showActions = Boolean(openTarget || hasIconActions || actions);
   const canOpenDetail = tmdbMovieId != null;
 
   function stopOverlayClick(event: MouseEvent) {
     event.stopPropagation();
   }
 
-  function handleCardClick() {
+  function handlePosterClick() {
     if (canOpenDetail) setDetailOpen(true);
   }
 
   const watchNowButton = openTarget ? (
-    <WatchNowIconLink
-      href={openTarget.webUrl}
-      onClick={stopOverlayClick}
-    />
+    <WatchNowIconLink href={openTarget.webUrl} onClick={stopOverlayClick} />
   ) : null;
 
-  const actionOverlay = showOverlay ? (
-    <div className="card-action-overlay pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl p-4 opacity-0 transition-opacity group-hover/card:opacity-100 group-focus-within/card:opacity-100 group-hover/card:pointer-events-auto group-focus-within/card:pointer-events-auto">
-      <div className="card-action-stack pointer-events-auto flex flex-col items-center gap-2">
-        {watchNowButton}
-        {hasIconActions ? (
-          <>
-            {onUnwatch ? (
+  const actionButtons = showActions ? (
+    <>
+      {watchNowButton}
+      {hasIconActions ? (
+        <>
+          {onUnwatch ? (
+            <CardIconButton
+              label="Mark not watched"
+              tone="watched"
+              icon={<CheckIcon className="h-5 w-5" />}
+              onClick={(event) => {
+                stopOverlayClick(event);
+                onUnwatch();
+              }}
+            />
+          ) : onWatched ? (
+            <CardIconButton
+              label="Mark watched"
+              tone="watched"
+              icon={<CheckIcon className="h-5 w-5" />}
+              onClick={(event) => {
+                stopOverlayClick(event);
+                onWatched();
+              }}
+            />
+          ) : null}
+          {onCopyToShared ? (
+            onSharedList ? (
+              <ListStatusIcon label="On shared list" />
+            ) : (
               <CardIconButton
-                label="Mark not watched"
-                tone="watched"
-                icon={<CheckIcon className="h-5 w-5" />}
+                label="Add to shared list"
+                tone="shared"
+                icon={<SharedIcon className="h-5 w-5" />}
                 onClick={(event) => {
                   stopOverlayClick(event);
-                  onUnwatch();
+                  onCopyToShared();
                 }}
               />
-            ) : onWatched ? (
-              <CardIconButton
-                label="Mark watched"
-                tone="watched"
-                icon={<CheckIcon className="h-5 w-5" />}
-                onClick={(event) => {
-                  stopOverlayClick(event);
-                  onWatched();
-                }}
-              />
-            ) : null}
-            {onCopyToShared ? (
-              onSharedList ? (
-                <ListStatusIcon label="On shared list" />
-              ) : (
-                <CardIconButton
-                  label="Add to shared list"
-                  tone="shared"
-                  icon={<SharedIcon className="h-5 w-5" />}
-                  onClick={(event) => {
-                    stopOverlayClick(event);
-                    onCopyToShared();
-                  }}
-                />
-              )
-            ) : null}
-            {onVote ? (
-              <CardIconButton
-                label={votedByCurrentUser ? "Remove vote" : "Vote for this title"}
-                tone={votedByCurrentUser ? "shared" : "vote"}
-                icon={<VoteIcon className="h-5 w-5" />}
-                onClick={(event) => {
-                  stopOverlayClick(event);
-                  onVote();
-                }}
-              />
-            ) : null}
-            {onRemove ? (
-              <CardIconButton
-                label="Remove"
-                tone="delete"
-                icon={<TrashIcon className="h-5 w-5" />}
-                onClick={(event) => {
-                  stopOverlayClick(event);
-                  onRemove();
-                }}
-              />
-            ) : null}
-          </>
-        ) : (
-          <div
-            className="card-action-stack flex flex-col items-center gap-2"
-            onClick={stopOverlayClick}
-          >
-            {actions}
-          </div>
-        )}
-      </div>
-    </div>
+            )
+          ) : null}
+          {onVote ? (
+            <CardIconButton
+              label={votedByCurrentUser ? "Remove vote" : "Vote for this title"}
+              tone={votedByCurrentUser ? "shared" : "vote"}
+              icon={<VoteIcon className="h-5 w-5" />}
+              onClick={(event) => {
+                stopOverlayClick(event);
+                onVote();
+              }}
+            />
+          ) : null}
+          {onRemove ? (
+            <CardIconButton
+              label="Remove"
+              tone="delete"
+              icon={<TrashIcon className="h-5 w-5" />}
+              onClick={(event) => {
+                stopOverlayClick(event);
+                onRemove();
+              }}
+            />
+          ) : null}
+        </>
+      ) : (
+        <div className="card-action-stack flex flex-wrap items-center justify-center gap-2">
+          {actions}
+        </div>
+      )}
+    </>
   ) : null;
 
   const posterBlock = (
     <div className="relative overflow-visible">
-      <MoviePoster title={title} posterPath={posterPath} />
+      <button
+        type="button"
+        onClick={handlePosterClick}
+        disabled={!canOpenDetail}
+        className={`block w-full text-left ${canOpenDetail ? "cursor-pointer" : "cursor-default"}`}
+        aria-label={canOpenDetail ? `View details for ${title}` : undefined}
+      >
+        <MoviePoster title={title} posterPath={posterPath} />
+      </button>
       {order != null ? (
         <span className="glass-badge absolute left-2 top-2 z-20 flex h-7 w-7 items-center justify-center font-semibold text-foreground">
           {order}
@@ -209,7 +208,22 @@ export function MovieCard({
           <GripIcon className="h-4 w-4" />
         </span>
       ) : null}
-      {actionOverlay}
+      {showActions ? (
+        <>
+          <div className="card-action-overlay card-action-overlay-desktop pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl p-4 opacity-0 transition-opacity">
+            <div className="card-action-stack pointer-events-auto flex flex-col items-center gap-2">
+              {actionButtons}
+            </div>
+          </div>
+          <div
+            className="card-action-mobile-bar"
+            onClick={stopOverlayClick}
+            role="presentation"
+          >
+            {actionButtons}
+          </div>
+        </>
+      ) : null}
     </div>
   );
 
@@ -255,24 +269,7 @@ export function MovieCard({
 
   return (
     <>
-      <article
-        className={`group/card glass flex h-full flex-col rounded-3xl p-3 transition-shadow hover:ring-2 hover:ring-[var(--accent-warm)] ${
-          canOpenDetail ? "cursor-pointer" : ""
-        }`}
-        onClick={canOpenDetail ? handleCardClick : undefined}
-        onKeyDown={
-          canOpenDetail
-            ? (event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  setDetailOpen(true);
-                }
-              }
-            : undefined
-        }
-        tabIndex={canOpenDetail ? 0 : undefined}
-        aria-label={canOpenDetail ? `View details for ${title}` : undefined}
-      >
+      <article className="group/card glass flex h-full flex-col rounded-3xl p-3 transition-shadow hover:ring-2 hover:ring-[var(--accent-warm)]">
         {posterBlock}
         {detailsBlock}
       </article>

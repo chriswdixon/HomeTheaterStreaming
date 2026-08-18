@@ -549,14 +549,6 @@ textarea.glass-input {
 
 .card-action-overlay {
   overflow: visible;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(0, 0, 0, 0.72) 0%,
-      rgba(0, 0, 0, 0.88) 100%
-    );
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
 }
 
 .card-action-stack .action-btn-add {
@@ -872,4 +864,83 @@ textarea.glass-input {
     rgba(255, 255, 255, 0.03) 0%,
     rgba(255, 255, 255, 0) 100%
   );
+}
+
+.app-nav-links {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.app-nav-links::-webkit-scrollbar {
+  display: none;
+}
+
+.card-action-mobile-bar {
+  display: none;
+}
+
+.card-action-overlay-desktop {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.72) 0%,
+      rgba(0, 0, 0, 0.88) 100%
+    );
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .group\/card:hover .card-action-overlay-desktop {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .card-action-mobile-bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .card-action-overlay-desktop {
+    display: none !important;
+  }
+
+  .card-action-mobile-bar .card-action-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .glass-nav-link {
+    padding: 0.2rem;
+  }
+
+  .glass-nav-icon {
+    height: 1.75rem;
+    width: 1.75rem;
+    border-radius: 0.625rem;
+  }
+
+  .glass-nav-icon svg {
+    height: 1rem;
+    width: 1rem;
+  }
+
+  .notification-bell-button {
+    height: 2rem;
+    width: 2rem;
+  }
+
+  .title-lightbox-mobile-header {
+    background: #101018;
+  }
 }
