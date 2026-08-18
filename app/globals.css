@@ -346,6 +346,85 @@ textarea.glass-input {
   padding: 0.7rem 1rem;
   font-size: 0.875rem;
   font-weight: 600;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+.card-action-overlay {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.72) 0%,
+      rgba(0, 0, 0, 0.88) 100%
+    );
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.card-action-stack .action-btn-add {
+  background: #3d9c4a;
+  border-color: #5cb86a;
+  color: #f4fff6;
+}
+
+.card-action-stack .action-btn-add:hover {
+  background: #4cb55a;
+  border-color: #7fd08a;
+  color: #ffffff;
+}
+
+.card-action-stack .action-btn-shared {
+  background: #3f6fa8;
+  border-color: #6b9fd4;
+  color: #f5f9ff;
+}
+
+.card-action-stack .action-btn-shared:hover {
+  background: #4d7eb8;
+  border-color: #8bb4e0;
+  color: #ffffff;
+}
+
+.card-action-stack .action-btn-watched {
+  background: #b8893f;
+  border-color: #e8b86d;
+  color: #1a1208;
+}
+
+.card-action-stack .action-btn-watched:hover {
+  background: #e8b86d;
+  border-color: #f0c482;
+  color: #1a1208;
+}
+
+.card-action-stack .action-btn-delete {
+  background: #b94444;
+  border-color: #e85d5d;
+  color: #fff5f5;
+}
+
+.card-action-stack .action-btn-delete:hover {
+  background: #d04f4f;
+  border-color: #f07070;
+  color: #ffffff;
+}
+
+.card-action-stack .action-btn-watch {
+  background: #e8b86d;
+  border-color: #f0c482;
+  color: #1a1208;
+}
+
+.card-action-stack .action-btn-watch:hover {
+  background: #f0c482;
+  border-color: #f5d092;
+  color: #1a1208;
+}
+
+.card-action-stack > span.action-btn-pill,
+.card-action-stack > span.card-action-button {
+  background: rgba(12, 12, 18, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--foreground);
 }
 
 .card-action-stack > span,

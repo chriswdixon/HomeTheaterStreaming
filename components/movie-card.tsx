@@ -90,7 +90,7 @@ export function MovieCard({
   ) : null;
 
   const actionOverlay = showOverlay ? (
-    <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-black/55 p-4 opacity-0 transition-opacity group-hover/card:opacity-100 group-focus-within/card:opacity-100 group-hover/card:pointer-events-auto group-focus-within/card:pointer-events-auto">
+    <div className="card-action-overlay pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl p-4 opacity-0 transition-opacity group-hover/card:opacity-100 group-focus-within/card:opacity-100 group-hover/card:pointer-events-auto group-focus-within/card:pointer-events-auto">
       <div className="card-action-stack pointer-events-auto flex w-full max-w-[11rem] flex-col gap-2">
         {watchNowButton}
         {hasIconActions ? (
