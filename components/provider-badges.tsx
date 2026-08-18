@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Provider } from "@/lib/effective-services";
 import type { ViewerAvailability } from "@/lib/availability";
+import { dedupeProvidersByFamily } from "@/lib/availability";
 import { streamingOpenTarget } from "@/lib/streaming-links";
 import { tmdbImageUrl } from "@/lib/tmdb";
 
@@ -14,9 +15,10 @@ export function ProviderBadges({
   linkable?: boolean;
 }) {
   if (availability.available && availability.onServices.length > 0) {
+    const providers = dedupeProvidersByFamily(availability.onServices);
     return (
       <ul className="flex w-full flex-wrap items-end gap-1.5">
-        {availability.onServices.map((provider) => (
+        {providers.map((provider) => (
           <ProviderChip
             key={provider.tmdbProviderId}
             provider={provider}
@@ -36,9 +38,10 @@ export function ProviderBadges({
   }
 
   if (availability.onRentServices.length > 0) {
+    const providers = dedupeProvidersByFamily(availability.onRentServices);
     return (
       <ul className="flex w-full flex-wrap items-end gap-1.5">
-        {availability.onRentServices.map((provider) => (
+        {providers.map((provider) => (
           <ProviderChip
             key={provider.tmdbProviderId}
             provider={provider}

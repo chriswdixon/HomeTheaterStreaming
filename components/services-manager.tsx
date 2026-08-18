@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { WATCH_REGIONS } from "@/lib/regions";
 import type { Provider } from "@/lib/effective-services";
+import { mergeEffectiveServices } from "@/lib/effective-services";
 import { ServicePicker } from "./service-picker";
 
 export function ServicesManager({
@@ -24,6 +25,8 @@ export function ServicesManager({
   const [name, setName] = useState(householdName);
   const [copied, setCopied] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [household, setHousehold] = useState(householdServices);
+  const [personal, setPersonal] = useState(personalServices);
 
   async function saveHouseholdMeta(event: React.FormEvent) {
     event.preventDefault();
@@ -55,13 +58,33 @@ export function ServicesManager({
     if (!response.ok) throw new Error(data.error ?? "Could not save services");
   }
 
+  async function saveEffective(providers: Provider[]) {
+    const householdIds = new Set(household.map((provider) => provider.tmdbProviderId));
+    const selectedIds = new Set(providers.map((provider) => provider.tmdbProviderId));
+
+    const resolvedHousehold = household.filter((provider) =>
+      selectedIds.has(provider.tmdbProviderId),
+    );
+    const resolvedPersonal = providers.filter(
+      (provider) => !householdIds.has(provider.tmdbProviderId),
+    );
+
+    await save("household", resolvedHousehold);
+    await save("personal", resolvedPersonal);
+    setHousehold(resolvedHousehold);
+    setPersonal(resolvedPersonal);
+  }
+
+  const effectiveServices = mergeEffectiveServices(household, personal);
+
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">Services</h1>
         <p className="mt-1 text-muted">
-          Household services apply to everyone. Add anything you subscribe to on
-          your own below.
+          Pick every service you can stream on. Household services are shared;
+          anything you add here that the household does not share is kept as your
+          personal add-on.
         </p>
       </div>
 
@@ -121,18 +144,11 @@ export function ServicesManager({
       </section>
 
       <ServicePicker
-        title="Household services"
-        description="Anyone in the household can update these."
+        title="Your streaming services"
+        description="One list of everything you can watch on. Existing household services stay shared; new picks are saved as personal add-ons."
         allProviders={catalog}
-        selected={householdServices}
-        onSave={(providers) => save("household", providers)}
-      />
-      <ServicePicker
-        title="Only you subscribe to"
-        description="Services the rest of the household doesn't share — for example, your own Crunchyroll or Viki account. We combine these with household services when showing what's available to you."
-        allProviders={catalog}
-        selected={personalServices}
-        onSave={(providers) => save("personal", providers)}
+        selected={effectiveServices}
+        onSave={saveEffective}
       />
     </div>
   );

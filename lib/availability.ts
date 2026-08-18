@@ -58,6 +58,18 @@ export function matchingRentProviders(
   return rent.filter((provider) => rentMatchesService(provider, services));
 }
 
+export function dedupeProvidersByFamily(providers: Provider[]): Provider[] {
+  const seen = new Set<string>();
+  const unique: Provider[] = [];
+  for (const provider of providers) {
+    const family = providerFamily(provider.name);
+    if (seen.has(family)) continue;
+    seen.add(family);
+    unique.push(provider);
+  }
+  return unique;
+}
+
 export function availabilityForViewer(
   cached: CachedWatchOptions,
   services: Provider[],

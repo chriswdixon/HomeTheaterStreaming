@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { WATCH_REGIONS } from "@/lib/regions";
-import { partitionProviders } from "@/lib/featured-providers";
 import type { Provider } from "@/lib/effective-services";
 import { tmdbImageUrl } from "@/lib/tmdb";
 
@@ -108,7 +107,7 @@ export function OnboardingForm() {
     const visible = q
       ? providers.filter((provider) => provider.name.toLowerCase().includes(q))
       : providers;
-    return partitionProviders(visible);
+    return [...visible].sort((a, b) => a.name.localeCompare(b.name));
   }, [providers, query]);
 
   function toggle(provider: Provider) {
@@ -234,14 +233,7 @@ export function OnboardingForm() {
               />
             </div>
             <ProviderChecklist
-              title="Popular"
-              providers={filtered.featured}
-              selected={selected}
-              onToggle={toggle}
-            />
-            <ProviderChecklist
-              title="More services"
-              providers={filtered.rest}
+              providers={filtered}
               selected={selected}
               onToggle={toggle}
             />
@@ -269,12 +261,10 @@ export function OnboardingForm() {
 }
 
 function ProviderChecklist({
-  title,
   providers,
   selected,
   onToggle,
 }: {
-  title: string;
   providers: Provider[];
   selected: Record<number, Provider>;
   onToggle: (provider: Provider) => void;
@@ -282,11 +272,7 @@ function ProviderChecklist({
   if (providers.length === 0) return null;
 
   return (
-    <section className="mt-4">
-      <h3 className="mb-2 text-xs uppercase tracking-[0.18em] text-muted">
-        {title}
-      </h3>
-      <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+    <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
         {providers.map((provider) => {
           const checked = Boolean(selected[provider.tmdbProviderId]);
           const logo = tmdbImageUrl(provider.logoPath, "w92");
@@ -315,6 +301,5 @@ function ProviderChecklist({
           );
         })}
       </ul>
-    </section>
   );
 }

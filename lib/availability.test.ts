@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { availabilityForViewer, matchingRentProviders } from "./availability";
+import { availabilityForViewer, dedupeProvidersByFamily, matchingRentProviders } from "./availability";
 
 const netflix = {
   tmdbProviderId: 8,
@@ -34,6 +34,16 @@ const title = {
   tmdbMovieId: 550,
   mediaType: "movie" as const,
 };
+
+describe("dedupeProvidersByFamily", () => {
+  it("keeps one provider per service family", () => {
+    expect(
+      dedupeProvidersByFamily([prime, amazonVideo, netflix]).map(
+        (provider) => provider.tmdbProviderId,
+      ),
+    ).toEqual([9, 8]);
+  });
+});
 
 describe("matchingRentProviders", () => {
   it("returns every rental store that matches a selected service", () => {

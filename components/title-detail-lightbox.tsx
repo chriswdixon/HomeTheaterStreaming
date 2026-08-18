@@ -5,7 +5,6 @@ import type { ViewerAvailability } from "@/lib/availability";
 import type { MediaType } from "@/lib/media";
 import { fetchNoStore } from "@/lib/http-cache";
 import { formatReleaseLabel } from "@/lib/release-label";
-import { streamingOpenTarget } from "@/lib/streaming-links";
 import type { TitleDetails } from "@/lib/tmdb";
 import { tmdbImageUrl } from "@/lib/tmdb";
 import { ProviderBadges } from "./provider-badges";
@@ -223,56 +222,9 @@ export function TitleDetailLightbox({
                 linkable
               />
             </div>
-            <WatchLinks availability={availability} title={displayTitle} />
           </div>
         </div>
       </div>
     </div>
-  );
-}
-
-function WatchLinks({
-  availability,
-  title,
-}: {
-  availability: ViewerAvailability;
-  title: string;
-}) {
-  const providers = availability.onServices.length
-    ? availability.onServices
-    : availability.onRentServices.length
-      ? availability.onRentServices
-      : availability.openTarget
-        ? [availability.openTarget.provider]
-        : [];
-
-  if (providers.length === 0) return null;
-
-  return (
-    <ul className="mt-3 flex flex-wrap gap-2">
-      {providers.map((provider) => {
-        const target = streamingOpenTarget({
-          provider,
-          title,
-          watchUrl: availability.openTarget?.webUrl ?? null,
-        });
-        if (!target) return null;
-        const prefix = availability.onRentServices.includes(provider)
-          ? "Rent on"
-          : "Watch on";
-        return (
-          <li key={provider.tmdbProviderId}>
-            <a
-              href={target.webUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="action-btn-pill action-btn-watch inline-flex px-4 py-2 text-sm no-underline"
-            >
-              {prefix} {provider.name}
-            </a>
-          </li>
-        );
-      })}
-    </ul>
   );
 }

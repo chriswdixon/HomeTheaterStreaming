@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import type { Provider } from "@/lib/effective-services";
-import { partitionProviders } from "@/lib/featured-providers";
 import { tmdbImageUrl } from "@/lib/tmdb";
 
 export function ServicePicker({
@@ -25,14 +24,14 @@ export function ServicePicker({
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  const filtered = useMemo(() => {
+  const visibleProviders = useMemo(() => {
     const q = query.trim().toLowerCase();
     const visible = q
       ? allProviders.filter((provider) =>
           provider.name.toLowerCase().includes(q),
         )
       : allProviders;
-    return partitionProviders(visible);
+    return [...visible].sort((a, b) => a.name.localeCompare(b.name));
   }, [allProviders, query]);
 
   function toggle(provider: Provider) {
@@ -78,15 +77,7 @@ export function ServicePicker({
         />
       </div>
       <ProviderList
-        heading="Popular"
-        providers={filtered.featured}
-        chosen={chosen}
-        onToggle={toggle}
-        disabled={saving}
-      />
-      <ProviderList
-        heading="More services"
-        providers={filtered.rest}
+        providers={visibleProviders}
         chosen={chosen}
         onToggle={toggle}
         disabled={saving}
@@ -107,13 +98,11 @@ export function ServicePicker({
 }
 
 function ProviderList({
-  heading,
   providers,
   chosen,
   onToggle,
   disabled = false,
 }: {
-  heading: string;
   providers: Provider[];
   chosen: Record<number, Provider>;
   onToggle: (provider: Provider) => void;
@@ -122,11 +111,7 @@ function ProviderList({
   if (providers.length === 0) return null;
 
   return (
-    <div className="mt-5">
-      <h3 className="mb-2 text-xs uppercase tracking-[0.18em] text-muted">
-        {heading}
-      </h3>
-      <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+    <ul className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {providers.map((provider) => {
           const logo = tmdbImageUrl(provider.logoPath, "w92");
           return (
@@ -151,6 +136,5 @@ function ProviderList({
           );
         })}
       </ul>
-    </div>
   );
 }
