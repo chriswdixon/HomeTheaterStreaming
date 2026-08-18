@@ -1,5 +1,5 @@
 import type { Provider } from "./effective-services";
-import { providerFamily } from "./availability";
+import { rentMatchesService } from "./availability";
 
 export function isOnViewerServices(
   flatrate: Provider[],
@@ -23,13 +23,7 @@ function matchesSelectedServices(
     return true;
   }
 
-  return rent.some((provider) =>
-    selectedServices.some(
-      (service) =>
-        service.tmdbProviderId === provider.tmdbProviderId ||
-        providerFamily(service.name) === providerFamily(provider.name),
-    ),
-  );
+  return rent.some((provider) => rentMatchesService(provider, selectedServices));
 }
 
 export function filterByViewerServices<T extends {

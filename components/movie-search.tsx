@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { fetchNoStore } from "@/lib/http-cache";
+import { formatReleaseLabel } from "@/lib/release-label";
 import type { TmdbSearchMovie } from "@/lib/tmdb";
 import { MoviePoster } from "./movie-card";
 
@@ -102,9 +103,7 @@ export function MovieSearch({
                 </div>
                 <span>
                   {movie.title}
-                  {movie.year ? (
-                    <span className="text-muted"> ({movie.year})</span>
-                  ) : null}
+                  <span className="text-muted"> ({formatReleaseLabel(movie.year)})</span>
                   {movie.mediaType === "tv" ? (
                     <span className="ml-2 text-[10px] uppercase tracking-wide text-accent">
                       Series

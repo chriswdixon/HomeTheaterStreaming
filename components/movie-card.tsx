@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
 import type { ViewerAvailability } from "@/lib/availability";
 import type { MediaType } from "@/lib/media";
+import { openStreamingTarget } from "@/lib/open-streaming";
+import type { StreamingOpenTarget } from "@/lib/streaming-links";
+import { formatReleaseLabel } from "@/lib/release-label";
 import { tmdbImageUrl } from "@/lib/tmdb";
 import { CheckIcon, CopyIcon, GripIcon, StarIcon, TrashIcon } from "./icons";
 import { ProviderBadges } from "./provider-badges";
@@ -46,7 +49,6 @@ export function MovieCard({
   onCopyToShared,
   actions,
   order,
-  onOpen,
 }: {
   title: string;
   year: string | null;
@@ -62,21 +64,22 @@ export function MovieCard({
   onCopyToShared?: () => void;
   actions?: ReactNode;
   order?: number;
-  onOpen?: () => void;
 }) {
-  const openLabel = availability.openTarget
-    ? `Open on ${availability.openTarget.provider.name}`
-    : undefined;
-
+  const openTarget = availability.openTarget;
   const hasIconActions = Boolean(
     onWatched || onRemove || onUnwatch || onCopyToShared,
   );
-  const hasActions = hasIconActions || Boolean(actions);
+  const showOverlay = Boolean(openTarget || hasIconActions || actions);
 
-  const actionOverlay = hasActions ? (
+  const watchNowButton = openTarget ? (
+    <WatchNowButton target={openTarget} />
+  ) : null;
+
+  const actionOverlay = showOverlay ? (
     <div className="pointer-events-none absolute inset-0 z-10 flex items-end justify-center gap-2 rounded-2xl bg-gradient-to-t from-black/75 via-black/35 to-transparent p-3 opacity-0 transition-opacity group-hover/card:opacity-100 group-focus-within/card:opacity-100 group-hover/card:pointer-events-auto group-focus-within/card:pointer-events-auto">
       {hasIconActions ? (
-        <div className="pointer-events-auto flex w-full items-center gap-2">
+        <div className="pointer-events-auto flex w-full flex-wrap items-center gap-2">
+          {watchNowButton}
           {onUnwatch ? (
             <IconButton label="Mark not watched" onClick={onUnwatch} tone="watched">
               <CheckIcon className="h-4 w-4" />
@@ -103,7 +106,8 @@ export function MovieCard({
           ) : null}
         </div>
       ) : (
-        <div className="pointer-events-auto flex flex-wrap justify-center gap-2">
+        <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-2">
+          {watchNowButton}
           {actions}
         </div>
       )}
@@ -132,23 +136,15 @@ export function MovieCard({
           <GripIcon className="h-4 w-4" />
         </span>
       ) : null}
-      {onOpen ? (
-        <button
-          type="button"
-          onClick={onOpen}
-          aria-label={openLabel}
-          className="absolute inset-0 z-0 rounded-2xl"
-        />
-      ) : null}
       {actionOverlay}
     </div>
   );
 
   const detailsBlock = (
-    <div className="mt-3 flex min-h-0 flex-col gap-2">
+    <div className="mt-3 flex min-h-0 flex-1 flex-col gap-2">
       <div className="min-h-[3.2rem]">
         <h3 className="line-clamp-2 font-medium leading-snug">{title}</h3>
-        {year ? <p className="text-xs text-muted">{year}</p> : null}
+        <p className="text-xs text-muted">{formatReleaseLabel(year)}</p>
       </div>
       <p className="line-clamp-2 min-h-[2.4rem] text-xs text-muted">
         {overview || " "}
@@ -164,19 +160,29 @@ export function MovieCard({
           ))}
         </p>
       ) : null}
-      <ProviderBadges availability={availability} />
+      <div className="mt-auto flex min-h-[1.75rem] w-full items-end">
+        <ProviderBadges availability={availability} />
+      </div>
     </div>
   );
 
   return (
-    <article
-      className={`group/card glass flex h-full flex-col rounded-3xl p-3 transition-shadow hover:ring-2 hover:ring-[var(--accent-warm)] ${
-        onOpen ? "hover:-translate-y-0.5" : ""
-      }`}
-    >
+    <article className="group/card glass flex h-full flex-col rounded-3xl p-3 transition-shadow hover:ring-2 hover:ring-[var(--accent-warm)]">
       {posterBlock}
       {detailsBlock}
     </article>
+  );
+}
+
+function WatchNowButton({ target }: { target: StreamingOpenTarget }) {
+  return (
+    <button
+      type="button"
+      onClick={() => openStreamingTarget(target)}
+      className="action-btn-pill action-btn-watch shrink-0 px-3 py-1.5 text-xs font-medium"
+    >
+      Watch now
+    </button>
   );
 }
 

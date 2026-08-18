@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { availabilityForViewer } from "./availability";
+import { availabilityForViewer, matchingRentProviders } from "./availability";
 
 const netflix = {
   tmdbProviderId: 8,
@@ -22,6 +22,11 @@ const appleTv = {
   name: "Apple TV",
   logoPath: "/apple.png",
 };
+const appleTvPlus = {
+  tmdbProviderId: 350,
+  name: "Apple TV+",
+  logoPath: "/appletvplus.png",
+};
 
 const watchUrl = "https://www.themoviedb.org/movie/550/watch?locale=US";
 const title = {
@@ -29,6 +34,14 @@ const title = {
   tmdbMovieId: 550,
   mediaType: "movie" as const,
 };
+
+describe("matchingRentProviders", () => {
+  it("returns every rental store that matches a selected service", () => {
+    expect(
+      matchingRentProviders([amazonVideo, appleTv], [prime, appleTvPlus]),
+    ).toEqual([amazonVideo, appleTv]);
+  });
+});
 
 describe("availabilityForViewer", () => {
   it("returns the subset of cached providers the viewer subscribes to", () => {
@@ -40,6 +53,7 @@ describe("availabilityForViewer", () => {
     ).toEqual({
       available: true,
       onServices: [netflix],
+      onRentServices: [],
       rentOffer: null,
       openTarget: null,
     });
@@ -59,7 +73,7 @@ describe("availabilityForViewer", () => {
     });
   });
 
-  it("offers a rental on a matching store when the title is not included with a subscription", () => {
+  it("offers rentals on every matching store when the title is not included with a subscription", () => {
     expect(
       availabilityForViewer(
         { flatrate: [max], rent: [amazonVideo, appleTv], watchUrl },
@@ -68,23 +82,34 @@ describe("availabilityForViewer", () => {
     ).toEqual({
       available: false,
       onServices: [],
+      onRentServices: [amazonVideo],
       rentOffer: { provider: amazonVideo, watchUrl },
       openTarget: null,
     });
   });
 
-  it("builds a rent open target using the TMDB watch page as browser fallback", () => {
+  it("shows all matching rental stores for the viewer's selected services", () => {
+    expect(
+      availabilityForViewer(
+        { flatrate: [max], rent: [amazonVideo, appleTv], watchUrl },
+        [prime, appleTvPlus],
+      ).onRentServices,
+    ).toEqual([amazonVideo, appleTv]);
+  });
+
+  it("opens the TMDB watch page when rentals exist but none match the viewer's services", () => {
     const availability = availabilityForViewer(
       { flatrate: [max], rent: [amazonVideo], watchUrl },
       [netflix],
       title,
     );
 
+    expect(availability.onRentServices).toEqual([]);
     expect(availability.openTarget?.webUrl).toBe(watchUrl);
-    expect(availability.openTarget?.provider).toEqual(amazonVideo);
+    expect(availability.openTarget?.provider.name).toBe("Watch options");
   });
 
-  it("falls back to the first rental store when none of the viewer's services offer a rent option", () => {
+  it("does not show rental stores that do not match the viewer's services", () => {
     expect(
       availabilityForViewer(
         { flatrate: [max], rent: [appleTv], watchUrl },
@@ -93,7 +118,8 @@ describe("availabilityForViewer", () => {
     ).toEqual({
       available: false,
       onServices: [],
-      rentOffer: { provider: appleTv, watchUrl },
+      onRentServices: [],
+      rentOffer: null,
       openTarget: null,
     });
   });
@@ -104,6 +130,7 @@ describe("availabilityForViewer", () => {
     ).toEqual({
       available: false,
       onServices: [],
+      onRentServices: [],
       rentOffer: null,
       openTarget: null,
     });

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { Provider } from "@/lib/effective-services";
 import type { ViewerAvailability } from "@/lib/availability";
 import { tmdbImageUrl } from "@/lib/tmdb";
@@ -9,7 +10,7 @@ export function ProviderBadges({
 }) {
   if (availability.available && availability.onServices.length > 0) {
     return (
-      <ul className="flex flex-wrap gap-1.5">
+      <ul className="flex w-full flex-wrap items-end gap-1.5">
         {availability.onServices.map((provider) => (
           <ProviderChip key={provider.tmdbProviderId} provider={provider} />
         ))}
@@ -17,24 +18,17 @@ export function ProviderBadges({
     );
   }
 
-  if (availability.rentOffer) {
-    const { provider, watchUrl } = availability.rentOffer;
-    const label = `Rent on ${provider.name}`;
-    const chip = <ProviderChip provider={provider} label={label} />;
-
-    if (!watchUrl) {
-      return <p className="text-xs text-muted">{label}</p>;
-    }
-
+  if (availability.onRentServices.length > 0) {
     return (
-      <a
-        href={watchUrl}
-        target="_blank"
-        rel="noreferrer"
-        className="inline-flex text-xs text-accent underline-offset-2 hover:underline"
-      >
-        {chip}
-      </a>
+      <ul className="flex w-full flex-wrap items-end gap-1.5">
+        {availability.onRentServices.map((provider) => (
+          <ProviderChip
+            key={provider.tmdbProviderId}
+            provider={provider}
+            label={`Rent on ${provider.name}`}
+          />
+        ))}
+      </ul>
     );
   }
 
@@ -45,7 +39,7 @@ export function ProviderBadges({
         href={availability.openTarget.webUrl}
         target="_blank"
         rel="noreferrer"
-        className="inline-flex text-xs text-accent underline-offset-2 hover:underline"
+        className="inline-flex w-full text-xs text-accent underline-offset-2 hover:underline"
       >
         <ProviderChip
           provider={availability.openTarget.provider}
@@ -55,7 +49,11 @@ export function ProviderBadges({
     );
   }
 
-  return <p className="text-xs text-muted">No stream or rental found</p>;
+  return (
+    <p className="w-full text-xs leading-snug text-muted">
+      No stream or rental found
+    </p>
+  );
 }
 
 function ProviderChip({

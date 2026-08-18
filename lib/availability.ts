@@ -24,6 +24,7 @@ export type RentOffer = {
 export type ViewerAvailability = {
   available: boolean;
   onServices: Provider[];
+  onRentServices: Provider[];
   rentOffer: RentOffer | null;
   openTarget: StreamingOpenTarget | null;
 };
@@ -38,13 +39,23 @@ export function providerFamily(name: string): string {
   return n;
 }
 
-function rentMatchesService(rentProvider: Provider, services: Provider[]): boolean {
+export function rentMatchesService(
+  rentProvider: Provider,
+  services: Provider[],
+): boolean {
   const family = providerFamily(rentProvider.name);
   return services.some(
     (service) =>
       service.tmdbProviderId === rentProvider.tmdbProviderId ||
       providerFamily(service.name) === family,
   );
+}
+
+export function matchingRentProviders(
+  rent: Provider[],
+  services: Provider[],
+): Provider[] {
+  return rent.filter((provider) => rentMatchesService(provider, services));
 }
 
 export function availabilityForViewer(
@@ -62,6 +73,7 @@ export function availabilityForViewer(
     return {
       available: true,
       onServices,
+      onRentServices: [],
       rentOffer: null,
       openTarget: title
         ? streamingOpenTarget({
@@ -73,10 +85,8 @@ export function availabilityForViewer(
     };
   }
 
-  const matchingRent = cached.rent.find((provider) =>
-    rentMatchesService(provider, services),
-  );
-  const rentProvider = matchingRent ?? cached.rent[0] ?? null;
+  const onRentServices = matchingRentProviders(cached.rent, services);
+  const rentProvider = onRentServices[0] ?? null;
 
   const rentOffer = rentProvider
     ? { provider: rentProvider, watchUrl: cached.watchUrl }
@@ -106,6 +116,7 @@ export function availabilityForViewer(
   return {
     available: false,
     onServices: [],
+    onRentServices,
     rentOffer,
     openTarget,
   };

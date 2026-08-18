@@ -40,6 +40,16 @@ export function RecommendationsView({
   const [payload, setPayload] = useState(initial);
   const [message, setMessage] = useState<string | null>(null);
   const [selectedServiceIds, setSelectedServiceIds] = useState<number[]>([]);
+  const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
+
+  function toggleFolder(key: string) {
+    setCollapsedFolders((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
 
   async function addFranchise(
     group: {
@@ -171,6 +181,27 @@ export function RecommendationsView({
     [generalRecs, selectedServiceIds, viewerServices],
   );
 
+  const franchiseFolders = useMemo(
+    () => [
+      ...filteredWatchOrderGroups.map((group) => ({
+        key: `watch-order-${group.name}`,
+        group,
+        subtitle:
+          group.orderLabel === "first-watch"
+            ? "First-watch order"
+            : "Release order",
+        showOrder: true as const,
+      })),
+      ...filteredAffinityGroups.map((group) => ({
+        key: `affinity-${group.name}`,
+        group,
+        subtitle: "Because you added 2+ titles from this franchise",
+        showOrder: false as const,
+      })),
+    ],
+    [filteredAffinityGroups, filteredWatchOrderGroups],
+  );
+
   if (!unlocked) {
     const remaining = payload.needed - payload.count;
     return (
@@ -246,7 +277,7 @@ export function RecommendationsView({
       ) : (
         <div className="mt-8 space-y-14">
           {hasFranchiseRecs ? (
-            <div className="space-y-12">
+            <div className="space-y-6">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-accent">
                   Franchises & series
@@ -255,48 +286,18 @@ export function RecommendationsView({
                   From collections on your list
                 </h2>
               </div>
-              {filteredWatchOrderGroups.map((group) => (
-                <section key={group.name}>
-                  <p className="text-xs uppercase tracking-[0.2em] text-accent">
-                    {group.orderLabel === "first-watch"
-                      ? "First-watch order"
-                      : "Release order"}
-                  </p>
-                  <h3 className="mb-2 text-xl font-medium">{group.name}</h3>
-                  <FranchiseAddButtons group={group} onAdd={addFranchise} />
-                  <RecommendationGrid
-                    movies={group.movies}
-                    getKey={(movie) => `${group.name}-${movie.tmdbMovieId}`}
-                    renderActions={(movie) =>
-                      movie.onList ? (
-                        <span className="glass-badge px-3 py-1 text-xs text-muted">
-                          On your list
-                        </span>
-                      ) : (
-                        <>
-                          <AddButtons movie={movie} onAdd={addMovie} />
-                        </>
-                      )
-                    }
-                    getOrder={(movie) => movie.order}
-                    viewerServices={viewerServices}
-                  />
-                </section>
-              ))}
-              {filteredAffinityGroups.map((group) => (
-                <section key={group.name}>
-                  <p className="text-xs uppercase tracking-[0.2em] text-accent">
-                    Because you added 2+
-                  </p>
-                  <h3 className="mb-2 text-xl font-medium">{group.name}</h3>
-                  <FranchiseAddButtons group={group} onAdd={addFranchise} />
-                  <RecommendationGrid
-                    movies={group.movies}
-                    getKey={(movie) => `${group.name}-${movie.tmdbMovieId}`}
-                    renderActions={(movie) => <AddButtons movie={movie} onAdd={addMovie} />}
-                    viewerServices={viewerServices}
-                  />
-                </section>
+              {franchiseFolders.map(({ key, group, subtitle, showOrder }) => (
+                <FranchiseFolder
+                  key={key}
+                  group={group}
+                  subtitle={subtitle}
+                  collapsed={collapsedFolders.has(key)}
+                  onToggle={() => toggleFolder(key)}
+                  onAddFranchise={addFranchise}
+                  onAddMovie={addMovie}
+                  viewerServices={viewerServices}
+                  showOrder={showOrder}
+                />
               ))}
             </div>
           ) : null}
@@ -321,6 +322,107 @@ export function RecommendationsView({
         </div>
       )}
     </div>
+  );
+}
+
+type FranchiseGroup = {
+  name: string;
+  movies: Array<{
+    tmdbMovieId: number;
+    mediaType?: TmdbSearchMovie["mediaType"];
+    title: string;
+    year: string | null;
+    posterPath: string | null;
+    overview: string;
+    order?: number;
+    onList?: boolean;
+    providers: { tmdbProviderId: number; name: string; logoPath: string | null }[];
+    rentProviders?: { tmdbProviderId: number; name: string; logoPath: string | null }[];
+  }>;
+};
+
+function FranchiseFolder({
+  group,
+  subtitle,
+  collapsed,
+  onToggle,
+  onAddFranchise,
+  onAddMovie,
+  viewerServices,
+  showOrder,
+}: {
+  group: FranchiseGroup;
+  subtitle: string;
+  collapsed: boolean;
+  onToggle: () => void;
+  onAddFranchise: (
+    group: {
+      name: string;
+      movies: Array<{
+        tmdbMovieId: number;
+        mediaType?: TmdbSearchMovie["mediaType"];
+        title: string;
+        year: string | null;
+        posterPath: string | null;
+        overview: string;
+        order: number;
+      }>;
+    },
+    list: "personal" | "shared",
+  ) => void;
+  onAddMovie: (
+    movie: {
+      tmdbMovieId: number;
+      mediaType?: TmdbSearchMovie["mediaType"];
+      title: string;
+      year: string | null;
+      posterPath: string | null;
+      overview?: string;
+    },
+    list: "personal" | "shared",
+  ) => void;
+  viewerServices: Provider[];
+  showOrder: boolean;
+}) {
+  return (
+    <section className="glass rounded-3xl p-4 sm:p-5">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between gap-3 text-left"
+      >
+        <div>
+          <p className="text-xs uppercase tracking-[0.2em] text-accent">
+            Franchise folder
+          </p>
+          <h2 className="mt-1 text-lg font-medium">{group.name}</h2>
+          <p className="mt-1 text-sm text-muted">{subtitle}</p>
+        </div>
+        <span className="shrink-0 text-sm text-muted">
+          {group.movies.length} titles {collapsed ? "▸" : "▾"}
+        </span>
+      </button>
+      {!collapsed ? (
+        <div className="mt-4 space-y-4">
+          <FranchiseAddButtons group={group} onAdd={onAddFranchise} />
+          <RecommendationGrid
+            movies={group.movies}
+            getKey={(movie) => `${group.name}-${movie.tmdbMovieId}`}
+            renderActions={(movie) =>
+              movie.onList ? (
+                <span className="rounded-full border border-white/15 px-3 py-1 text-xs text-muted">
+                  On your list
+                </span>
+              ) : (
+                <AddButtons movie={movie} onAdd={onAddMovie} />
+              )
+            }
+            getOrder={showOrder ? (movie) => movie.order : undefined}
+            viewerServices={viewerServices}
+          />
+        </div>
+      ) : null}
+    </section>
   );
 }
 

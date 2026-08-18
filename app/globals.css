@@ -324,6 +324,17 @@ textarea.glass-input {
     border-color 150ms ease;
 }
 
+.action-btn-watch {
+  border: 1px solid rgba(232, 184, 109, 0.65);
+  background: rgba(232, 184, 109, 0.92);
+  color: #1a1208;
+}
+
+.action-btn-watch:hover {
+  background: rgba(240, 196, 130, 1);
+  border-color: rgba(232, 184, 109, 0.85);
+}
+
 .glass-overlay {
   background: rgba(4, 4, 8, 0.55);
   backdrop-filter: blur(8px);

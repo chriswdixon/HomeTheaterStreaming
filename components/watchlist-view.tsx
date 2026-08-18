@@ -16,7 +16,6 @@ import {
   reorderIds,
   visibleWatchlistItems,
 } from "@/lib/list-query";
-import { openStreamingTarget } from "@/lib/open-streaming";
 import type { StoredWatchlistItem } from "@/lib/server/watchlist-actions";
 import type { TmdbSearchMovie } from "@/lib/tmdb";
 import { layoutWatchlistFolders } from "@/lib/watchlist-folders";
@@ -78,7 +77,7 @@ export function WatchlistView({
     const byGenre = filterByGenres(byWatch, genreIds);
     const byRating = filterByContentRatings(byGenre, contentRatingIds);
     if (!showServiceFilter) return byRating;
-    return filterWatchlistByServices(byRating, selectedServiceIds);
+    return filterWatchlistByServices(byRating, selectedServiceIds, viewerServices);
   }, [
     contentRatingIds,
     genreIds,
@@ -124,11 +123,6 @@ export function WatchlistView({
         order={options?.order ?? item.folderOrder ?? undefined}
         rating={item.watchState?.rating}
         draggable={draggable}
-        onOpen={
-          item.availability.openTarget
-            ? () => openStreamingTarget(item.availability.openTarget!)
-            : undefined
-        }
         onWatched={item.watchState ? undefined : () => setRatingItem(item)}
         onUnwatch={item.watchState ? () => void unwatch(item) : undefined}
         onCopyToShared={

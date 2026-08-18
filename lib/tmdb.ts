@@ -1,6 +1,7 @@
 import type { Provider } from "./effective-services";
 import type { Genre, Keyword, MediaType } from "./media";
 import type { RecommendedMovie } from "./recommendations";
+import { releaseYearFromDate } from "./release-label";
 
 export type TmdbSearchMovie = {
   tmdbMovieId: number;
@@ -111,7 +112,7 @@ function mapTitle(
     tmdbMovieId: payload.id,
     mediaType,
     title: payload.title ?? payload.name ?? "Untitled",
-    year: yearFromReleaseDate(payload.release_date ?? payload.first_air_date),
+    year: releaseYearFromDate(payload.release_date ?? payload.first_air_date),
     posterPath: payload.poster_path ?? null,
     overview: payload.overview ?? "",
   };

@@ -1,3 +1,4 @@
+import { providerFamily } from "./availability";
 import type { Genre } from "./media";
 import type { WatchState } from "./watch-state";
 
@@ -42,22 +43,38 @@ export function filterByGenres<T extends { genres: Genre[] }>(
 }
 
 export function filterWatchlistByServices<T extends { availability: {
-  available: boolean;
   onServices: { tmdbProviderId: number; name: string }[];
-  rentOffer: { provider: { tmdbProviderId: number; name: string } } | null;
+  onRentServices: { tmdbProviderId: number; name: string }[];
 } }>(
   items: T[],
   selectedServiceIds: number[],
+  viewerServices: { tmdbProviderId: number; name: string }[],
 ): T[] {
   if (selectedServiceIds.length === 0) return items;
-  const selected = new Set(selectedServiceIds);
+
+  const selectedServices = viewerServices.filter((provider) =>
+    selectedServiceIds.includes(provider.tmdbProviderId),
+  );
+  if (selectedServices.length === 0) return items;
+
   return items.filter((item) => {
-    if (item.availability.onServices.some((provider) => selected.has(provider.tmdbProviderId))) {
+    if (
+      item.availability.onServices.some((provider) =>
+        selectedServices.some(
+          (service) => service.tmdbProviderId === provider.tmdbProviderId,
+        ),
+      )
+    ) {
       return true;
     }
-    const rentProvider = item.availability.rentOffer?.provider;
-    if (!rentProvider) return false;
-    return selected.has(rentProvider.tmdbProviderId);
+
+    return item.availability.onRentServices.some((rentProvider) =>
+      selectedServices.some(
+        (service) =>
+          service.tmdbProviderId === rentProvider.tmdbProviderId ||
+          providerFamily(service.name) === providerFamily(rentProvider.name),
+      ),
+    );
   });
 }
 
