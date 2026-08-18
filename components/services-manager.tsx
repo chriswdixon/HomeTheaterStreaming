@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { WATCH_REGIONS } from "@/lib/regions";
 import type { Provider } from "@/lib/effective-services";
 import { mergeEffectiveServices } from "@/lib/effective-services";
+import { buildHouseholdInviteUrl } from "@/lib/household-invite";
 import { ServicePicker } from "./service-picker";
 
 export function ServicesManager({
@@ -23,7 +24,9 @@ export function ServicesManager({
 }) {
   const [currentRegion, setCurrentRegion] = useState(region);
   const [name, setName] = useState(householdName);
-  const [copied, setCopied] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [inviteLink, setInviteLink] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [household, setHousehold] = useState(householdServices);
   const [personal, setPersonal] = useState(personalServices);
@@ -77,6 +80,10 @@ export function ServicesManager({
 
   const effectiveServices = mergeEffectiveServices(household, personal);
 
+  useEffect(() => {
+    setInviteLink(buildHouseholdInviteUrl(inviteCode, window.location.origin));
+  }, [inviteCode]);
+
   return (
     <div className="space-y-8">
       <div>
@@ -114,6 +121,25 @@ export function ServicesManager({
             </select>
           </label>
           <div className="sm:col-span-2">
+            <p className="text-sm text-muted">Invite link</p>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <code className="min-w-0 flex-1 break-all rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm">
+                {inviteLink || "…"}
+              </code>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!inviteLink) return;
+                  await navigator.clipboard.writeText(inviteLink);
+                  setCopiedLink(true);
+                }}
+                className="rounded-full border border-white/15 px-4 py-2 text-sm"
+              >
+                {copiedLink ? "Copied" : "Copy link"}
+              </button>
+            </div>
+          </div>
+          <div className="sm:col-span-2">
             <p className="text-sm text-muted">Invite code</p>
             <div className="mt-2 flex items-center gap-3">
               <code className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 tracking-[0.3em]">
@@ -123,11 +149,11 @@ export function ServicesManager({
                 type="button"
                 onClick={async () => {
                   await navigator.clipboard.writeText(inviteCode);
-                  setCopied(true);
+                  setCopiedCode(true);
                 }}
                 className="rounded-full border border-white/15 px-4 py-2 text-sm"
               >
-                {copied ? "Copied" : "Copy"}
+                {copiedCode ? "Copied" : "Copy code"}
               </button>
             </div>
           </div>

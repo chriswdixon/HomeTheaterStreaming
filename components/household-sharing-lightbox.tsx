@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { buildHouseholdInviteUrl } from "@/lib/household-invite";
 import { WATCH_REGIONS } from "@/lib/regions";
 import { SharedIcon } from "./icons";
 
@@ -20,7 +21,13 @@ export function HouseholdSharingLightbox({
   region: string;
   onClose: () => void;
 }) {
-  const [copied, setCopied] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [inviteLink, setInviteLink] = useState("");
+
+  useEffect(() => {
+    setInviteLink(buildHouseholdInviteUrl(inviteCode, window.location.origin));
+  }, [inviteCode]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -78,10 +85,33 @@ export function HouseholdSharingLightbox({
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+            <h3 className="text-sm font-medium">Invite link</h3>
+            <p className="mt-1 text-sm text-muted">
+              Send this link so someone can sign up and join your household in one
+              step.
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <code className="min-w-0 flex-1 break-all rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm">
+                {inviteLink || "…"}
+              </code>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!inviteLink) return;
+                  await navigator.clipboard.writeText(inviteLink);
+                  setCopiedLink(true);
+                }}
+                className="glass-button glass-button-primary px-5 py-2 text-sm"
+              >
+                {copiedLink ? "Copied" : "Copy link"}
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
             <h3 className="text-sm font-medium">Invite code</h3>
             <p className="mt-1 text-sm text-muted">
-              Share this code so others can join your household and access the shared
-              list.
+              Or share this code for someone to enter during onboarding.
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <code className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-lg tracking-[0.3em]">
@@ -91,11 +121,11 @@ export function HouseholdSharingLightbox({
                 type="button"
                 onClick={async () => {
                   await navigator.clipboard.writeText(inviteCode);
-                  setCopied(true);
+                  setCopiedCode(true);
                 }}
-                className="glass-button glass-button-primary px-5 py-2 text-sm"
+                className="glass-button px-5 py-2 text-sm"
               >
-                {copied ? "Copied" : "Copy code"}
+                {copiedCode ? "Copied" : "Copy code"}
               </button>
             </div>
           </div>

@@ -81,8 +81,23 @@ export async function getPersonalProviders(
     );
 
   return rows.map((row) => ({
-      tmdbProviderId: row.tmdbProviderId,
-      name: row.name,
-      logoPath: row.logoPath,
-    }));
+    tmdbProviderId: row.tmdbProviderId,
+    name: row.name,
+    logoPath: row.logoPath,
+  }));
+}
+
+export async function getHouseholdInvitePreview(code: string) {
+  const normalized = code.trim().toUpperCase();
+  const db = getDb();
+  const [household] = await db
+    .select({
+      name: households.name,
+      region: households.region,
+    })
+    .from(households)
+    .where(eq(households.inviteCode, normalized))
+    .limit(1);
+
+  return household ?? null;
 }

@@ -9,12 +9,12 @@ import { tmdbImageUrl } from "@/lib/tmdb";
 
 type Mode = "choose" | "create" | "join";
 
-export function OnboardingForm() {
+export function OnboardingForm({ initialCode }: { initialCode?: string }) {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>("choose");
+  const [mode, setMode] = useState<Mode>(initialCode ? "join" : "choose");
   const [name, setName] = useState("");
   const [region, setRegion] = useState("US");
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(initialCode ?? "");
   const [providers, setProviders] = useState<Provider[]>([]);
   const [selected, setSelected] = useState<Record<number, Provider>>({});
   const [query, setQuery] = useState("");
