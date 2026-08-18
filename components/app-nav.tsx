@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import { HouseholdSharingLightbox } from "./household-sharing-lightbox";
 import {
   HouseholdSwitcher,
-  SharedListManageLinks,
   type HouseholdOption,
 } from "./household-switcher";
 import { CloseIcon, MenuIcon } from "./icons";
@@ -166,13 +165,6 @@ export function AppNav({
                   variant="drawer"
                 />
               </div>
-              <SharedListManageLinks
-                className="mt-3"
-                onViewInvite={() => {
-                  closeMenu();
-                  setShowHouseholdInvite(true);
-                }}
-              />
             </div>
             <ul className="app-nav-drawer-list">
               {LINKS.map((link) => {

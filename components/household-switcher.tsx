@@ -150,31 +150,3 @@ export function HouseholdSwitcher({
     </div>
   );
 }
-
-export function SharedListManageLinks({
-  onViewInvite,
-  className = "",
-}: {
-  onViewInvite?: () => void;
-  className?: string;
-}) {
-  return (
-    <div className={`shared-list-manage ${className}`.trim()}>
-      <Link href="/create-list" className="shared-list-manage-link">
-        Create list
-      </Link>
-      <Link href="/join-list" className="shared-list-manage-link">
-        Join list
-      </Link>
-      {onViewInvite ? (
-        <button
-          type="button"
-          onClick={onViewInvite}
-          className="shared-list-manage-link"
-        >
-          Invite
-        </button>
-      ) : null}
-    </div>
-  );
-}

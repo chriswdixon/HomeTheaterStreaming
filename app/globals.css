@@ -200,27 +200,6 @@ a {
   justify-content: space-between;
 }
 
-.shared-list-manage {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.shared-list-manage-link {
-  border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.05);
-  padding: 0.45rem 0.85rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--foreground);
-}
-
-.shared-list-manage-link:hover {
-  border-color: rgba(232, 184, 109, 0.35);
-  color: var(--accent);
-}
-
 .glass-nav {
   background: var(--background);
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
