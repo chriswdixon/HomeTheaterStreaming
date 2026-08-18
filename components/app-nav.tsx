@@ -27,7 +27,7 @@ export function AppNav({
     <>
       <header className="glass-nav sticky top-0 z-50">
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
-        <Link href="/my-list" className="pr-2 text-lg font-semibold tracking-tight">
+        <Link href="/start" className="pr-2 text-lg font-semibold tracking-tight">
           ScreenStack
         </Link>
         <nav className="flex flex-1 flex-wrap items-center gap-1">

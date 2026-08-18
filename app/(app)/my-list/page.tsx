@@ -4,12 +4,15 @@ import {
   getHouseholdProviders,
   getPersonalProviders,
 } from "@/lib/server/membership";
-import { loadWatchlistSafe } from "@/lib/server/load-watchlist";
+import {
+  loadSharedItemKeys,
+  loadWatchlistSafe,
+} from "@/lib/server/load-watchlist";
 import { requirePageMembership } from "@/lib/server/page-session";
 
 export default async function MyListPage() {
   const { userId, membership } = await requirePageMembership();
-  const [result, household, personal] = await Promise.all([
+  const [result, household, personal, sharedItemKeys] = await Promise.all([
     loadWatchlistSafe(
       userId,
       membership.householdId,
@@ -18,6 +21,7 @@ export default async function MyListPage() {
     ),
     getHouseholdProviders(membership.householdId),
     getPersonalProviders(userId, membership.householdId),
+    loadSharedItemKeys(membership.householdId),
   ]);
 
   return (
@@ -26,6 +30,7 @@ export default async function MyListPage() {
       title="My list"
       description="Movies and series you want to watch. Drag to reorder. Recommendations use this list."
       initialItems={result.items}
+      initialSharedItemKeys={sharedItemKeys}
       warning={result.warning}
       viewerServices={mergeEffectiveServices(household, personal)}
       showServiceFilter

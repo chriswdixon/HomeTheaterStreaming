@@ -8,9 +8,10 @@ import type { StreamingOpenTarget } from "@/lib/streaming-links";
 import { tmdbImageUrl } from "@/lib/tmdb";
 import {
   CardIconButton,
+  ListStatusIcon,
   WatchNowIconLink,
 } from "./card-action-buttons";
-import { CheckIcon, CopyIcon, GripIcon, StarIcon, TrashIcon } from "./icons";
+import { CheckIcon, GripIcon, SharedIcon, StarIcon, TrashIcon } from "./icons";
 import { ProviderBadges } from "./provider-badges";
 import { TitleDetailLightbox } from "./title-detail-lightbox";
 
@@ -54,6 +55,7 @@ export function MovieCard({
   onRemove,
   onUnwatch,
   onCopyToShared,
+  onSharedList,
   actions,
   order,
 }: {
@@ -70,13 +72,14 @@ export function MovieCard({
   onRemove?: () => void;
   onUnwatch?: () => void;
   onCopyToShared?: () => void;
+  onSharedList?: boolean;
   actions?: ReactNode;
   order?: number;
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const openTarget = availability.openTarget;
   const hasIconActions = Boolean(
-    onWatched || onRemove || onUnwatch || onCopyToShared,
+    onWatched || onRemove || onUnwatch || onCopyToShared || onSharedList,
   );
   const showOverlay = Boolean(openTarget || hasIconActions || actions);
   const canOpenDetail = tmdbMovieId != null;
@@ -124,15 +127,19 @@ export function MovieCard({
               />
             ) : null}
             {onCopyToShared ? (
-              <CardIconButton
-                label="Copy to shared list"
-                tone="add"
-                icon={<CopyIcon className="h-5 w-5" />}
-                onClick={(event) => {
-                  stopOverlayClick(event);
-                  onCopyToShared();
-                }}
-              />
+              onSharedList ? (
+                <ListStatusIcon label="On shared list" />
+              ) : (
+                <CardIconButton
+                  label="Add to shared list"
+                  tone="shared"
+                  icon={<SharedIcon className="h-5 w-5" />}
+                  onClick={(event) => {
+                    stopOverlayClick(event);
+                    onCopyToShared();
+                  }}
+                />
+              )
             ) : null}
             {onRemove ? (
               <CardIconButton

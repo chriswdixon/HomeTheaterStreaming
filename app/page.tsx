@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getMembership } from "@/lib/server/membership";
+import { defaultListPath } from "@/lib/default-list-view";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,7 @@ export default async function HomePage() {
   const { userId } = await auth();
   if (userId) {
     const membership = await getMembership(userId);
-    redirect(membership ? "/my-list" : "/onboarding");
+    redirect(membership ? defaultListPath(membership.defaultListView) : "/onboarding");
   }
 
   return (

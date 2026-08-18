@@ -21,6 +21,7 @@ import type { TmdbSearchMovie } from "@/lib/tmdb";
 import { layoutWatchlistFolders } from "@/lib/watchlist-folders";
 import type { WatchState } from "@/lib/watch-state";
 import type { WatchlistKind } from "@/lib/watchlist";
+import { watchlistItemKey } from "@/lib/default-list-view";
 import { ConfirmDialog, RatingDialog } from "./dialogs";
 import { HouseholdSharingLightbox } from "./household-sharing-lightbox";
 import { MultiSelectFilter } from "./multi-select-filter";
@@ -44,6 +45,7 @@ export function WatchlistView({
   viewerServices = [],
   showServiceFilter = false,
   household,
+  initialSharedItemKeys = [],
 }: {
   list?: WatchlistKind;
   title: string;
@@ -56,6 +58,7 @@ export function WatchlistView({
   viewerServices?: Provider[];
   showServiceFilter?: boolean;
   household?: { name: string; inviteCode: string; region: string };
+  initialSharedItemKeys?: string[];
 }) {
   const router = useRouter();
   const [items, setItems] = useState(initialItems);
@@ -69,6 +72,9 @@ export function WatchlistView({
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [openFolderName, setOpenFolderName] = useState<string | null>(null);
   const [showHouseholdInvite, setShowHouseholdInvite] = useState(false);
+  const [sharedItemKeys, setSharedItemKeys] = useState(
+    () => new Set(initialSharedItemKeys),
+  );
 
   const states = items
     .map((item) => item.watchState)
@@ -125,6 +131,13 @@ export function WatchlistView({
         onUnwatch={item.watchState ? () => void unwatch(item) : undefined}
         onCopyToShared={
           item.list === "personal" ? () => void copyToShared(item) : undefined
+        }
+        onSharedList={
+          item.list === "personal"
+            ? sharedItemKeys.has(
+                watchlistItemKey(item.tmdbMovieId, item.mediaType),
+              )
+            : undefined
         }
         onRemove={() => setRemoveItem(item)}
       />
@@ -215,6 +228,11 @@ export function WatchlistView({
     });
     const data = (await response.json()) as { error?: string };
     if (response.status === 409) {
+      setSharedItemKeys((current) => {
+        const next = new Set(current);
+        next.add(watchlistItemKey(item.tmdbMovieId, item.mediaType));
+        return next;
+      });
       setMessage(`${item.title} is already on the shared list`);
       return;
     }
@@ -222,7 +240,12 @@ export function WatchlistView({
       setMessage(data.error ?? "Could not copy to the shared list");
       return;
     }
-    setMessage(`Copied ${item.title} to the shared list`);
+    setSharedItemKeys((current) => {
+      const next = new Set(current);
+      next.add(watchlistItemKey(item.tmdbMovieId, item.mediaType));
+      return next;
+    });
+    setMessage(`Added ${item.title} to the shared list`);
   }
 
   async function remove(item: WatchlistItemView) {

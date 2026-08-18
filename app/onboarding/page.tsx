@@ -12,7 +12,7 @@ export default async function OnboardingPage({
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
   const membership = await getMembership(userId);
-  if (membership) redirect("/my-list");
+  if (membership) redirect("/start");
 
   const { code } = await searchParams;
   const initialCode = code ? normalizeInviteCode(code) : undefined;

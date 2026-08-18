@@ -32,6 +32,7 @@ export const householdMembers = pgTable(
       .references(() => households.id, { onDelete: "cascade" }),
     userId: text("user_id").notNull(),
     role: text("role").notNull(),
+    defaultListView: text("default_list_view").notNull().default("personal"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

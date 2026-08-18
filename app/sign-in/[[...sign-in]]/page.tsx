@@ -11,7 +11,7 @@ export default async function SignInPage({
     <main className="flex min-h-full flex-1 items-center justify-center px-4 py-16">
       <SignIn
         forceRedirectUrl={redirectUrl || undefined}
-        fallbackRedirectUrl="/my-list"
+        fallbackRedirectUrl="/start"
       />
     </main>
   );

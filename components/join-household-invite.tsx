@@ -25,7 +25,7 @@ export function JoinHouseholdInvite({
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(data.error ?? "Could not join household");
-      router.push("/my-list");
+      router.push("/start");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not join household");

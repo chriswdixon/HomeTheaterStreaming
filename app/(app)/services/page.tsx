@@ -1,3 +1,4 @@
+import { DefaultViewPreference } from "@/components/default-view-preference";
 import { ServicesManager } from "@/components/services-manager";
 import type { Provider } from "@/lib/effective-services";
 import {
@@ -24,13 +25,18 @@ export default async function ServicesPage() {
   }
 
   return (
-    <ServicesManager
-      householdName={membership.household.name}
-      inviteCode={membership.household.inviteCode}
-      region={membership.household.region}
-      catalog={catalog}
-      householdServices={householdServices}
-      personalServices={personalServices}
-    />
+    <div className="space-y-8">
+      <DefaultViewPreference
+        initialDefaultListView={membership.defaultListView}
+      />
+      <ServicesManager
+        householdName={membership.household.name}
+        inviteCode={membership.household.inviteCode}
+        region={membership.household.region}
+        catalog={catalog}
+        householdServices={householdServices}
+        personalServices={personalServices}
+      />
+    </div>
   );
 }

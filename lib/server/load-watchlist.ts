@@ -184,3 +184,21 @@ export async function loadRecentlyWatchedSafe(
     };
   }
 }
+
+export async function loadSharedItemKeys(householdId: string): Promise<string[]> {
+  const db = getDb();
+  const rows = await db
+    .select({
+      tmdbMovieId: watchlistItems.tmdbMovieId,
+      mediaType: watchlistItems.mediaType,
+    })
+    .from(watchlistItems)
+    .where(
+      and(
+        eq(watchlistItems.householdId, householdId),
+        eq(watchlistItems.list, "shared"),
+      ),
+    );
+
+  return rows.map((row) => `${row.mediaType}:${row.tmdbMovieId}`);
+}

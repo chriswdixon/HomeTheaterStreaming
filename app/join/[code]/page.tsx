@@ -84,10 +84,10 @@ export default async function JoinHouseholdPage({
               joining {preview.name}.
             </p>
             <Link
-              href="/my-list"
+              href="/start"
               className="mt-8 inline-block rounded-full bg-accent px-6 py-3 text-sm font-medium text-black"
             >
-              Go to my list
+              Go to your lists
             </Link>
           </div>
         </main>

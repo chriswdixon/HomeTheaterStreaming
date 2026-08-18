@@ -7,11 +7,13 @@ import {
   userSubscriptions,
 } from "@/db/schema";
 import type { Provider } from "@/lib/effective-services";
+import type { DefaultListView } from "@/lib/default-list-view";
 
 export type Membership = {
   userId: string;
   householdId: string;
   role: "owner" | "member";
+  defaultListView: DefaultListView;
   household: {
     id: string;
     name: string;
@@ -27,6 +29,7 @@ export async function getMembership(userId: string): Promise<Membership | null> 
       userId: householdMembers.userId,
       householdId: householdMembers.householdId,
       role: householdMembers.role,
+      defaultListView: householdMembers.defaultListView,
       household: households,
     })
     .from(householdMembers)
@@ -40,6 +43,8 @@ export async function getMembership(userId: string): Promise<Membership | null> 
     userId: row.userId,
     householdId: row.householdId,
     role: row.role === "owner" ? "owner" : "member",
+    defaultListView:
+      row.defaultListView === "shared" ? "shared" : "personal",
     household: {
       id: row.household.id,
       name: row.household.name,
@@ -100,4 +105,21 @@ export async function getHouseholdInvitePreview(code: string) {
     .limit(1);
 
   return household ?? null;
+}
+
+export async function updateDefaultListView(
+  userId: string,
+  householdId: string,
+  defaultListView: DefaultListView,
+) {
+  const db = getDb();
+  await db
+    .update(householdMembers)
+    .set({ defaultListView })
+    .where(
+      and(
+        eq(householdMembers.userId, userId),
+        eq(householdMembers.householdId, householdId),
+      ),
+    );
 }
