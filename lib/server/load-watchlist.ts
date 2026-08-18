@@ -7,7 +7,10 @@ import {
   getHouseholdProviders,
   getPersonalProviders,
 } from "@/lib/server/membership";
-import { mapWatchlistRow } from "@/lib/server/watchlist-store";
+import {
+  backfillMissingTitleMeta,
+  mapWatchlistRow,
+} from "@/lib/server/watchlist-store";
 import type { WatchState } from "@/lib/watch-state";
 import { recentlyWatchedItems } from "@/lib/watch-state";
 import type { WatchlistKind } from "@/lib/watchlist";
@@ -83,16 +86,18 @@ export async function loadWatchlist(
     )
     .orderBy(asc(watchlistItems.sortOrder), desc(watchlistItems.createdAt));
 
+  const hydrated = await backfillMissingTitleMeta(rows);
+
   const [services, states] = await Promise.all([
     servicesFor(userId, householdId),
     loadWatchStates(
       userId,
-      rows.map((row) => row.id),
+      hydrated.map((row) => row.id),
     ),
   ]);
   const stateById = new Map(states.map((state) => [state.watchlistItemId, state]));
 
-  return rows.map((row) =>
+  return hydrated.map((row) =>
     withAvailability(
       mapWatchlistRow(row),
       services,

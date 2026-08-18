@@ -43,7 +43,8 @@ export function createDbWatchlistStore(householdId: string): WatchlistStore {
         .from(watchlistItems)
         .where(eq(watchlistItems.householdId, householdId))
         .orderBy(asc(watchlistItems.sortOrder), desc(watchlistItems.createdAt));
-      return rows.map(mapWatchlistRow);
+      const hydrated = await backfillMissingTitleMeta(rows);
+      return hydrated.map(mapWatchlistRow);
     },
     async insertItem(item) {
       const [row] = await db
@@ -154,4 +155,43 @@ export async function refreshHouseholdAvailability(
     .where(eq(watchlistItems.householdId, householdId));
 
   await Promise.all(rows.map((row) => syncItemWatchCache(row, region)));
+}
+
+export async function backfillMissingTitleMeta(
+  rows: (typeof watchlistItems.$inferSelect)[],
+): Promise<(typeof watchlistItems.$inferSelect)[]> {
+  const missing = rows.filter((row) => (row.genres ?? []).length === 0).slice(0, 6);
+  if (missing.length === 0) return rows;
+
+  const db = getDb();
+  const tmdb = createTmdbClient();
+  const updated = new Map<string, (typeof watchlistItems.$inferSelect)>();
+  let next = 0;
+
+  async function worker() {
+    while (next < missing.length) {
+      const row = missing[next++];
+      if (!row) return;
+      try {
+        const mediaType = row.mediaType === "tv" ? "tv" : "movie";
+        const meta = await tmdb.getTitleMeta(row.tmdbMovieId, mediaType);
+        const [saved] = await db
+          .update(watchlistItems)
+          .set({
+            genres: meta.genres,
+            keywords: meta.keywords,
+            collectionId: meta.collectionId,
+            collectionName: meta.collectionName,
+          })
+          .where(eq(watchlistItems.id, row.id))
+          .returning();
+        if (saved) updated.set(row.id, saved);
+      } catch {
+        // Skip titles TMDB will not describe.
+      }
+    }
+  }
+
+  await Promise.all([worker(), worker()]);
+  return rows.map((row) => updated.get(row.id) ?? row);
 }
