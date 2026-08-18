@@ -90,3 +90,14 @@ export function SharedIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+
+export function VoteIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M2 20h4V9H2zm7 0h4V4H9zm7 0h4v-7h-4z"
+      />
+    </svg>
+  );
+}

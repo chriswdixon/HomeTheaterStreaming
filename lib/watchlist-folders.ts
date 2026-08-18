@@ -3,7 +3,23 @@ export type FolderedWatchlistItem = {
   folderName: string | null;
   folderOrder: number | null;
   sortOrder: number;
+  voteCount?: number;
 };
+
+function compareItems<T extends FolderedWatchlistItem>(left: T, right: T) {
+  const voteDiff = (right.voteCount ?? 0) - (left.voteCount ?? 0);
+  if (voteDiff !== 0) return voteDiff;
+  return left.sortOrder - right.sortOrder;
+}
+
+function sectionRank<T extends FolderedWatchlistItem>(items: T[]) {
+  const topVote = items.reduce(
+    (max, item) => Math.max(max, item.voteCount ?? 0),
+    0,
+  );
+  if (topVote > 0) return -topVote;
+  return Math.min(...items.map((item) => item.sortOrder));
+}
 
 export type WatchlistFolderGroup<T extends FolderedWatchlistItem> = {
   name: string;
@@ -39,11 +55,12 @@ export function layoutWatchlistFolders<T extends FolderedWatchlistItem>(
       name,
       items: [...folderItems].sort(
         (a, b) =>
+          (b.voteCount ?? 0) - (a.voteCount ?? 0) ||
           (a.folderOrder ?? Number.MAX_SAFE_INTEGER) -
             (b.folderOrder ?? Number.MAX_SAFE_INTEGER) ||
-          a.sortOrder - b.sortOrder,
+          compareItems(a, b),
       ),
-      sortOrder: Math.min(...folderItems.map((item) => item.sortOrder)),
+      sortOrder: sectionRank(folderItems),
     },
   }));
 
@@ -51,8 +68,8 @@ export function layoutWatchlistFolders<T extends FolderedWatchlistItem>(
     loose.length > 0
       ? {
           type: "items",
-          items: [...loose].sort((a, b) => a.sortOrder - b.sortOrder),
-          sortOrder: Math.min(...loose.map((item) => item.sortOrder)),
+          items: [...loose].sort(compareItems),
+          sortOrder: sectionRank(loose),
         }
       : null;
 

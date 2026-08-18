@@ -19,9 +19,11 @@ export default async function SharedListPage() {
     <WatchlistView
       list="shared"
       title="Shared list"
-      description="The household queue. Anyone here can add, reorder, or remove titles."
+      description="Vote for what to watch next. The most-voted titles rise to the top."
       initialItems={items}
       warning={warning}
+      allowDrag={false}
+      enableSharedVoting
       members={members}
       household={{
         name: membership.household.name,

@@ -7,11 +7,13 @@ import {
   getHouseholdProviders,
   getPersonalProviders,
 } from "@/lib/server/membership";
+import { sortSharedListItems } from "@/lib/shared-list-votes";
 import {
   backfillMissingTitleMeta,
   backfillMissingWatchProviders,
   mapWatchlistRow,
 } from "@/lib/server/watchlist-store";
+import { loadSharedListVoteSummaries } from "@/lib/server/shared-list-votes";
 import type { WatchState } from "@/lib/watch-state";
 import { recentlyWatchedItems } from "@/lib/watch-state";
 import type { WatchlistKind } from "@/lib/watchlist";
@@ -107,13 +109,33 @@ export async function loadWatchlist(
   ]);
   const stateById = new Map(states.map((state) => [state.watchlistItemId, state]));
 
-  return hydrated.map((row) =>
+  const items = hydrated.map((row) =>
     withAvailability(
       mapWatchlistRow(row),
       services,
       stateById.get(row.id) ?? null,
     ),
   );
+
+  if (list !== "shared") return items;
+
+  const summaries = await loadSharedListVoteSummaries(
+    userId,
+    items.map((item) => item.id),
+  );
+  const withVotes = items.map((item) => {
+    const summary = summaries.get(item.id) ?? {
+      voteCount: 0,
+      votedByCurrentUser: false,
+    };
+    return {
+      ...item,
+      voteCount: summary.voteCount,
+      votedByCurrentUser: summary.votedByCurrentUser,
+    };
+  });
+
+  return sortSharedListItems(withVotes);
 }
 
 export async function loadWatchlistSafe(

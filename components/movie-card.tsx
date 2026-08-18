@@ -11,7 +11,7 @@ import {
   ListStatusIcon,
   WatchNowIconLink,
 } from "./card-action-buttons";
-import { CheckIcon, GripIcon, SharedIcon, StarIcon, TrashIcon } from "./icons";
+import { CheckIcon, GripIcon, SharedIcon, StarIcon, TrashIcon, VoteIcon } from "./icons";
 import { ProviderBadges } from "./provider-badges";
 import { TitleDetailLightbox } from "./title-detail-lightbox";
 
@@ -56,6 +56,9 @@ export function MovieCard({
   onUnwatch,
   onCopyToShared,
   onSharedList,
+  onVote,
+  voteCount,
+  votedByCurrentUser,
   actions,
   order,
 }: {
@@ -73,13 +76,21 @@ export function MovieCard({
   onUnwatch?: () => void;
   onCopyToShared?: () => void;
   onSharedList?: boolean;
+  onVote?: () => void;
+  voteCount?: number;
+  votedByCurrentUser?: boolean;
   actions?: ReactNode;
   order?: number;
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const openTarget = availability.openTarget;
   const hasIconActions = Boolean(
-    onWatched || onRemove || onUnwatch || onCopyToShared || onSharedList,
+    onWatched ||
+      onRemove ||
+      onUnwatch ||
+      onCopyToShared ||
+      onSharedList ||
+      onVote,
   );
   const showOverlay = Boolean(openTarget || hasIconActions || actions);
   const canOpenDetail = tmdbMovieId != null;
@@ -140,6 +151,17 @@ export function MovieCard({
                   }}
                 />
               )
+            ) : null}
+            {onVote ? (
+              <CardIconButton
+                label={votedByCurrentUser ? "Remove vote" : "Vote for this title"}
+                tone={votedByCurrentUser ? "shared" : "vote"}
+                icon={<VoteIcon className="h-5 w-5" />}
+                onClick={(event) => {
+                  stopOverlayClick(event);
+                  onVote();
+                }}
+              />
             ) : null}
             {onRemove ? (
               <CardIconButton
@@ -212,9 +234,20 @@ export function MovieCard({
         </p>
       ) : null}
       <div
-        className="mt-auto flex min-h-[1.75rem] w-full items-end"
+        className="mt-auto flex min-h-[1.75rem] w-full items-end justify-between gap-2"
         onClick={stopOverlayClick}
       >
+        {voteCount != null ? (
+          <span
+            className={`vote-count-badge ${votedByCurrentUser ? "vote-count-badge-active" : ""}`}
+            title={`${voteCount} vote${voteCount === 1 ? "" : "s"}`}
+          >
+            <VoteIcon className="h-3.5 w-3.5" />
+            <span>{voteCount}</span>
+          </span>
+        ) : (
+          <span />
+        )}
         <ProviderBadges availability={availability} title={title} linkable />
       </div>
     </div>

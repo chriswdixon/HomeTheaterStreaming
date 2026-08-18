@@ -8,7 +8,7 @@ import {
   SharedIcon,
 } from "./icons";
 
-type ActionTone = "add" | "shared" | "watched" | "delete" | "watch";
+type ActionTone = "add" | "shared" | "watched" | "delete" | "watch" | "vote";
 
 const toneClass: Record<ActionTone, string> = {
   add: "action-btn-add",
@@ -16,6 +16,7 @@ const toneClass: Record<ActionTone, string> = {
   watched: "action-btn-watched",
   delete: "action-btn-delete",
   watch: "action-btn-watch",
+  vote: "action-btn-vote",
 };
 
 function CardActionTooltip({

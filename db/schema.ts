@@ -148,3 +148,19 @@ export const userWatchStates = pgTable(
     unique("user_watch_states_unique").on(table.userId, table.watchlistItemId),
   ],
 );
+
+export const sharedListVotes = pgTable(
+  "shared_list_votes",
+  {
+    watchlistItemId: uuid("watchlist_item_id")
+      .notNull()
+      .references(() => watchlistItems.id, { onDelete: "cascade" }),
+    userId: text("user_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.watchlistItemId, table.userId] }),
+  ],
+);

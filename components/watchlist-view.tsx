@@ -23,6 +23,7 @@ import { layoutWatchlistFolders } from "@/lib/watchlist-folders";
 import type { WatchState } from "@/lib/watch-state";
 import type { WatchlistKind } from "@/lib/watchlist";
 import { watchlistItemKey } from "@/lib/default-list-view";
+import { sortSharedListItems } from "@/lib/shared-list-votes";
 import { ConfirmDialog, RatingDialog } from "./dialogs";
 import { HouseholdSharingLightbox } from "./household-sharing-lightbox";
 import { HouseholdMembersList } from "./household-members-list";
@@ -33,6 +34,8 @@ import { MovieSearch } from "./movie-search";
 export type WatchlistItemView = StoredWatchlistItem & {
   availability: ViewerAvailability;
   watchState: WatchState | null;
+  voteCount?: number;
+  votedByCurrentUser?: boolean;
 };
 
 export function WatchlistView({
@@ -43,6 +46,7 @@ export function WatchlistView({
   showSearch = true,
   allowDrag = true,
   mode = "queue",
+  enableSharedVoting = false,
   warning,
   viewerServices = [],
   showServiceFilter = false,
@@ -56,6 +60,7 @@ export function WatchlistView({
   initialItems: WatchlistItemView[];
   showSearch?: boolean;
   allowDrag?: boolean;
+  enableSharedVoting?: boolean;
   mode?: "queue" | "watched";
   warning?: string;
   viewerServices?: Provider[];
@@ -117,7 +122,8 @@ export function WatchlistView({
     options?: { order?: number; draggable?: boolean },
   ) {
     const draggable =
-      options?.draggable ?? (allowDrag && !showWatched && !item.folderName);
+      options?.draggable ??
+      (allowDrag && !enableSharedVoting && !showWatched && !item.folderName);
 
     return (
       <MovieCard
@@ -131,6 +137,13 @@ export function WatchlistView({
         order={options?.order ?? item.folderOrder ?? undefined}
         rating={item.watchState?.rating}
         draggable={draggable}
+        voteCount={enableSharedVoting ? item.voteCount ?? 0 : undefined}
+        votedByCurrentUser={
+          enableSharedVoting ? item.votedByCurrentUser ?? false : undefined
+        }
+        onVote={
+          enableSharedVoting ? () => void toggleSharedVote(item) : undefined
+        }
         onWatched={item.watchState ? undefined : () => setRatingItem(item)}
         onUnwatch={item.watchState ? () => void unwatch(item) : undefined}
         onCopyToShared={
@@ -162,7 +175,14 @@ export function WatchlistView({
     };
     if (!response.ok) throw new Error(data.error ?? "Could not add title");
     if (data.item) {
-      setItems((current) => [data.item!, ...current]);
+      const nextItem = enableSharedVoting
+        ? { ...data.item!, voteCount: 0, votedByCurrentUser: false }
+        : data.item!;
+      setItems((current) =>
+        enableSharedVoting
+          ? sortSharedListItems([...current, nextItem])
+          : [nextItem, ...current],
+      );
       router.refresh();
     }
   }
@@ -250,6 +270,38 @@ export function WatchlistView({
       return next;
     });
     setMessage(`Added ${item.title} to the shared list`);
+  }
+
+  async function toggleSharedVote(item: WatchlistItemView) {
+    setMessage(null);
+    const response = await fetchNoStore("/api/shared-votes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ watchlistItemId: item.id }),
+    });
+    const data = (await response.json()) as {
+      voteCount?: number;
+      votedByCurrentUser?: boolean;
+      error?: string;
+    };
+    if (!response.ok) {
+      setMessage(data.error ?? "Could not save vote");
+      return;
+    }
+
+    setItems((current) =>
+      sortSharedListItems(
+        current.map((row) =>
+          row.id === item.id
+            ? {
+                ...row,
+                voteCount: data.voteCount ?? 0,
+                votedByCurrentUser: data.votedByCurrentUser ?? false,
+              }
+            : row,
+        ),
+      ),
+    );
   }
 
   async function remove(item: WatchlistItemView) {

@@ -337,6 +337,36 @@ textarea.glass-input {
   color: #eef6ff;
 }
 
+.action-btn-vote {
+  border: 1px solid rgba(168, 132, 216, 0.55);
+  background: rgba(168, 132, 216, 0.24);
+  color: #f6efff;
+}
+
+.action-btn-vote:hover {
+  background: rgba(168, 132, 216, 0.38);
+  border-color: rgba(168, 132, 216, 0.75);
+  color: #f6efff;
+}
+
+.vote-count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.vote-count-badge-active {
+  border-color: rgba(107, 159, 212, 0.45);
+  background: rgba(107, 159, 212, 0.16);
+  color: #eef6ff;
+}
+
 .action-btn-watched {
   border: 1px solid rgba(232, 184, 109, 0.55);
   background: rgba(232, 184, 109, 0.28);

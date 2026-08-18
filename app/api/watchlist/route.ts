@@ -106,7 +106,16 @@ export async function POST(request: Request) {
   );
 
   return jsonOk(
-    { item: { ...added.item, availability, watchState: null } },
+    {
+      item: {
+        ...added.item,
+        availability,
+        watchState: null,
+        ...(list === "shared"
+          ? { voteCount: 0, votedByCurrentUser: false }
+          : {}),
+      },
+    },
     { status: 201 },
   );
 }
