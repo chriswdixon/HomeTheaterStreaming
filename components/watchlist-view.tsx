@@ -279,7 +279,7 @@ export function WatchlistView({
         </p>
       ) : null}
       {showSearch && list ? (
-        <div className="glass mt-6 rounded-3xl p-4 sm:p-5">
+        <div className="glass mt-6 overflow-visible rounded-3xl p-4 sm:p-5">
           <p className="mb-3 text-xs uppercase tracking-[0.2em] text-accent">
             Add to your list
           </p>
@@ -331,7 +331,7 @@ export function WatchlistView({
               {showWatched ? "Watched" : "Unwatched"}
               <span
                 role="tooltip"
-                className="pointer-events-none absolute bottom-[calc(100%+0.4rem)] right-0 z-10 whitespace-nowrap rounded-md bg-black px-2 py-1 text-[11px] font-normal text-foreground opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
+                className="app-tooltip pointer-events-none absolute bottom-[calc(100%+0.4rem)] right-0 z-10 whitespace-nowrap opacity-0 transition-opacity group-hover:opacity-100"
               >
                 {showWatched ? "Show unwatched" : "Show watched"}
               </span>

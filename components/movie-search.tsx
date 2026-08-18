@@ -57,11 +57,11 @@ export function MovieSearch({
   const visibleResults = query.trim().length < 2 ? [] : results;
 
   return (
-    <div ref={boxRef} className="relative">
+    <div ref={boxRef} className="relative w-full min-w-0">
       <label htmlFor="movie-search" className="sr-only">
         Search movies and series to add
       </label>
-      <div className="glass-input flex items-center gap-3 py-4 pr-5 pl-5">
+      <div className="glass-input flex w-full min-w-0 items-center gap-3 px-5 py-4">
         <SearchIcon className="h-5 w-5 shrink-0 text-accent" />
         <input
           id="movie-search"

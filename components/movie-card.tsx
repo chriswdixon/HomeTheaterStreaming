@@ -195,7 +195,7 @@ function IconButton({
       </button>
       <span
         role="tooltip"
-        className={`glass-badge pointer-events-none absolute bottom-[calc(100%+0.4rem)] z-10 whitespace-nowrap opacity-0 transition-opacity group-hover:opacity-100 ${
+        className={`app-tooltip pointer-events-none absolute bottom-[calc(100%+0.4rem)] z-10 whitespace-nowrap opacity-0 transition-opacity group-hover:opacity-100 ${
           tone === "danger" ? "right-0" : "left-1/2 -translate-x-1/2"
         }`}
       >
