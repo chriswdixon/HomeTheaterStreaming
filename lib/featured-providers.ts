@@ -41,3 +41,29 @@ export function partitionProviders(providers: Provider[]) {
   rest.sort((a, b) => a.name.localeCompare(b.name));
   return { featured, rest };
 }
+
+export function partitionProviderSections(
+  providers: Provider[],
+  selectedIds: Set<number>,
+) {
+  const selected: Provider[] = [];
+  const featured: Provider[] = [];
+  const rest: Provider[] = [];
+
+  for (const provider of providers) {
+    if (selectedIds.has(provider.tmdbProviderId)) {
+      selected.push(provider);
+      continue;
+    }
+    if (FEATURED_NAMES.has(provider.name.toLowerCase())) {
+      featured.push(provider);
+      continue;
+    }
+    rest.push(provider);
+  }
+
+  selected.sort((a, b) => a.name.localeCompare(b.name));
+  featured.sort((a, b) => a.name.localeCompare(b.name));
+  rest.sort((a, b) => a.name.localeCompare(b.name));
+  return { selected, featured, rest };
+}

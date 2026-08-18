@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { WATCH_REGIONS } from "@/lib/regions";
 import type { Provider } from "@/lib/effective-services";
+import { partitionProviderSections } from "@/lib/featured-providers";
 import { tmdbImageUrl } from "@/lib/tmdb";
 
 type Mode = "choose" | "create" | "join";
@@ -102,13 +103,16 @@ export function OnboardingForm() {
     }
   }
 
-  const filtered = useMemo(() => {
+  const sections = useMemo(() => {
     const q = query.trim().toLowerCase();
     const visible = q
       ? providers.filter((provider) => provider.name.toLowerCase().includes(q))
       : providers;
-    return [...visible].sort((a, b) => a.name.localeCompare(b.name));
-  }, [providers, query]);
+    return partitionProviderSections(
+      visible,
+      new Set(Object.keys(selected).map((id) => Number(id))),
+    );
+  }, [providers, query, selected]);
 
   function toggle(provider: Provider) {
     setSelected((current) => {
@@ -233,7 +237,20 @@ export function OnboardingForm() {
               />
             </div>
             <ProviderChecklist
-              providers={filtered}
+              heading="Your services"
+              providers={sections.selected}
+              selected={selected}
+              onToggle={toggle}
+            />
+            <ProviderChecklist
+              heading="Popular"
+              providers={sections.featured}
+              selected={selected}
+              onToggle={toggle}
+            />
+            <ProviderChecklist
+              heading="More services"
+              providers={sections.rest}
               selected={selected}
               onToggle={toggle}
             />
@@ -261,10 +278,12 @@ export function OnboardingForm() {
 }
 
 function ProviderChecklist({
+  heading,
   providers,
   selected,
   onToggle,
 }: {
+  heading: string;
   providers: Provider[];
   selected: Record<number, Provider>;
   onToggle: (provider: Provider) => void;
@@ -272,7 +291,11 @@ function ProviderChecklist({
   if (providers.length === 0) return null;
 
   return (
-    <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+    <section className="mt-4">
+      <h3 className="mb-2 text-xs uppercase tracking-[0.18em] text-muted">
+        {heading}
+      </h3>
+      <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {providers.map((provider) => {
           const checked = Boolean(selected[provider.tmdbProviderId]);
           const logo = tmdbImageUrl(provider.logoPath, "w92");
@@ -301,5 +324,6 @@ function ProviderChecklist({
           );
         })}
       </ul>
+    </section>
   );
 }
