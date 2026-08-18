@@ -38,17 +38,20 @@ export async function loadWatchlist(
     getHouseholdProviders(householdId),
     getPersonalProviders(userId, householdId),
   ]);
-  const effectiveIds = new Set(
-    mergeEffectiveServices(household, personal).map(
-      (provider) => provider.tmdbProviderId,
-    ),
-  );
+  const services = mergeEffectiveServices(household, personal);
 
-  return rows.map((row) => ({
-    ...mapWatchlistRow(row),
-    availability: availabilityForViewer(
-      row.cachedFlatrateProviders ?? [],
-      effectiveIds,
-    ),
-  }));
+  return rows.map((row) => {
+    const item = mapWatchlistRow(row);
+    return {
+      ...item,
+      availability: availabilityForViewer(
+        {
+          flatrate: item.cachedFlatrateProviders,
+          rent: item.cachedRentProviders,
+          watchUrl: item.watchUrl,
+        },
+        services,
+      ),
+    };
+  });
 }

@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import type { ViewerAvailability } from "@/lib/availability";
 import type { StoredWatchlistItem } from "@/lib/server/watchlist-actions";
-import type { Provider } from "@/lib/effective-services";
 import type { TmdbSearchMovie } from "@/lib/tmdb";
 import type { WatchlistKind } from "@/lib/watchlist";
 import { MovieCard } from "./movie-card";
 import { MovieSearch } from "./movie-search";
 
 export type WatchlistItemView = StoredWatchlistItem & {
-  availability: { available: boolean; onServices: Provider[] };
+  availability: ViewerAvailability;
 };
 
 export function WatchlistView({
@@ -81,7 +81,7 @@ export function WatchlistView({
                 year={item.year}
                 posterPath={item.posterPath}
                 overview={item.overview}
-                providers={item.availability.onServices}
+                availability={item.availability}
                 actions={
                   <button
                     type="button"

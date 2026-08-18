@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   addWatchlistItem,
   getRecommendationPayload,
+  MAX_WATCH_PROVIDER_LOOKUPS,
   type WatchlistStore,
 } from "./watchlist-actions";
 import type { TmdbClient } from "../tmdb";
@@ -22,14 +23,41 @@ const dune: RecommendedMovie = {
   providers: [netflix],
 };
 
+const emptyWatch = {
+  flatrate: [] as Provider[],
+  rent: [] as Provider[],
+  buy: [] as Provider[],
+  watchUrl: null as string | null,
+};
+
 function mockTmdb(overrides: Partial<TmdbClient> = {}): TmdbClient {
   return {
     searchMovies: vi.fn(),
-    getWatchProviders: vi.fn().mockResolvedValue([netflix]),
+    getWatchProviders: vi.fn().mockResolvedValue({
+      ...emptyWatch,
+      flatrate: [netflix],
+    }),
     getMovieRecommendations: vi.fn().mockResolvedValue([dune]),
     listWatchProviders: vi.fn(),
     ...overrides,
   };
+}
+
+function personalMovies(count: number) {
+  return Array.from({ length: count }, (_, index) => ({
+    id: String(index),
+    list: "personal" as const,
+    ownerUserId: "user-1",
+    tmdbMovieId: index + 1,
+    title: `Movie ${index}`,
+    year: "2020",
+    posterPath: null,
+    overview: "",
+    cachedFlatrateProviders: [netflix],
+    cachedRentProviders: [],
+    watchUrl: null,
+    addedByUserId: "user-1",
+  }));
 }
 
 function memoryStore(
@@ -66,6 +94,8 @@ describe("addWatchlistItem", () => {
         posterPath: null,
         overview: "",
         cachedFlatrateProviders: [],
+        cachedRentProviders: [],
+        watchUrl: null,
         addedByUserId: "user-1",
       },
     ]);
@@ -94,7 +124,18 @@ describe("addWatchlistItem", () => {
   it("caches flatrate providers from TMDB when adding a movie", async () => {
     const store = memoryStore([]);
     const tmdb = mockTmdb({
-      getWatchProviders: vi.fn().mockResolvedValue([netflix]),
+      getWatchProviders: vi.fn().mockResolvedValue({
+        ...emptyWatch,
+        flatrate: [netflix],
+        rent: [
+          {
+            tmdbProviderId: 10,
+            name: "Amazon Video",
+            logoPath: "/amazon.png",
+          },
+        ],
+        watchUrl: "https://www.themoviedb.org/movie/550/watch?locale=US",
+      }),
     });
 
     const result = await addWatchlistItem(
@@ -117,23 +158,22 @@ describe("addWatchlistItem", () => {
     expect(result.ok).toBe(true);
     expect(tmdb.getWatchProviders).toHaveBeenCalledWith(550, "US");
     expect(store.items[0]?.cachedFlatrateProviders).toEqual([netflix]);
+    expect(store.items[0]?.cachedRentProviders).toEqual([
+      {
+        tmdbProviderId: 10,
+        name: "Amazon Video",
+        logoPath: "/amazon.png",
+      },
+    ]);
+    expect(store.items[0]?.watchUrl).toBe(
+      "https://www.themoviedb.org/movie/550/watch?locale=US",
+    );
   });
 });
 
 describe("getRecommendationPayload", () => {
   it("stays gated until the personal list has 10 movies", async () => {
-    const personal = Array.from({ length: 9 }, (_, index) => ({
-      id: String(index),
-      list: "personal" as const,
-      ownerUserId: "user-1",
-      tmdbMovieId: index + 1,
-      title: `Movie ${index}`,
-      year: "2020",
-      posterPath: null,
-      overview: "",
-      cachedFlatrateProviders: [netflix],
-      addedByUserId: "user-1",
-    }));
+    const personal = personalMovies(9);
 
     const payload = await getRecommendationPayload(
       { tmdb: mockTmdb(), store: memoryStore(personal) },
@@ -152,22 +192,14 @@ describe("getRecommendationPayload", () => {
   });
 
   it("returns grouped recommendations after 10 personal movies", async () => {
-    const personal = Array.from({ length: 10 }, (_, index) => ({
-      id: String(index),
-      list: "personal" as const,
-      ownerUserId: "user-1",
-      tmdbMovieId: index + 1,
-      title: `Movie ${index}`,
-      year: "2020",
-      posterPath: null,
-      overview: "",
-      cachedFlatrateProviders: [netflix],
-      addedByUserId: "user-1",
-    }));
+    const personal = personalMovies(10);
 
     const tmdb = mockTmdb({
       getMovieRecommendations: vi.fn().mockResolvedValue([dune]),
-      getWatchProviders: vi.fn().mockResolvedValue([netflix]),
+      getWatchProviders: vi.fn().mockResolvedValue({
+        ...emptyWatch,
+        flatrate: [netflix],
+      }),
     });
 
     const payload = await getRecommendationPayload(
@@ -184,5 +216,83 @@ describe("getRecommendationPayload", () => {
       expect(payload.groups[0]?.provider.tmdbProviderId).toBe(8);
       expect(payload.groups[0]?.movies[0]?.tmdbMovieId).toBe(101);
     }
+  });
+
+  it("keeps recommendations when some TMDB watch-provider lookups fail", async () => {
+    const personal = personalMovies(10);
+    const flop: RecommendedMovie = {
+      tmdbMovieId: 14831,
+      title: "The Flop",
+      year: "1980",
+      posterPath: null,
+      overview: "",
+      providers: [],
+    };
+    const tmdb = mockTmdb({
+      getMovieRecommendations: vi.fn().mockResolvedValue([
+        { ...dune, providers: [] },
+        flop,
+      ]),
+      getWatchProviders: vi.fn().mockImplementation(async (id: number) => {
+        if (id === flop.tmdbMovieId) {
+          throw new Error("TMDB request failed (429) for /movie/14831/watch/providers");
+        }
+        return { ...emptyWatch, flatrate: [netflix] };
+      }),
+    });
+
+    const payload = await getRecommendationPayload(
+      { tmdb, store: memoryStore(personal) },
+      {
+        ownerUserId: "user-1",
+        effectiveProviders: [netflix],
+        region: "US",
+      },
+    );
+
+    expect(payload.unlocked).toBe(true);
+    if (payload.unlocked) {
+      expect(payload.groups[0]?.movies.map((movie) => movie.tmdbMovieId)).toEqual([
+        101,
+      ]);
+    }
+  });
+
+  it("looks up watch providers for the most recommended titles first, not every unique id", async () => {
+    const personal = personalMovies(10);
+    const crowdFavorites = Array.from({ length: 40 }, (_, index) => ({
+      tmdbMovieId: 1000 + index,
+      title: `Popular ${index}`,
+      year: "2024",
+      posterPath: null,
+      overview: "",
+      providers: [] as Provider[],
+    }));
+    const tmdb = mockTmdb({
+      getMovieRecommendations: vi.fn().mockImplementation(async (movieId: number) => {
+        const uncachedDune = { ...dune, providers: [] };
+        if (movieId === 1) {
+          return [uncachedDune, ...crowdFavorites];
+        }
+        return [uncachedDune];
+      }),
+      getWatchProviders: vi.fn().mockResolvedValue({
+        ...emptyWatch,
+        flatrate: [netflix],
+      }),
+    });
+
+    await getRecommendationPayload(
+      { tmdb, store: memoryStore(personal) },
+      {
+        ownerUserId: "user-1",
+        effectiveProviders: [netflix],
+        region: "US",
+      },
+    );
+
+    const lookedUp = vi.mocked(tmdb.getWatchProviders).mock.calls.map(([id]) => id);
+    expect(lookedUp.length).toBeLessThanOrEqual(MAX_WATCH_PROVIDER_LOOKUPS);
+    expect(lookedUp[0]).toBe(101);
   });
 });

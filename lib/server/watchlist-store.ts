@@ -1,7 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { watchlistItems } from "@/db/schema";
-import type { Provider } from "@/lib/effective-services";
 import type {
   StoredWatchlistItem,
   WatchlistStore,
@@ -22,6 +21,8 @@ export function mapWatchlistRow(
     posterPath: row.posterPath,
     overview: row.overview ?? "",
     cachedFlatrateProviders: row.cachedFlatrateProviders ?? [],
+    cachedRentProviders: row.cachedRentProviders ?? [],
+    watchUrl: row.watchUrl ?? null,
     addedByUserId: row.addedByUserId,
   };
 }
@@ -50,6 +51,8 @@ export function createDbWatchlistStore(householdId: string): WatchlistStore {
           posterPath: item.posterPath,
           overview: item.overview,
           cachedFlatrateProviders: item.cachedFlatrateProviders,
+          cachedRentProviders: item.cachedRentProviders,
+          watchUrl: item.watchUrl,
           addedByUserId: item.addedByUserId,
         })
         .returning();
@@ -63,32 +66,58 @@ export function createDbWatchlistStore(householdId: string): WatchlistStore {
   };
 }
 
+function watchCacheUnchanged(
+  row: typeof watchlistItems.$inferSelect,
+  watch: {
+    flatrate: StoredWatchlistItem["cachedFlatrateProviders"];
+    rent: StoredWatchlistItem["cachedRentProviders"];
+    watchUrl: string | null;
+  },
+) {
+  return (
+    JSON.stringify(row.cachedFlatrateProviders ?? []) ===
+      JSON.stringify(watch.flatrate) &&
+    JSON.stringify(row.cachedRentProviders ?? []) === JSON.stringify(watch.rent) &&
+    (row.watchUrl ?? null) === watch.watchUrl
+  );
+}
+
+export async function syncItemWatchCache(
+  row: typeof watchlistItems.$inferSelect,
+  region: string,
+): Promise<typeof watchlistItems.$inferSelect> {
+  const db = getDb();
+  const tmdb = createTmdbClient();
+  const watch = await tmdb.getWatchProviders(row.tmdbMovieId, region);
+  if (watchCacheUnchanged(row, watch)) return row;
+
+  const [updated] = await db
+    .update(watchlistItems)
+    .set({
+      cachedFlatrateProviders: watch.flatrate,
+      cachedRentProviders: watch.rent,
+      watchUrl: watch.watchUrl,
+    })
+    .where(
+      and(
+        eq(watchlistItems.id, row.id),
+        eq(watchlistItems.householdId, row.householdId),
+      ),
+    )
+    .returning();
+
+  return updated ?? row;
+}
+
 export async function refreshHouseholdAvailability(
   householdId: string,
   region: string,
 ) {
   const db = getDb();
-  const tmdb = createTmdbClient();
   const rows = await db
     .select()
     .from(watchlistItems)
     .where(eq(watchlistItems.householdId, householdId));
 
-  await Promise.all(
-    rows.map(async (row) => {
-      const providers: Provider[] = await tmdb.getWatchProviders(
-        row.tmdbMovieId,
-        region,
-      );
-      await db
-        .update(watchlistItems)
-        .set({ cachedFlatrateProviders: providers })
-        .where(
-          and(
-            eq(watchlistItems.id, row.id),
-            eq(watchlistItems.householdId, householdId),
-          ),
-        );
-    }),
-  );
+  await Promise.all(rows.map((row) => syncItemWatchCache(row, region)));
 }

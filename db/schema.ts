@@ -88,6 +88,11 @@ export const watchlistItems = pgTable(
       .$type<Provider[]>()
       .notNull()
       .default(sql`'[]'::jsonb`),
+    cachedRentProviders: jsonb("cached_rent_providers")
+      .$type<Provider[]>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
+    watchUrl: text("watch_url"),
     addedByUserId: text("added_by_user_id").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()

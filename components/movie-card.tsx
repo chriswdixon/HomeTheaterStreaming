@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { Provider } from "@/lib/effective-services";
+import type { ViewerAvailability } from "@/lib/availability";
 import { tmdbImageUrl } from "@/lib/tmdb";
 import { ProviderBadges } from "./provider-badges";
 
@@ -34,14 +34,14 @@ export function MovieCard({
   year,
   posterPath,
   overview,
-  providers,
+  availability,
   actions,
 }: {
   title: string;
   year: string | null;
   posterPath: string | null;
   overview?: string;
-  providers: Provider[];
+  availability: ViewerAvailability;
   actions?: ReactNode;
 }) {
   return (
@@ -55,7 +55,7 @@ export function MovieCard({
         {overview ? (
           <p className="line-clamp-3 text-xs text-muted">{overview}</p>
         ) : null}
-        <ProviderBadges providers={providers} />
+        <ProviderBadges availability={availability} />
         {actions ? <div className="mt-auto flex flex-wrap gap-2">{actions}</div> : null}
       </div>
     </article>

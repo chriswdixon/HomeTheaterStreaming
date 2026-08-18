@@ -19,6 +19,8 @@ export type StoredWatchlistItem = {
   posterPath: string | null;
   overview: string;
   cachedFlatrateProviders: Provider[];
+  cachedRentProviders: Provider[];
+  watchUrl: string | null;
   addedByUserId: string;
 };
 
@@ -61,7 +63,7 @@ export async function addWatchlistItem(
     return { ok: false, error: "duplicate" };
   }
 
-  const cachedFlatrateProviders = await deps.tmdb.getWatchProviders(
+  const watch = await deps.tmdb.getWatchProviders(
     input.movie.tmdbMovieId,
     input.region,
   );
@@ -74,7 +76,9 @@ export async function addWatchlistItem(
     year: input.movie.year,
     posterPath: input.movie.posterPath,
     overview: input.movie.overview,
-    cachedFlatrateProviders,
+    cachedFlatrateProviders: watch.flatrate,
+    cachedRentProviders: watch.rent,
+    watchUrl: watch.watchUrl,
     addedByUserId: input.addedByUserId,
   });
 
@@ -84,6 +88,32 @@ export async function addWatchlistItem(
 export type RecommendationPayload =
   | { unlocked: false; count: number; needed: number }
   | { unlocked: true; count: number; needed: number; groups: RecommendationGroup[] };
+
+export const MAX_WATCH_PROVIDER_LOOKUPS = 30;
+const WATCH_PROVIDER_CONCURRENCY = 5;
+
+async function settledMap<T>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T) => Promise<void>,
+) {
+  let next = 0;
+  async function worker() {
+    while (next < items.length) {
+      const index = next++;
+      const item = items[index];
+      if (item === undefined) return;
+      try {
+        await fn(item);
+      } catch {
+        // Keep going; one TMDB 429/404 must not fail the whole page.
+      }
+    }
+  }
+  if (items.length === 0) return;
+  const workerCount = Math.min(concurrency, items.length);
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+}
 
 export async function getRecommendationPayload(
   deps: { tmdb: TmdbClient; store: WatchlistStore },
@@ -115,24 +145,38 @@ export async function getRecommendationPayload(
   );
 
   const recSets = await Promise.all(
-    personal.map((item) => deps.tmdb.getMovieRecommendations(item.tmdbMovieId)),
+    personal.map(async (item) => {
+      try {
+        return await deps.tmdb.getMovieRecommendations(item.tmdbMovieId);
+      } catch {
+        return [];
+      }
+    }),
   );
 
-  const uniqueIds = new Set<number>();
+  const frequency = new Map<number, number>();
   for (const set of recSets) {
+    const seenInSet = new Set<number>();
     for (const rec of set) {
-      if (!excludedTmdbIds.has(rec.tmdbMovieId) && rec.providers.length === 0) {
-        uniqueIds.add(rec.tmdbMovieId);
+      if (excludedTmdbIds.has(rec.tmdbMovieId) || rec.providers.length > 0) {
+        continue;
       }
+      if (seenInSet.has(rec.tmdbMovieId)) continue;
+      seenInSet.add(rec.tmdbMovieId);
+      frequency.set(rec.tmdbMovieId, (frequency.get(rec.tmdbMovieId) ?? 0) + 1);
     }
   }
 
+  const uniqueIds = [...frequency.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+    .slice(0, MAX_WATCH_PROVIDER_LOOKUPS)
+    .map(([id]) => id);
+
   const providersById = new Map<number, Provider[]>();
-  await Promise.all(
-    [...uniqueIds].map(async (id) => {
-      providersById.set(id, await deps.tmdb.getWatchProviders(id, input.region));
-    }),
-  );
+  await settledMap(uniqueIds, WATCH_PROVIDER_CONCURRENCY, async (id) => {
+    const watch = await deps.tmdb.getWatchProviders(id, input.region);
+    providersById.set(id, watch.flatrate);
+  });
 
   const recommendationSets = recSets.map((set) =>
     set.map((rec) => ({
@@ -162,7 +206,11 @@ export function viewerAvailability(
 ) {
   const effective = mergeEffectiveServices(household, personal);
   return availabilityForViewer(
-    item.cachedFlatrateProviders,
-    new Set(effective.map((provider) => provider.tmdbProviderId)),
+    {
+      flatrate: item.cachedFlatrateProviders,
+      rent: item.cachedRentProviders,
+      watchUrl: item.watchUrl,
+    },
+    effective,
   );
 }

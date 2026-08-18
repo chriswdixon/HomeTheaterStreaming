@@ -9,9 +9,16 @@ export type TmdbSearchMovie = {
   overview: string;
 };
 
+export type WatchOptions = {
+  flatrate: Provider[];
+  rent: Provider[];
+  buy: Provider[];
+  watchUrl: string | null;
+};
+
 export type TmdbClient = {
   searchMovies: (query: string) => Promise<TmdbSearchMovie[]>;
-  getWatchProviders: (movieId: number, region: string) => Promise<Provider[]>;
+  getWatchProviders: (movieId: number, region: string) => Promise<WatchOptions>;
   getMovieRecommendations: (movieId: number) => Promise<RecommendedMovie[]>;
   listWatchProviders: (region: string) => Promise<Provider[]>;
 };
@@ -105,10 +112,23 @@ export function createTmdbClient(
 
     async getWatchProviders(movieId, region) {
       const data = await tmdbGet<{
-        results?: Record<string, { flatrate?: TmdbProviderPayload[] }>;
+        results?: Record<
+          string,
+          {
+            link?: string;
+            flatrate?: TmdbProviderPayload[];
+            rent?: TmdbProviderPayload[];
+            buy?: TmdbProviderPayload[];
+          }
+        >;
       }>(`/movie/${movieId}/watch/providers`);
       const regionData = data.results?.[region];
-      return (regionData?.flatrate ?? []).map(mapProvider);
+      return {
+        flatrate: (regionData?.flatrate ?? []).map(mapProvider),
+        rent: (regionData?.rent ?? []).map(mapProvider),
+        buy: (regionData?.buy ?? []).map(mapProvider),
+        watchUrl: regionData?.link ?? null,
+      };
     },
 
     async getMovieRecommendations(movieId) {

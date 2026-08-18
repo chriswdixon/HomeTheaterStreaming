@@ -100,7 +100,11 @@ export function RecommendationsView({
                       year={movie.year}
                       posterPath={movie.posterPath}
                       overview={movie.overview}
-                      providers={movie.providers}
+                      availability={{
+                        available: true,
+                        onServices: movie.providers,
+                        rentOffer: null,
+                      }}
                       actions={
                         <>
                           <button

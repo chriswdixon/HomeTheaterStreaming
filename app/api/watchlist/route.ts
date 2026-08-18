@@ -51,20 +51,23 @@ export async function GET(request: Request) {
     getHouseholdProviders(result.membership.householdId),
     getPersonalProviders(result.userId, result.membership.householdId),
   ]);
-  const effectiveIds = new Set(
-    mergeEffectiveServices(household, personal).map(
-      (provider) => provider.tmdbProviderId,
-    ),
-  );
+  const services = mergeEffectiveServices(household, personal);
 
   return NextResponse.json({
-    items: rows.map((row) => ({
-      ...mapWatchlistRow(row),
-      availability: availabilityForViewer(
-        row.cachedFlatrateProviders ?? [],
-        effectiveIds,
-      ),
-    })),
+    items: rows.map((row) => {
+      const item = mapWatchlistRow(row);
+      return {
+        ...item,
+        availability: availabilityForViewer(
+          {
+            flatrate: item.cachedFlatrateProviders,
+            rent: item.cachedRentProviders,
+            watchUrl: item.watchUrl,
+          },
+          services,
+        ),
+      };
+    }),
   });
 }
 
@@ -118,12 +121,12 @@ export async function POST(request: Request) {
     getPersonalProviders(result.userId, result.membership.householdId),
   ]);
   const availability = availabilityForViewer(
-    added.item.cachedFlatrateProviders,
-    new Set(
-      mergeEffectiveServices(household, personal).map(
-        (provider) => provider.tmdbProviderId,
-      ),
-    ),
+    {
+      flatrate: added.item.cachedFlatrateProviders,
+      rent: added.item.cachedRentProviders,
+      watchUrl: added.item.watchUrl,
+    },
+    mergeEffectiveServices(household, personal),
   );
 
   return NextResponse.json({ item: { ...added.item, availability } }, { status: 201 });
