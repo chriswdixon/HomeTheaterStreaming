@@ -12,7 +12,7 @@ function GlassSvgIcon({
       <defs>
         <linearGradient id={gradientId} x1="8" y1="4" x2="24" y2="28">
           <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
-          <stop offset="100%" stopColor="#c8d4ff" stopOpacity="0.75" />
+          <stop offset="100%" stopColor="#f0d090" stopOpacity="0.75" />
         </linearGradient>
       </defs>
       {children}

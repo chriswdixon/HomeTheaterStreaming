@@ -41,7 +41,7 @@ export function AppNav({ householdName }: { householdName: string }) {
             );
           })}
         </nav>
-        <p className="glass-badge hidden text-sm text-muted lg:inline">{householdName}</p>
+        <p className="nav-household-name hidden lg:inline">{householdName}</p>
         <UserButton />
       </div>
     </header>

@@ -374,14 +374,14 @@ function FranchiseAddButtons({
       <button
         type="button"
         onClick={() => onAdd(payload, "personal")}
-        className="glass-button glass-button-primary px-3 py-1.5 text-xs"
+        className="action-btn-pill action-btn-add px-3 py-1.5 text-xs"
       >
         Add franchise to My list
       </button>
       <button
         type="button"
         onClick={() => onAdd(payload, "shared")}
-        className="glass-button px-3 py-1.5 text-xs"
+        className="action-btn-pill action-btn-add px-3 py-1.5 text-xs"
       >
         Add franchise to Shared
       </button>
@@ -418,14 +418,14 @@ function AddButtons({
       <button
         type="button"
         onClick={() => onAdd(movie, "personal")}
-        className="glass-button glass-button-primary px-3 py-1 text-xs"
+        className="action-btn-pill action-btn-add px-3 py-1 text-xs"
       >
         My list
       </button>
       <button
         type="button"
         onClick={() => onAdd(movie, "shared")}
-        className="glass-button px-3 py-1 text-xs"
+        className="action-btn-pill action-btn-add px-3 py-1 text-xs"
       >
         Shared
       </button>

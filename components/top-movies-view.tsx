@@ -108,7 +108,7 @@ export function TopMoviesView({
                       <button
                         type="button"
                         onClick={() => void addMovie(movie, "shared")}
-                        className="rounded-full border border-white/15 px-3 py-1 text-xs"
+                        className="action-btn-pill action-btn-add"
                       >
                         Shared
                       </button>
@@ -119,7 +119,7 @@ export function TopMoviesView({
                     <button
                       type="button"
                       onClick={() => void addMovie(movie, "personal")}
-                      className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-black"
+                      className="action-btn-pill action-btn-add"
                     >
                       My list
                     </button>
@@ -132,14 +132,14 @@ export function TopMoviesView({
                     <button
                       type="button"
                       onClick={() => void addMovie(movie, "personal")}
-                      className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-black"
+                      className="action-btn-pill action-btn-add"
                     >
                       My list
                     </button>
                     <button
                       type="button"
                       onClick={() => void addMovie(movie, "shared")}
-                      className="rounded-full border border-white/15 px-3 py-1 text-xs"
+                      className="action-btn-pill action-btn-add"
                     >
                       Shared
                     </button>

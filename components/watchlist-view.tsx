@@ -326,7 +326,7 @@ export function WatchlistView({
               type="button"
               onClick={() => setShowWatched((current) => !current)}
               title={showWatched ? "Show unwatched" : "Show watched"}
-              className="group relative shrink-0 rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-black transition-colors hover:bg-accent/80"
+              className="group relative shrink-0 rounded-full bg-accent px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-accent/80"
             >
               {showWatched ? "Watched" : "Unwatched"}
               <span
