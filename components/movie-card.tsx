@@ -6,6 +6,10 @@ import type { MediaType } from "@/lib/media";
 import { formatReleaseLabel } from "@/lib/release-label";
 import type { StreamingOpenTarget } from "@/lib/streaming-links";
 import { tmdbImageUrl } from "@/lib/tmdb";
+import {
+  CardIconButton,
+  WatchNowIconLink,
+} from "./card-action-buttons";
 import { CheckIcon, CopyIcon, GripIcon, StarIcon, TrashIcon } from "./icons";
 import { ProviderBadges } from "./provider-badges";
 import { TitleDetailLightbox } from "./title-detail-lightbox";
@@ -86,62 +90,65 @@ export function MovieCard({
   }
 
   const watchNowButton = openTarget ? (
-    <WatchNowLink target={openTarget} onClick={stopOverlayClick} />
+    <WatchNowIconLink
+      href={openTarget.webUrl}
+      onClick={stopOverlayClick}
+    />
   ) : null;
 
   const actionOverlay = showOverlay ? (
     <div className="card-action-overlay pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl p-4 opacity-0 transition-opacity group-hover/card:opacity-100 group-focus-within/card:opacity-100 group-hover/card:pointer-events-auto group-focus-within/card:pointer-events-auto">
-      <div className="card-action-stack pointer-events-auto flex w-full max-w-[11rem] flex-col gap-2">
+      <div className="card-action-stack pointer-events-auto flex flex-col items-center gap-2">
         {watchNowButton}
         {hasIconActions ? (
           <>
             {onUnwatch ? (
-              <OverlayActionButton
-                label="Not watched"
+              <CardIconButton
+                label="Mark not watched"
+                tone="watched"
+                icon={<CheckIcon className="h-5 w-5" />}
                 onClick={(event) => {
                   stopOverlayClick(event);
                   onUnwatch();
                 }}
-                tone="watched"
-                icon={<CheckIcon className="h-5 w-5" />}
               />
             ) : onWatched ? (
-              <OverlayActionButton
-                label="Watched"
+              <CardIconButton
+                label="Mark watched"
+                tone="watched"
+                icon={<CheckIcon className="h-5 w-5" />}
                 onClick={(event) => {
                   stopOverlayClick(event);
                   onWatched();
                 }}
-                tone="watched"
-                icon={<CheckIcon className="h-5 w-5" />}
               />
             ) : null}
             {onCopyToShared ? (
-              <OverlayActionButton
-                label="Copy to shared"
+              <CardIconButton
+                label="Copy to shared list"
+                tone="add"
+                icon={<CopyIcon className="h-5 w-5" />}
                 onClick={(event) => {
                   stopOverlayClick(event);
                   onCopyToShared();
                 }}
-                tone="add"
-                icon={<CopyIcon className="h-5 w-5" />}
               />
             ) : null}
             {onRemove ? (
-              <OverlayActionButton
+              <CardIconButton
                 label="Remove"
+                tone="delete"
+                icon={<TrashIcon className="h-5 w-5" />}
                 onClick={(event) => {
                   stopOverlayClick(event);
                   onRemove();
                 }}
-                tone="delete"
-                icon={<TrashIcon className="h-5 w-5" />}
               />
             ) : null}
           </>
         ) : (
           <div
-            className="card-action-stack flex w-full flex-col gap-2"
+            className="card-action-stack flex flex-col items-center gap-2"
             onClick={stopOverlayClick}
           >
             {actions}
@@ -242,56 +249,5 @@ export function MovieCard({
         />
       ) : null}
     </>
-  );
-}
-
-function WatchNowLink({
-  target,
-  onClick,
-}: {
-  target: StreamingOpenTarget;
-  onClick: (event: MouseEvent) => void;
-}) {
-  return (
-    <a
-      href={target.webUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={onClick}
-      className="action-btn-pill action-btn-watch card-action-button w-full text-center no-underline"
-    >
-      Watch now
-    </a>
-  );
-}
-
-function OverlayActionButton({
-  label,
-  onClick,
-  icon,
-  tone,
-}: {
-  label: string;
-  onClick: (event: MouseEvent) => void;
-  icon: ReactNode;
-  tone: "add" | "watched" | "delete";
-}) {
-  const toneClass =
-    tone === "add"
-      ? "action-btn-add"
-      : tone === "delete"
-        ? "action-btn-delete"
-        : "action-btn-watched";
-
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      onClick={onClick}
-      className={`action-btn-pill card-action-button w-full ${toneClass}`}
-    >
-      {icon}
-      <span>{label}</span>
-    </button>
   );
 }

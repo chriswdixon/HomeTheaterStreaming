@@ -4,7 +4,9 @@ import { useState } from "react";
 import { availabilityForViewer } from "@/lib/availability";
 import type { Provider } from "@/lib/effective-services";
 import type { TopMovie } from "@/lib/server/top-movies";
-import { ListAddButtons } from "./list-add-buttons";
+import { ListAddButtons, ListStatusIcon } from "./list-add-buttons";
+import { CardIconButton } from "./card-action-buttons";
+import { PlusIcon, SharedIcon } from "./icons";
 import { MovieCard } from "./movie-card";
 
 export function TopMoviesView({
@@ -98,36 +100,31 @@ export function TopMoviesView({
               )}
               actions={
                 movie.onPersonalList && movie.onSharedList ? (
-                  <span className="action-btn-pill card-action-button w-full border border-white/15 text-center text-sm text-muted">
-                    On both lists
-                  </span>
+                  <>
+                    <ListStatusIcon label="On your list" />
+                    <ListStatusIcon label="On shared list" />
+                  </>
                 ) : movie.onPersonalList ? (
                   <>
-                    <span className="action-btn-pill card-action-button w-full border border-white/15 text-center text-sm text-muted">
-                      On your list
-                    </span>
+                    <ListStatusIcon label="On your list" />
                     {!movie.onSharedList ? (
-                      <button
-                        type="button"
+                      <CardIconButton
+                        label="Add to shared list"
+                        tone="shared"
+                        icon={<SharedIcon className="h-5 w-5" />}
                         onClick={() => void addMovie(movie, "shared")}
-                        className="action-btn-pill action-btn-shared card-action-button w-full"
-                      >
-                        Shared
-                      </button>
+                      />
                     ) : null}
                   </>
                 ) : movie.onSharedList ? (
                   <>
-                    <button
-                      type="button"
+                    <CardIconButton
+                      label="Add to my list"
+                      tone="add"
+                      icon={<PlusIcon className="h-5 w-5" />}
                       onClick={() => void addMovie(movie, "personal")}
-                      className="action-btn-pill action-btn-add card-action-button w-full"
-                    >
-                      My list
-                    </button>
-                    <span className="action-btn-pill card-action-button w-full border border-white/15 text-center text-sm text-muted">
-                      On shared
-                    </span>
+                    />
+                    <ListStatusIcon label="On shared list" />
                   </>
                 ) : (
                   <ListAddButtons movie={movie} onAdd={addMovie} />

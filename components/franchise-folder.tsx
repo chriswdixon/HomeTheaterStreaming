@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import type { Provider } from "@/lib/effective-services";
 import { availabilityForViewer } from "@/lib/availability";
 import type { TmdbSearchMovie } from "@/lib/tmdb";
-import { ListAddButtons } from "./list-add-buttons";
+import { ListAddButtons, ListStatusIcon } from "./list-add-buttons";
 import { MovieCard } from "./movie-card";
 
 export type FranchiseFolderMovie = {
@@ -223,9 +223,7 @@ function FranchiseFolderPanel({
           const actions =
             renderMovieActions?.(movie) ??
             (movie.onList ? (
-              <span className="action-btn-pill card-action-button w-full border border-white/15 text-center text-sm text-muted">
-                On your list
-              </span>
+              <ListStatusIcon label="On your list" />
             ) : (
               <ListAddButtons movie={movie} onAdd={onAddMovie} />
             ));

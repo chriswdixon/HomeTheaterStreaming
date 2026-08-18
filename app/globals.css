@@ -340,13 +340,30 @@ textarea.glass-input {
     border-color 150ms ease;
 }
 
+.card-action-stack {
+  width: auto;
+}
+
 .card-action-stack .action-btn-pill,
 .card-action-button {
-  width: 100%;
-  padding: 0.7rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 600;
+  width: auto;
+}
+
+.card-action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.85rem;
+  height: 2.85rem;
+  padding: 0;
+  border-radius: 9999px;
+  flex-shrink: 0;
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+.card-action-icon-muted {
+  opacity: 0.72;
+  cursor: default;
 }
 
 .card-action-overlay {
@@ -390,6 +407,12 @@ textarea.glass-input {
   color: #1a1208;
 }
 
+.card-action-stack .card-action-icon-muted.action-btn-watched {
+  background: rgba(12, 12, 18, 0.92);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--accent);
+}
+
 .card-action-stack .action-btn-watched:hover {
   background: #e8b86d;
   border-color: #f0c482;
@@ -420,16 +443,9 @@ textarea.glass-input {
   color: #1a1208;
 }
 
-.card-action-stack > span.action-btn-pill,
-.card-action-stack > span.card-action-button {
-  background: rgba(12, 12, 18, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: var(--foreground);
-}
-
 .card-action-stack > span,
 .card-action-stack > div {
-  width: 100%;
+  width: auto;
 }
 
 .action-btn-watch {
