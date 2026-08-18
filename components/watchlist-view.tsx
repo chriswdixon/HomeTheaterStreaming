@@ -121,6 +121,35 @@ export function WatchlistView({
     );
   }
 
+  async function copyToShared(item: WatchlistItemView) {
+    setMessage(null);
+    const response = await fetch("/api/watchlist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        list: "shared",
+        movie: {
+          tmdbMovieId: item.tmdbMovieId,
+          mediaType: item.mediaType,
+          title: item.title,
+          year: item.year,
+          posterPath: item.posterPath,
+          overview: item.overview,
+        },
+      }),
+    });
+    const data = (await response.json()) as { error?: string };
+    if (response.status === 409) {
+      setMessage(`${item.title} is already on the shared list`);
+      return;
+    }
+    if (!response.ok) {
+      setMessage(data.error ?? "Could not copy to the shared list");
+      return;
+    }
+    setMessage(`Copied ${item.title} to the shared list`);
+  }
+
   async function remove(item: WatchlistItemView) {
     const response = await fetch(`/api/watchlist?id=${item.id}`, {
       method: "DELETE",
@@ -197,7 +226,15 @@ export function WatchlistView({
           ))}
         </div>
       ) : null}
-      {message ? <p className="mt-3 text-sm text-red-300">{message}</p> : null}
+      {message ? (
+        <p
+          className={`mt-3 text-sm ${
+            message.startsWith("Could") ? "text-red-300" : "text-accent"
+          }`}
+        >
+          {message}
+        </p>
+      ) : null}
       {displayed.length === 0 ? (
         <div className="mt-12 rounded-3xl border border-dashed border-white/15 px-6 py-16 text-center">
           <h2 className="text-xl font-medium">
@@ -234,6 +271,11 @@ export function WatchlistView({
                 }
                 onUnwatch={
                   item.watchState ? () => void unwatch(item) : undefined
+                }
+                onCopyToShared={
+                  item.list === "personal"
+                    ? () => void copyToShared(item)
+                    : undefined
                 }
                 onRemove={() => setRemoveItem(item)}
               />

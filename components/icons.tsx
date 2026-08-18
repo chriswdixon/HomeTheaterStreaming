@@ -39,6 +39,17 @@ export function StarIcon({
   );
 }
 
+export function CopyIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M8 6h10v12h2V4H8zm-2 4h10v12H4V10zm2 2v8h6v-8z"
+      />
+    </svg>
+  );
+}
+
 export function GripIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true">

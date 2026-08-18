@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { ViewerAvailability } from "@/lib/availability";
 import type { MediaType } from "@/lib/media";
 import { tmdbImageUrl } from "@/lib/tmdb";
-import { CheckIcon, GripIcon, StarIcon, TrashIcon } from "./icons";
+import { CheckIcon, CopyIcon, GripIcon, StarIcon, TrashIcon } from "./icons";
 import { ProviderBadges } from "./provider-badges";
 
 export function MoviePoster({
@@ -43,6 +43,7 @@ export function MovieCard({
   onWatched,
   onRemove,
   onUnwatch,
+  onCopyToShared,
   actions,
 }: {
   title: string;
@@ -56,6 +57,7 @@ export function MovieCard({
   onWatched?: () => void;
   onRemove?: () => void;
   onUnwatch?: () => void;
+  onCopyToShared?: () => void;
   actions?: ReactNode;
 }) {
   return (
@@ -93,8 +95,8 @@ export function MovieCard({
           </p>
         ) : null}
         <ProviderBadges availability={availability} />
-        {onWatched || onRemove || onUnwatch ? (
-          <div className="mt-auto flex gap-2">
+        {onWatched || onRemove || onUnwatch || onCopyToShared ? (
+          <div className="mt-auto flex flex-wrap gap-2">
             {onUnwatch ? (
               <IconButton label="Mark not watched" onClick={onUnwatch}>
                 <CheckIcon className="h-4 w-4" />
@@ -102,6 +104,11 @@ export function MovieCard({
             ) : onWatched ? (
               <IconButton label="Watched" onClick={onWatched}>
                 <CheckIcon className="h-4 w-4" />
+              </IconButton>
+            ) : null}
+            {onCopyToShared ? (
+              <IconButton label="Copy to shared list" onClick={onCopyToShared}>
+                <CopyIcon className="h-4 w-4" />
               </IconButton>
             ) : null}
             {onRemove ? (

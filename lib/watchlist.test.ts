@@ -32,6 +32,22 @@ describe("isDuplicateWatchlistItem", () => {
     ).toBe(false);
   });
 
+  it("allows copying a personal title onto the shared list", () => {
+    expect(
+      isDuplicateWatchlistItem(
+        [
+          {
+            list: "personal",
+            ownerUserId: "user-1",
+            tmdbMovieId: 42,
+            mediaType: "tv",
+          },
+        ],
+        { list: "shared", ownerUserId: null, tmdbMovieId: 42, mediaType: "tv" },
+      ),
+    ).toBe(false);
+  });
+
   it("detects the same movie on the shared household list", () => {
     expect(
       isDuplicateWatchlistItem(
