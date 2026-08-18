@@ -3,43 +3,50 @@
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { NAV_ICONS, NavGlassIcon } from "./nav-icons";
 
 const LINKS = [
-  { href: "/my-list", label: "My list" },
-  { href: "/shared", label: "Shared list" },
-  { href: "/recently-watched", label: "Recently watched" },
-  { href: "/services", label: "Services" },
-  { href: "/recommendations", label: "Recommendations" },
-];
+  { href: "/my-list", label: "My list", short: "Mine" },
+  { href: "/shared", label: "Shared list", short: "Shared" },
+  { href: "/top-100", label: "Top 100", short: "Top 100" },
+  { href: "/recently-watched", label: "Recently watched", short: "Recent" },
+  { href: "/services", label: "Services", short: "Services" },
+  { href: "/recommendations", label: "Recommendations", short: "Recs" },
+] as const;
 
 export function AppNav({ householdName }: { householdName: string }) {
   const pathname = usePathname();
 
   return (
-    <header className="border-b border-white/10 bg-black/30 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-4">
-        <Link href="/my-list" className="text-lg font-semibold tracking-tight">
-          ScreenStack
+    <header className="glass-nav sticky top-0 z-50">
+      <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
+        <Link href="/my-list" className="flex items-center gap-2 pr-2">
+          <span className="glass-nav-icon">
+            <span className="text-sm font-bold text-foreground">S</span>
+          </span>
+          <span className="hidden text-lg font-semibold tracking-tight sm:inline">
+            ScreenStack
+          </span>
         </Link>
         <nav className="flex flex-1 flex-wrap items-center gap-1">
           {LINKS.map((link) => {
             const active = pathname === link.href;
+            const hasIcon = link.href in NAV_ICONS;
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`rounded-full px-3 py-1.5 text-sm transition ${
-                  active
-                    ? "bg-accent text-black"
-                    : "text-muted hover:bg-white/5 hover:text-foreground"
-                }`}
+                title={link.label}
+                className={`glass-nav-link ${active ? "glass-nav-link-active" : ""}`}
               >
-                {link.label}
+                {hasIcon ? <NavGlassIcon href={link.href} /> : null}
+                <span className="hidden md:inline">{link.label}</span>
+                <span className="md:hidden">{link.short}</span>
               </Link>
             );
           })}
         </nav>
-        <p className="hidden text-sm text-muted sm:block">{householdName}</p>
+        <p className="glass-badge hidden text-sm text-muted lg:inline">{householdName}</p>
         <UserButton />
       </div>
     </header>

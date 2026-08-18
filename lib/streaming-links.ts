@@ -62,6 +62,10 @@ const LINKS_BY_PROVIDER_ID: Record<number, LinkBuilder> = {
     appUrl: (query) => `max://search?q=${encoded(query)}`,
     webUrl: (query) => `https://play.max.com/search?q=${encoded(query)}`,
   },
+  344: {
+    appUrl: (query) => `https://www.viki.com/search?q=${encoded(query)}`,
+    webUrl: (query) => `https://www.viki.com/search?q=${encoded(query)}`,
+  },
 };
 
 const LINKS_BY_FAMILY: Record<string, LinkBuilder> = {

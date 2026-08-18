@@ -25,6 +25,8 @@ export function mapWatchlistRow(
     keywords: row.keywords ?? [],
     collectionId: row.collectionId,
     collectionName: row.collectionName,
+    folderName: row.folderName ?? null,
+    folderOrder: row.folderOrder ?? null,
     sortOrder: row.sortOrder,
     cachedFlatrateProviders: row.cachedFlatrateProviders ?? [],
     cachedRentProviders: row.cachedRentProviders ?? [],
@@ -63,6 +65,8 @@ export function createDbWatchlistStore(householdId: string): WatchlistStore {
           keywords: item.keywords,
           collectionId: item.collectionId,
           collectionName: item.collectionName,
+          folderName: item.folderName,
+          folderOrder: item.folderOrder,
           sortOrder: item.sortOrder,
           cachedFlatrateProviders: item.cachedFlatrateProviders,
           cachedRentProviders: item.cachedRentProviders,
@@ -73,6 +77,42 @@ export function createDbWatchlistStore(householdId: string): WatchlistStore {
 
       if (!row) {
         throw new Error("Could not save watchlist item");
+      }
+
+      return mapWatchlistRow(row);
+    },
+    async updateItem(id, patch) {
+      const [row] = await db
+        .update(watchlistItems)
+        .set({
+          ...(patch.folderName !== undefined
+            ? { folderName: patch.folderName }
+            : {}),
+          ...(patch.folderOrder !== undefined
+            ? { folderOrder: patch.folderOrder }
+            : {}),
+          ...(patch.sortOrder !== undefined
+            ? { sortOrder: patch.sortOrder }
+            : {}),
+          ...(patch.genres !== undefined ? { genres: patch.genres } : {}),
+          ...(patch.keywords !== undefined ? { keywords: patch.keywords } : {}),
+          ...(patch.collectionId !== undefined
+            ? { collectionId: patch.collectionId }
+            : {}),
+          ...(patch.collectionName !== undefined
+            ? { collectionName: patch.collectionName }
+            : {}),
+        })
+        .where(
+          and(
+            eq(watchlistItems.id, id),
+            eq(watchlistItems.householdId, householdId),
+          ),
+        )
+        .returning();
+
+      if (!row) {
+        throw new Error("Could not update watchlist item");
       }
 
       return mapWatchlistRow(row);
@@ -160,7 +200,7 @@ export async function refreshHouseholdAvailability(
 export async function backfillMissingTitleMeta(
   rows: (typeof watchlistItems.$inferSelect)[],
 ): Promise<(typeof watchlistItems.$inferSelect)[]> {
-  const missing = rows.filter((row) => (row.genres ?? []).length === 0).slice(0, 6);
+  const missing = rows.filter((row) => (row.genres ?? []).length === 0);
   if (missing.length === 0) return rows;
 
   const db = getDb();

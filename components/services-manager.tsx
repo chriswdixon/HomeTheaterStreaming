@@ -60,11 +60,12 @@ export function ServicesManager({
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">Services</h1>
         <p className="mt-1 text-muted">
-          Household defaults apply to everyone. Add personal services on top.
+          Household services apply to everyone. Add anything you subscribe to on
+          your own below.
         </p>
       </div>
 
-      <section className="rounded-3xl border border-white/10 bg-card/70 p-6">
+      <section className="glass rounded-3xl p-6">
         <h2 className="text-xl font-medium">Household</h2>
         <form onSubmit={saveHouseholdMeta} className="mt-4 grid gap-4 sm:grid-cols-2">
           <label className="text-sm text-muted">
@@ -127,8 +128,8 @@ export function ServicesManager({
         onSave={(providers) => save("household", providers)}
       />
       <ServicePicker
-        title="Your add-ons"
-        description="Only you see these. They are combined with household services when checking availability."
+        title="Only you subscribe to"
+        description="Services the rest of the household doesn't share — for example, your own Crunchyroll or Viki account. We combine these with household services when showing what's available to you."
         allProviders={catalog}
         selected={personalServices}
         onSave={(providers) => save("personal", providers)}

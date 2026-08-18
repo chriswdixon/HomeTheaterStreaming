@@ -1,9 +1,12 @@
 import type { ReactNode } from "react";
 import { AppNav } from "@/components/app-nav";
+import { BackToTopButton } from "@/components/back-to-top-button";
 import { SiteFooter } from "@/components/site-footer";
 import { requirePageMembership } from "@/lib/server/page-session";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 export default async function AppShell({ children }: { children: ReactNode }) {
   const { membership } = await requirePageMembership();
@@ -13,6 +16,7 @@ export default async function AppShell({ children }: { children: ReactNode }) {
       <AppNav householdName={membership.household.name} />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
       <SiteFooter />
+      <BackToTopButton />
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { getDb } from "@/db";
 import { watchlistItems } from "@/db/schema";
 import { availabilityForViewer } from "@/lib/availability";
 import { mergeEffectiveServices } from "@/lib/effective-services";
-import { jsonError, requireHousehold } from "@/lib/server/api";
+import { jsonError, jsonOk, requireHousehold } from "@/lib/server/api";
 import { loadWatchlist } from "@/lib/server/load-watchlist";
 import {
   getHouseholdProviders,
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     result.membership.householdId,
     list,
   );
-  return NextResponse.json({ items });
+  return jsonOk({ items });
 }
 
 export async function POST(request: Request) {
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
     },
   );
 
-  return NextResponse.json(
+  return jsonOk(
     { item: { ...added.item, availability, watchState: null } },
     { status: 201 },
   );
@@ -120,7 +120,7 @@ export async function PATCH(request: Request) {
   }
 
   await saveWatchlistOrder(result.membership.householdId, body.ids);
-  return NextResponse.json({ ok: true });
+  return jsonOk({ ok: true });
 }
 
 export async function DELETE(request: Request) {
@@ -146,5 +146,5 @@ export async function DELETE(request: Request) {
   }
 
   await db.delete(watchlistItems).where(eq(watchlistItems.id, id));
-  return NextResponse.json({ ok: true });
+  return jsonOk({ ok: true });
 }

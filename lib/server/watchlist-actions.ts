@@ -5,7 +5,9 @@ import {
   RECOMMENDATION_UNLOCK_COUNT,
   groupByFranchise,
   isRecommendationsUnlocked,
+  rankGeneralRecommendations,
   type AffinityGroup,
+  type RankedMovie,
   type RecommendedMovie,
   type WatchOrderGroup,
 } from "../recommendations";
@@ -18,9 +20,15 @@ import {
   qualifiesForWatchOrder,
   sortByReleaseYear,
 } from "../franchise-watch-order";
-import { detectSeriesAndFranchises, type SeriesOrFranchise } from "../series";
+import {
+  detectSeriesAndFranchises,
+  rankSeedsByListStrength,
+  type CatalogTitle,
+  type SeriesOrFranchise,
+} from "../series";
 import type { TmdbClient } from "../tmdb";
 import { isDuplicateWatchlistItem, type WatchlistKind } from "../watchlist";
+import { franchiseSortOrders } from "../watchlist-folders";
 
 export type StoredWatchlistItem = {
   id: string;
@@ -36,6 +44,8 @@ export type StoredWatchlistItem = {
   keywords: Keyword[];
   collectionId: number | null;
   collectionName: string | null;
+  folderName: string | null;
+  folderOrder: number | null;
   sortOrder: number;
   cachedFlatrateProviders: Provider[];
   cachedRentProviders: Provider[];
@@ -47,6 +57,21 @@ export type WatchlistStore = {
   listItems: () => Promise<StoredWatchlistItem[]>;
   insertItem: (
     item: Omit<StoredWatchlistItem, "id">,
+  ) => Promise<StoredWatchlistItem>;
+  updateItem: (
+    id: string,
+    patch: Partial<
+      Pick<
+        StoredWatchlistItem,
+        | "folderName"
+        | "folderOrder"
+        | "sortOrder"
+        | "genres"
+        | "keywords"
+        | "collectionId"
+        | "collectionName"
+      >
+    >,
   ) => Promise<StoredWatchlistItem>;
 };
 
@@ -115,6 +140,8 @@ export async function addWatchlistItem(
     keywords: meta.keywords,
     collectionId: meta.collectionId,
     collectionName: meta.collectionName,
+    folderName: null,
+    folderOrder: null,
     sortOrder,
     cachedFlatrateProviders: watch.flatrate,
     cachedRentProviders: watch.rent,
@@ -125,6 +152,94 @@ export async function addWatchlistItem(
   return { ok: true, item };
 }
 
+export type FranchiseMovieInput = MovieInput & {
+  order: number;
+};
+
+export async function addFranchiseFolderToWatchlist(
+  deps: { tmdb: TmdbClient; store: WatchlistStore },
+  input: {
+    list: WatchlistKind;
+    ownerUserId: string | null;
+    addedByUserId: string;
+    region: string;
+    folderName: string;
+    movies: FranchiseMovieInput[];
+  },
+): Promise<{ added: number; updated: number; items: StoredWatchlistItem[] }> {
+  if (input.movies.length === 0) {
+    return { added: 0, updated: 0, items: [] };
+  }
+
+  const existing = await deps.store.listItems();
+  const sameList = existing.filter((item) =>
+    input.list === "shared"
+      ? item.list === "shared"
+      : item.list === "personal" && item.ownerUserId === input.ownerUserId,
+  );
+  const sortOrders = franchiseSortOrders(
+    input.movies.length,
+    sameList.map((item) => item.sortOrder),
+  );
+
+  const results: StoredWatchlistItem[] = [];
+  let added = 0;
+  let updated = 0;
+
+  for (let index = 0; index < input.movies.length; index++) {
+    const movie = input.movies[index]!;
+    const mediaType = movie.mediaType ?? "movie";
+    const sortOrder = sortOrders[index]!;
+    const folderOrder = movie.order;
+    const duplicate = sameList.find(
+      (item) =>
+        item.tmdbMovieId === movie.tmdbMovieId && item.mediaType === mediaType,
+    );
+
+    if (duplicate) {
+      const item = await deps.store.updateItem(duplicate.id, {
+        folderName: input.folderName,
+        folderOrder,
+        sortOrder,
+      });
+      results.push(item);
+      updated++;
+      continue;
+    }
+
+    const [watch, meta] = await Promise.all([
+      deps.tmdb.getWatchProviders(movie.tmdbMovieId, input.region, mediaType),
+      deps.tmdb.getTitleMeta(movie.tmdbMovieId, mediaType),
+    ]);
+
+    const item = await deps.store.insertItem({
+      list: input.list,
+      ownerUserId: input.ownerUserId,
+      mediaType,
+      tmdbMovieId: movie.tmdbMovieId,
+      title: movie.title,
+      year: movie.year,
+      posterPath: movie.posterPath,
+      overview: movie.overview,
+      genres: meta.genres,
+      keywords: meta.keywords,
+      collectionId: meta.collectionId,
+      collectionName: meta.collectionName,
+      folderName: input.folderName,
+      folderOrder,
+      sortOrder,
+      cachedFlatrateProviders: watch.flatrate,
+      cachedRentProviders: watch.rent,
+      watchUrl: watch.watchUrl,
+      addedByUserId: input.addedByUserId,
+    });
+    results.push(item);
+    added++;
+  }
+
+  return { added, updated, items: results };
+}
+
 export type RecommendationPayload =
   | { unlocked: false; count: number; needed: number }
   | {
@@ -133,6 +248,7 @@ export type RecommendationPayload =
       needed: number;
       watchOrderGroups: WatchOrderGroup[];
       affinityGroups: AffinityGroup[];
+      generalRecs: RankedMovie[];
     };
 
 export const MAX_WATCH_PROVIDER_LOOKUPS = 30;
@@ -170,6 +286,45 @@ function listedMovieItems(
       item.mediaType === "movie" &&
       (item.list === "shared" ||
         (item.list === "personal" && item.ownerUserId === ownerUserId)),
+  );
+}
+
+async function buildPersonalCatalog(
+  deps: { tmdb: TmdbClient; store: WatchlistStore },
+  personal: StoredWatchlistItem[],
+): Promise<CatalogTitle[]> {
+  const movies = personal.filter((item) => item.mediaType === "movie");
+
+  return Promise.all(
+    movies.map(async (item) => {
+      let keywords = item.keywords ?? [];
+      let collectionId = item.collectionId;
+      let collectionName = item.collectionName;
+
+      if (keywords.length === 0) {
+        try {
+          const meta = await deps.tmdb.getTitleMeta(item.tmdbMovieId, "movie");
+          keywords = meta.keywords;
+          collectionId = meta.collectionId ?? collectionId;
+          collectionName = meta.collectionName ?? collectionName;
+          await deps.store.updateItem(item.id, {
+            genres: meta.genres,
+            keywords: meta.keywords,
+            collectionId: meta.collectionId,
+            collectionName: meta.collectionName,
+          });
+        } catch {
+          // Keep whatever is already stored.
+        }
+      }
+
+      return {
+        tmdbMovieId: item.tmdbMovieId,
+        collectionId,
+        collectionName,
+        keywords,
+      };
+    }),
   );
 }
 
@@ -283,29 +438,10 @@ async function buildAffinityGroups(
     }
   });
 
-  const providersById = new Map<number, Provider[]>();
-  const toHydrate = affinityRaw
-    .flatMap((group) => group.titles)
-    .filter((title) => !input.excludedTmdbIds.has(title.tmdbMovieId))
-    .slice(0, MAX_WATCH_PROVIDER_LOOKUPS);
-
-  await settledMap(toHydrate, WATCH_PROVIDER_CONCURRENCY, async (title) => {
-    if (providersById.has(title.tmdbMovieId)) return;
-    const watch = await deps.tmdb.getWatchProviders(
-      title.tmdbMovieId,
-      input.region,
-      title.mediaType ?? "movie",
-    );
-    providersById.set(title.tmdbMovieId, watch.flatrate);
-  });
-
   return groupByFranchise({
     groups: affinityRaw.map((group) => ({
       name: group.name,
-      movies: group.titles.map((title) => ({
-        ...title,
-        providers: providersById.get(title.tmdbMovieId) ?? [],
-      })),
+      movies: group.titles,
     })),
     excludedTmdbIds: input.excludedTmdbIds,
   });
@@ -337,26 +473,37 @@ export async function getRecommendationPayload(
   const excludedTmdbIds = new Set(listed.map((item) => item.tmdbMovieId));
   const listedMovieRows = listedMovieItems(items, input.ownerUserId);
 
-  const catalog = personal
-    .filter((item) => item.mediaType === "movie")
-    .map((item) => ({
-      tmdbMovieId: item.tmdbMovieId,
-      collectionId: item.collectionId,
-      collectionName: item.collectionName,
-      keywords: item.keywords,
-    }));
+  const recSets = await Promise.all(
+    personal.map(async (item) => {
+      try {
+        return await deps.tmdb.getTitleRecommendations(
+          item.tmdbMovieId,
+          item.mediaType,
+        );
+      } catch {
+        return [];
+      }
+    }),
+  );
+
+  const catalog = await buildPersonalCatalog(deps, personal);
 
   const detected = detectSeriesAndFranchises(catalog);
-  const franchiseSeeds = detected.filter((seed) => seed.kind === "franchise");
-  const leftoverSeeds = detected.filter(
-    (seed) =>
-      seed.kind === "collection" ||
-      (seed.kind === "franchise" && !qualifiesForWatchOrder(seed.seedTmdbIds.length)),
+  const franchiseSeeds = rankSeedsByListStrength(
+    detected.filter((seed) => seed.kind === "franchise"),
+  );
+  const leftoverSeeds = rankSeedsByListStrength(
+    detected.filter(
+      (seed) =>
+        seed.kind === "collection" ||
+        (seed.kind === "franchise" &&
+          !qualifiesForWatchOrder(seed.seedTmdbIds.length)),
+    ),
   );
 
   const { groups: watchOrderGroups, pathIds: watchPathIds } =
     await buildWatchOrderGroups(deps, {
-      franchiseSeeds: franchiseSeeds.slice(0, 5),
+      franchiseSeeds,
       listedItems: listedMovieRows,
       listedIds: excludedTmdbIds,
       region: input.region,
@@ -390,14 +537,63 @@ export async function getRecommendationPayload(
   }
 
   const affinityGroups = await buildAffinityGroups(deps, {
-    seeds: leftoverSeeds.slice(0, 5),
+    seeds: leftoverSeeds,
     watchOrderNames,
     watchPathIds,
     excludedTmdbIds,
     region: input.region,
   });
 
-  return { unlocked: true, count, needed, watchOrderGroups, affinityGroups };
+  const franchiseTmdbIds = new Set<number>([
+    ...watchPathIds,
+    ...affinityGroups.flatMap((group) =>
+      group.movies.map((movie) => movie.tmdbMovieId),
+    ),
+  ]);
+
+  const generalRecs = rankGeneralRecommendations({
+    recommendationSets: recSets.map((set) =>
+      set.map((rec) => ({ ...rec, providers: [] })),
+    ),
+    excludedTmdbIds,
+    excludeTmdbIds: franchiseTmdbIds,
+  });
+
+  const toHydrateGeneral = generalRecs.filter(
+    (movie) => !providersById.has(movie.tmdbMovieId),
+  );
+  const remainingLookups = Math.max(
+    0,
+    MAX_WATCH_PROVIDER_LOOKUPS - providersById.size,
+  );
+
+  await settledMap(
+    toHydrateGeneral.slice(0, remainingLookups),
+    WATCH_PROVIDER_CONCURRENCY,
+    async (movie) => {
+      if (providersById.has(movie.tmdbMovieId)) return;
+      const watch = await deps.tmdb.getWatchProviders(
+        movie.tmdbMovieId,
+        input.region,
+        movie.mediaType ?? "movie",
+      );
+      providersById.set(movie.tmdbMovieId, watch.flatrate);
+    },
+  );
+
+  const hydratedGeneralRecs = generalRecs.map((movie) => ({
+    ...movie,
+    providers: providersById.get(movie.tmdbMovieId) ?? [],
+  }));
+
+  return {
+    unlocked: true,
+    count,
+    needed,
+    watchOrderGroups,
+    affinityGroups,
+    generalRecs: hydratedGeneralRecs,
+  };
 }
 
 export function viewerAvailability(

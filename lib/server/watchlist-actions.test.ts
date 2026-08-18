@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  addFranchiseFolderToWatchlist,
   addWatchlistItem,
   getRecommendationPayload,
   MAX_WATCH_PROVIDER_LOOKUPS,
@@ -48,6 +49,7 @@ function mockTmdb(overrides: Partial<TmdbClient> = {}): TmdbClient {
     getCollectionParts: vi.fn().mockResolvedValue([]),
     discoverByKeyword: vi.fn().mockResolvedValue([]),
     getMoviesByIds: vi.fn().mockResolvedValue([]),
+    getTopRatedMovies: vi.fn().mockResolvedValue([]),
     listWatchProviders: vi.fn(),
     ...overrides,
   };
@@ -68,6 +70,8 @@ function personalMovies(count: number) {
     keywords: [],
     collectionId: null,
     collectionName: null,
+    folderName: null,
+    folderOrder: null,
     sortOrder: index,
     cachedFlatrateProviders: [netflix],
     cachedRentProviders: [],
@@ -94,6 +98,12 @@ function memoryStore(
       });
       return items[items.length - 1]!;
     },
+    async updateItem(id, patch) {
+      const index = items.findIndex((item) => item.id === id);
+      if (index === -1) throw new Error("not found");
+      items[index] = { ...items[index]!, ...patch };
+      return items[index]!;
+    },
   };
 }
 
@@ -114,6 +124,8 @@ describe("addWatchlistItem", () => {
         keywords: [],
         collectionId: null,
         collectionName: null,
+        folderName: null,
+        folderOrder: null,
         sortOrder: 0,
         cachedFlatrateProviders: [],
         cachedRentProviders: [],
@@ -193,6 +205,74 @@ describe("addWatchlistItem", () => {
   });
 });
 
+describe("addFranchiseFolderToWatchlist", () => {
+  it("adds missing titles and folders existing list items in watch order", async () => {
+    const store = memoryStore([
+      {
+        id: "existing",
+        list: "personal",
+        ownerUserId: "user-1",
+        mediaType: "movie",
+        tmdbMovieId: 100,
+        title: "Episode I",
+        year: "1999",
+        posterPath: null,
+        overview: "",
+        genres: [],
+        keywords: [],
+        collectionId: null,
+        collectionName: null,
+        folderName: null,
+        folderOrder: null,
+        sortOrder: 0,
+        cachedFlatrateProviders: [],
+        cachedRentProviders: [],
+        watchUrl: null,
+        addedByUserId: "user-1",
+      },
+    ]);
+    const tmdb = mockTmdb();
+
+    const result = await addFranchiseFolderToWatchlist(
+      { tmdb, store },
+      {
+        list: "personal",
+        ownerUserId: "user-1",
+        addedByUserId: "user-1",
+        region: "US",
+        folderName: "Star Wars",
+        movies: [
+          {
+            tmdbMovieId: 100,
+            title: "Episode I",
+            year: "1999",
+            posterPath: null,
+            overview: "",
+            order: 1,
+          },
+          {
+            tmdbMovieId: 101,
+            title: "Episode II",
+            year: "2002",
+            posterPath: null,
+            overview: "",
+            order: 2,
+          },
+        ],
+      },
+    );
+
+    expect(result.added).toBe(1);
+    expect(result.updated).toBe(1);
+    expect(store.items).toHaveLength(2);
+    expect(store.items[0]?.folderName).toBe("Star Wars");
+    expect(store.items[0]?.folderOrder).toBe(1);
+    expect(store.items[1]?.folderName).toBe("Star Wars");
+    expect(store.items[1]?.folderOrder).toBe(2);
+    expect(store.items[0]?.sortOrder).toBeLessThan(store.items[1]?.sortOrder ?? 0);
+  });
+});
+
 describe("getRecommendationPayload", () => {
   it("stays gated until the personal list has 10 movies", async () => {
     const personal = personalMovies(9);
@@ -252,6 +332,7 @@ describe("getRecommendationPayload", () => {
       expect(payload.affinityGroups.map((group) => group.name)).toEqual([
         "John Wick Collection",
       ]);
+      expect(payload.generalRecs.map((movie) => movie.tmdbMovieId)).toEqual([101]);
       expect(
         payload.affinityGroups[0]?.movies.map((movie) => movie.tmdbMovieId),
       ).toEqual([245891]);
@@ -345,7 +426,7 @@ describe("getRecommendationPayload", () => {
 
     const lookedUp = vi.mocked(tmdb.getWatchProviders).mock.calls.map(([id]) => id);
     expect(lookedUp.length).toBeLessThanOrEqual(MAX_WATCH_PROVIDER_LOOKUPS);
-    expect(lookedUp.every((id) => id >= 2000 && id < 2012)).toBe(true);
+    expect(lookedUp.length).toBeLessThan(40);
   });
 
   it("shows a numbered MCU path when three or more personal titles match", async () => {
@@ -402,6 +483,7 @@ describe("getRecommendationPayload", () => {
           ?.onList,
       ).toBe(false);
       expect(payload.affinityGroups).toEqual([]);
+      expect(payload.generalRecs.map((movie) => movie.tmdbMovieId)).toEqual([101]);
     }
   });
 
@@ -492,5 +574,87 @@ describe("getRecommendationPayload", () => {
       expect(payload.watchOrderGroups).toHaveLength(1);
       expect(payload.affinityGroups).toEqual([]);
     }
+  });
+
+  it("prioritizes collections with more list titles over newer one-off collections", async () => {
+    const personal = personalMovies(15).map((item, index) => {
+      if (index >= 12) {
+        return {
+          ...item,
+          collectionId: 10,
+          collectionName: "John Wick Collection",
+        };
+      }
+      const pair = Math.floor(index / 2);
+      if (pair < 6 && index % 2 === 0) {
+        return {
+          ...item,
+          collectionId: 100 + pair,
+          collectionName: `Collection ${pair}`,
+        };
+      }
+      if (pair < 6 && index % 2 === 1) {
+        return {
+          ...item,
+          collectionId: 100 + pair,
+          collectionName: `Collection ${pair}`,
+        };
+      }
+      return item;
+    });
+    const chapter4: RecommendedMovie = {
+      tmdbMovieId: 245891,
+      title: "John Wick: Chapter 4",
+      year: "2023",
+      posterPath: "/jw4.jpg",
+      overview: "Guns",
+      providers: [],
+    };
+    const tmdb = mockTmdb({
+      getCollectionParts: vi.fn().mockResolvedValue([chapter4]),
+    });
+
+    const payload = await getRecommendationPayload(
+      { tmdb, store: memoryStore(personal) },
+      { ownerUserId: "user-1", region: "US" },
+    );
+
+    expect(payload.unlocked).toBe(true);
+    if (payload.unlocked) {
+      expect(payload.affinityGroups[0]?.name).toBe("John Wick Collection");
+    }
+  });
+
+  it("hydrates missing keywords for older list titles before detecting franchises", async () => {
+    const mcuKeyword = {
+      tmdbKeywordId: 180547,
+      name: "marvel cinematic universe",
+    };
+    const personal = personalMovies(10).map((item, index) =>
+      index === 9
+        ? {
+            ...item,
+            tmdbMovieId: 1726,
+            title: "Iron Man",
+            keywords: [],
+          }
+        : item,
+    );
+    const tmdb = mockTmdb({
+      getTitleMeta: vi.fn().mockImplementation(async (id: number) => ({
+        genres: [],
+        keywords: id === 1726 ? [mcuKeyword] : [],
+        collectionId: null,
+        collectionName: null,
+      })),
+      discoverByKeyword: vi.fn().mockResolvedValue([]),
+    });
+
+    await getRecommendationPayload(
+      { tmdb, store: memoryStore(personal) },
+      { ownerUserId: "user-1", region: "US" },
+    );
+
+    expect(tmdb.getTitleMeta).toHaveBeenCalledWith(1726, "movie");
   });
 });

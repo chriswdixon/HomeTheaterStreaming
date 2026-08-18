@@ -1,10 +1,20 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { jsonResponse, NO_STORE_HEADERS } from "@/lib/http-cache";
 import { getMembership, type Membership } from "./membership";
 
 export function jsonError(message: string, status: number) {
-  return NextResponse.json({ error: message }, { status });
+  return jsonResponse({ error: message }, { status });
 }
+
+export function jsonOk(data: unknown, init: number | ResponseInit = 200) {
+  if (typeof init === "number") {
+    return jsonResponse(data, { status: init });
+  }
+  return jsonResponse(data, init);
+}
+
+export { NO_STORE_HEADERS };
 
 export async function requireUserId(): Promise<
   { error: NextResponse } | { userId: string }

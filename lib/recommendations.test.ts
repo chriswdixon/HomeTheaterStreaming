@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  GENERAL_RECOMMENDATIONS_LIMIT,
   RECOMMENDATION_UNLOCK_COUNT,
   RECOMMENDATIONS_PER_FRANCHISE,
   groupByFranchise,
   isRecommendationsUnlocked,
+  rankGeneralRecommendations,
   type RecommendedMovie,
 } from "./recommendations";
 
@@ -91,5 +93,44 @@ describe("groupByFranchise", () => {
     });
 
     expect(groups[0]?.movies).toHaveLength(RECOMMENDATIONS_PER_FRANCHISE);
+  });
+});
+
+describe("rankGeneralRecommendations", () => {
+  const dune = movie(1, "Dune");
+  const heat = movie(2, "Heat");
+  const arrival = movie(4, "Arrival");
+
+  it("ranks titles recommended by more personal list items higher", () => {
+    const recs = rankGeneralRecommendations({
+      recommendationSets: [[dune, arrival], [dune]],
+      excludedTmdbIds: new Set(),
+    });
+
+    expect(recs.map((item) => item.tmdbMovieId)).toEqual([1, 4]);
+    expect(recs[0]?.score).toBe(2);
+  });
+
+  it("drops listed titles and franchise duplicates", () => {
+    const recs = rankGeneralRecommendations({
+      recommendationSets: [[dune, heat]],
+      excludedTmdbIds: new Set([1]),
+      excludeTmdbIds: new Set([2]),
+    });
+
+    expect(recs).toEqual([]);
+  });
+
+  it("caps the list at twenty recommendations", () => {
+    const extras = Array.from({ length: 25 }, (_, index) =>
+      movie(100 + index, `Title ${index}`),
+    );
+
+    const recs = rankGeneralRecommendations({
+      recommendationSets: [extras],
+      excludedTmdbIds: new Set(),
+    });
+
+    expect(recs).toHaveLength(GENERAL_RECOMMENDATIONS_LIMIT);
   });
 });

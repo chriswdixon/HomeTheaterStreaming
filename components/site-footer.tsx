@@ -1,6 +1,6 @@
 export function SiteFooter() {
   return (
-    <footer className="mt-auto border-t border-white/10 px-4 py-6 text-center text-xs text-muted">
+    <footer className="glass-subtle mt-auto border-t border-white/10 px-4 py-6 text-center text-xs text-muted">
       Movie data from{" "}
       <a
         href="https://www.themoviedb.org/"

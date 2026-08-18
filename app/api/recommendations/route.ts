@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-import { jsonError, requireHousehold } from "@/lib/server/api";
+import { jsonError, jsonOk, requireHousehold } from "@/lib/server/api";
 import { getRecommendationPayload } from "@/lib/server/watchlist-actions";
 import { createDbWatchlistStore } from "@/lib/server/watchlist-store";
 import { createTmdbClient } from "@/lib/tmdb";
@@ -19,7 +18,7 @@ export async function GET() {
         region: result.membership.household.region,
       },
     );
-    return NextResponse.json(payload);
+    return jsonOk(payload);
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Could not load recommendations";

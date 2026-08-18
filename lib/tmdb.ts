@@ -41,6 +41,7 @@ export type TmdbClient = {
   getCollectionParts: (collectionId: number) => Promise<TmdbSearchMovie[]>;
   discoverByKeyword: (keywordId: number) => Promise<TmdbSearchMovie[]>;
   getMoviesByIds: (ids: number[]) => Promise<TmdbSearchMovie[]>;
+  getTopRatedMovies: (limit: number) => Promise<TmdbSearchMovie[]>;
   listWatchProviders: (region: string) => Promise<Provider[]>;
 };
 
@@ -270,6 +271,26 @@ export function createTmdbClient(
         }),
       );
       return movies.filter((movie): movie is TmdbSearchMovie => movie != null);
+    },
+
+    async getTopRatedMovies(limit) {
+      const movies: TmdbSearchMovie[] = [];
+      let page = 1;
+
+      while (movies.length < limit) {
+        const data = await tmdbGet<{ results: TmdbMoviePayload[] }>(
+          "/movie/top_rated",
+          { page: String(page) },
+        );
+        const batch = (data.results ?? []).map((payload) =>
+          mapTitle(payload, "movie"),
+        );
+        if (batch.length === 0) break;
+        movies.push(...batch);
+        page += 1;
+      }
+
+      return movies.slice(0, limit);
     },
 
     async listWatchProviders(region) {

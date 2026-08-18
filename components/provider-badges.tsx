@@ -52,7 +52,7 @@ function ProviderChip({
   return (
     <span
       title={label ?? provider.name}
-      className="flex items-center gap-1 rounded-full bg-white/8 px-2 py-1 text-[11px]"
+      className="flex items-center gap-1 glass-badge px-2 py-1 text-[11px]"
     >
       {logo ? (
         // eslint-disable-next-line @next/next/no-img-element

@@ -36,32 +36,35 @@ export function ServicePicker({
   }, [allProviders, query]);
 
   function toggle(provider: Provider) {
-    setChosen((current) => {
-      const next = { ...current };
-      if (next[provider.tmdbProviderId]) {
-        delete next[provider.tmdbProviderId];
-      } else {
-        next[provider.tmdbProviderId] = provider;
-      }
-      return next;
-    });
-  }
+    if (saving) return;
 
-  async function save() {
+    const previous = chosen;
+    const next = { ...chosen };
+    if (next[provider.tmdbProviderId]) {
+      delete next[provider.tmdbProviderId];
+    } else {
+      next[provider.tmdbProviderId] = provider;
+    }
+
+    setChosen(next);
     setSaving(true);
     setMessage(null);
-    try {
-      await onSave(Object.values(chosen));
-      setMessage("Saved");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not save");
-    } finally {
-      setSaving(false);
-    }
+
+    void onSave(Object.values(next))
+      .then(() => {
+        setMessage("Saved");
+      })
+      .catch((error) => {
+        setChosen(previous);
+        setMessage(error instanceof Error ? error.message : "Could not save");
+      })
+      .finally(() => {
+        setSaving(false);
+      });
   }
 
   return (
-    <section className="rounded-3xl border border-white/10 bg-card/70 p-6">
+    <section className="glass rounded-3xl p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-xl font-medium">{title}</h2>
@@ -71,7 +74,7 @@ export function ServicePicker({
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search services"
-          className="rounded-full border border-white/10 bg-black/40 px-4 py-2 text-sm"
+          className="glass-input max-w-xs px-4 py-2 text-sm"
         />
       </div>
       <ProviderList
@@ -79,24 +82,26 @@ export function ServicePicker({
         providers={filtered.featured}
         chosen={chosen}
         onToggle={toggle}
+        disabled={saving}
       />
       <ProviderList
         heading="More services"
         providers={filtered.rest}
         chosen={chosen}
         onToggle={toggle}
+        disabled={saving}
       />
-      <div className="mt-5 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={save}
-          disabled={saving}
-          className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-black"
+      {message ? (
+        <p
+          className={`mt-5 text-sm ${
+            message === "Saved" ? "text-muted" : "text-red-300"
+          }`}
         >
-          {saving ? "Saving…" : "Save"}
-        </button>
-        {message ? <p className="text-sm text-muted">{message}</p> : null}
-      </div>
+          {saving ? "Saving…" : message}
+        </p>
+      ) : saving ? (
+        <p className="mt-5 text-sm text-muted">Saving…</p>
+      ) : null}
     </section>
   );
 }
@@ -106,11 +111,13 @@ function ProviderList({
   providers,
   chosen,
   onToggle,
+  disabled = false,
 }: {
   heading: string;
   providers: Provider[];
   chosen: Record<number, Provider>;
   onToggle: (provider: Provider) => void;
+  disabled?: boolean;
 }) {
   if (providers.length === 0) return null;
 
@@ -124,11 +131,12 @@ function ProviderList({
           const logo = tmdbImageUrl(provider.logoPath, "w92");
           return (
             <li key={provider.tmdbProviderId}>
-              <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-white/10 bg-black/30 px-3 py-2">
+              <label className="glass-subtle flex cursor-pointer items-center gap-3 rounded-2xl px-3 py-2">
                 <input
                   type="checkbox"
                   checked={Boolean(chosen[provider.tmdbProviderId])}
                   onChange={() => onToggle(provider)}
+                  disabled={disabled}
                   className="accent-accent"
                 />
                 {logo ? (

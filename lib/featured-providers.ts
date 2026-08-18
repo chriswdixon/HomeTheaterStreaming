@@ -20,6 +20,8 @@ const FEATURED_NAMES = new Set(
     "Starz",
     "MGM+",
     "Discovery+",
+    "Viki",
+    "Rakuten Viki",
   ].map((name) => name.toLowerCase()),
 );
 

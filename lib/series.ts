@@ -78,3 +78,13 @@ export function detectSeriesAndFranchises(
     (group) => group.seedTmdbIds.length >= 2,
   );
 }
+
+export function rankSeedsByListStrength(
+  seeds: SeriesOrFranchise[],
+): SeriesOrFranchise[] {
+  return [...seeds].sort(
+    (a, b) =>
+      b.seedTmdbIds.length - a.seedTmdbIds.length ||
+      a.name.localeCompare(b.name),
+  );
+}

@@ -15,12 +15,12 @@ export function RatingDialog({
   const [hover, setHover] = useState(0);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+    <div className="glass-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="rating-title"
-        className="w-full max-w-sm rounded-3xl border border-white/10 bg-card p-6"
+        className="glass w-full max-w-sm rounded-3xl p-6"
       >
         <h2 id="rating-title" className="text-lg font-medium">
           Rate {title}
@@ -37,17 +37,13 @@ export function RatingDialog({
               onMouseEnter={() => setHover(value)}
               onMouseLeave={() => setHover(0)}
               onClick={() => onRate(value)}
-              className="rounded-full p-1 text-accent hover:bg-white/5"
+              className="glass-icon-button !h-10 !w-10 text-accent"
             >
-              <StarIcon className="h-8 w-8" filled={hover >= value} />
+              <StarIcon className="h-6 w-6" filled={hover >= value} />
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="mt-6 w-full rounded-full border border-white/15 px-4 py-2 text-sm"
-        >
+        <button type="button" onClick={onCancel} className="glass-button mt-6 w-full">
           Cancel
         </button>
       </div>
@@ -69,26 +65,18 @@ export function ConfirmDialog({
   onConfirm: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div
-        role="dialog"
-        aria-modal="true"
-        className="w-full max-w-sm rounded-3xl border border-white/10 bg-card p-6"
-      >
+    <div className="glass-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div role="dialog" aria-modal="true" className="glass w-full max-w-sm rounded-3xl p-6">
         <h2 className="text-lg font-medium">{title}</h2>
         <p className="mt-2 text-sm text-muted">{message}</p>
         <div className="mt-6 flex gap-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex-1 rounded-full border border-white/15 px-4 py-2 text-sm"
-          >
+          <button type="button" onClick={onCancel} className="glass-button flex-1">
             Cancel
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="flex-1 rounded-full bg-accent px-4 py-2 text-sm font-medium text-black"
+            className="glass-button glass-button-primary flex-1"
           >
             {confirmLabel}
           </button>

@@ -46,6 +46,25 @@ describe("streamingOpenTarget", () => {
     expect(target?.appUrl).toContain("aiv://");
   });
 
+  it("builds Viki search links", () => {
+    const viki = {
+      tmdbProviderId: 344,
+      name: "Rakuten Viki",
+      logoPath: null,
+    };
+    const target = streamingOpenTarget({
+      provider: viki,
+      title: "Crash Landing on You",
+      watchUrl,
+    });
+
+    expect(target).toEqual({
+      provider: viki,
+      appUrl: "https://www.viki.com/search?q=Crash%20Landing%20on%20You",
+      webUrl: "https://www.viki.com/search?q=Crash%20Landing%20on%20You",
+    });
+  });
+
   it("falls back to the TMDB watch page when the provider is unknown", () => {
     expect(
       streamingOpenTarget({
