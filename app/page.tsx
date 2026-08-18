@@ -1,4 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SiteFooter } from "@/components/site-footer";
@@ -14,13 +15,21 @@ export default async function HomePage() {
   }
 
   return (
-    <div className="flex min-h-full flex-1 flex-col">
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-6">
+    <div className="relative flex min-h-full flex-1 flex-col overflow-hidden">
+      <Image
+        src="/hero.png"
+        alt="A dark home theater with a glowing screen"
+        fill
+        priority
+        className="object-cover"
+      />
+      <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background/25" />
+      <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-6">
         <p className="text-lg font-semibold tracking-tight">ScreenStack</p>
         <div className="flex gap-3">
           <Link
             href="/sign-in"
-            className="rounded-full border border-white/15 px-4 py-2 text-sm"
+            className="rounded-full border border-white/15 bg-black/30 px-4 py-2 text-sm backdrop-blur"
           >
             Sign in
           </Link>
@@ -32,7 +41,7 @@ export default async function HomePage() {
           </Link>
         </div>
       </header>
-      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col justify-center px-4 py-16">
+      <main className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-4 py-16">
         <p className="text-sm uppercase tracking-[0.25em] text-accent">
           Household streaming
         </p>
@@ -53,13 +62,15 @@ export default async function HomePage() {
           </Link>
           <Link
             href="/sign-in"
-            className="rounded-full border border-white/15 px-6 py-3 text-sm"
+            className="rounded-full border border-white/15 bg-black/30 px-6 py-3 text-sm backdrop-blur"
           >
             I have an invite
           </Link>
         </div>
       </main>
-      <SiteFooter />
+      <div className="relative z-10">
+        <SiteFooter />
+      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: dark;
   --background: #07070b;
   --foreground: #f4f1ea;
   --muted: #9a958a;
@@ -32,4 +33,31 @@ body {
 
 a {
   color: inherit;
+}
+
+.cl-rootBox,
+.cl-cardBox,
+.cl-card,
+.cl-headerTitle,
+.cl-headerSubtitle,
+.cl-formFieldLabel,
+.cl-formFieldInput,
+.cl-footerActionText,
+.cl-identityPreviewText,
+.cl-socialButtonsBlockButtonText,
+.cl-formButtonPrimary,
+.cl-internal-b3fm6y {
+  color: var(--foreground);
+}
+
+.cl-formFieldInput,
+.cl-input {
+  background-color: #1b1b26;
+  color: var(--foreground);
+}
+
+.cl-headerSubtitle,
+.cl-footerActionText,
+.cl-formFieldInfoText {
+  color: var(--muted);
 }
