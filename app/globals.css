@@ -288,6 +288,18 @@ textarea.glass-input {
   color: #eaffee;
 }
 
+.action-btn-shared {
+  border: 1px solid rgba(107, 159, 212, 0.55);
+  background: rgba(107, 159, 212, 0.28);
+  color: #eef6ff;
+}
+
+.action-btn-shared:hover {
+  background: rgba(107, 159, 212, 0.42);
+  border-color: rgba(107, 159, 212, 0.75);
+  color: #eef6ff;
+}
+
 .action-btn-watched {
   border: 1px solid rgba(232, 184, 109, 0.55);
   background: rgba(232, 184, 109, 0.28);

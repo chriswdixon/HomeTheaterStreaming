@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import type { Provider } from "@/lib/effective-services";
 import { availabilityForViewer } from "@/lib/availability";
 import type { TmdbSearchMovie } from "@/lib/tmdb";
+import { ListAddButtons } from "./list-add-buttons";
 import { MovieCard } from "./movie-card";
 
 export type FranchiseFolderMovie = {
@@ -226,22 +227,7 @@ function FranchiseFolderPanel({
                 On your list
               </span>
             ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() => onAddMovie(movie, "personal")}
-                  className="action-btn-pill action-btn-add card-action-button w-full"
-                >
-                  My list
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onAddMovie(movie, "shared")}
-                  className="action-btn-pill action-btn-add card-action-button w-full"
-                >
-                  Shared
-                </button>
-              </>
+              <ListAddButtons movie={movie} onAdd={onAddMovie} />
             ));
 
           return (

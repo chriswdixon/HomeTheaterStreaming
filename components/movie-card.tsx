@@ -140,7 +140,12 @@ export function MovieCard({
             ) : null}
           </>
         ) : (
-          <div onClick={stopOverlayClick}>{actions}</div>
+          <div
+            className="card-action-stack flex w-full flex-col gap-2"
+            onClick={stopOverlayClick}
+          >
+            {actions}
+          </div>
         )}
       </div>
     </div>

@@ -22,6 +22,7 @@ import {
   FranchiseFolderRow,
   type FranchiseFolderData,
 } from "./franchise-folder";
+import { ListAddButtons } from "./list-add-buttons";
 import { MovieCard } from "./movie-card";
 import { MultiSelectFilter } from "./multi-select-filter";
 
@@ -342,7 +343,9 @@ export function RecommendationsView({
               <RecommendationGrid
                 movies={filteredGeneralRecs}
                 getKey={(movie) => `general-${movie.tmdbMovieId}`}
-                renderActions={(movie) => <AddButtons movie={movie} onAdd={addMovie} />}
+                renderActions={(movie) => (
+                  <ListAddButtons movie={movie} onAdd={addMovie} />
+                )}
                 viewerServices={viewerServices}
               />
             </section>
@@ -350,50 +353,6 @@ export function RecommendationsView({
         </div>
       )}
     </div>
-  );
-}
-
-function AddButtons({
-  movie,
-  onAdd,
-}: {
-  movie: {
-    tmdbMovieId: number;
-    mediaType?: TmdbSearchMovie["mediaType"];
-    title: string;
-    year: string | null;
-    posterPath: string | null;
-    overview: string;
-  };
-  onAdd: (
-    movie: {
-      tmdbMovieId: number;
-      mediaType?: TmdbSearchMovie["mediaType"];
-      title: string;
-      year: string | null;
-      posterPath: string | null;
-      overview?: string;
-    },
-    list: "personal" | "shared",
-  ) => void;
-}) {
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => onAdd(movie, "personal")}
-        className="action-btn-pill action-btn-add card-action-button w-full"
-      >
-        My list
-      </button>
-      <button
-        type="button"
-        onClick={() => onAdd(movie, "shared")}
-        className="action-btn-pill action-btn-add card-action-button w-full"
-      >
-        Shared
-      </button>
-    </>
   );
 }
 

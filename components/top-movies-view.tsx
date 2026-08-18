@@ -4,6 +4,7 @@ import { useState } from "react";
 import { availabilityForViewer } from "@/lib/availability";
 import type { Provider } from "@/lib/effective-services";
 import type { TopMovie } from "@/lib/server/top-movies";
+import { ListAddButtons } from "./list-add-buttons";
 import { MovieCard } from "./movie-card";
 
 export function TopMoviesView({
@@ -109,7 +110,7 @@ export function TopMoviesView({
                       <button
                         type="button"
                         onClick={() => void addMovie(movie, "shared")}
-                        className="action-btn-pill action-btn-add card-action-button w-full"
+                        className="action-btn-pill action-btn-shared card-action-button w-full"
                       >
                         Shared
                       </button>
@@ -129,22 +130,7 @@ export function TopMoviesView({
                     </span>
                   </>
                 ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => void addMovie(movie, "personal")}
-                      className="action-btn-pill action-btn-add card-action-button w-full"
-                    >
-                      My list
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void addMovie(movie, "shared")}
-                      className="action-btn-pill action-btn-add card-action-button w-full"
-                    >
-                      Shared
-                    </button>
-                  </>
+                  <ListAddButtons movie={movie} onAdd={addMovie} />
                 )
               }
             />
