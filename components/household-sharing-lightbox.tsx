@@ -68,26 +68,28 @@ export function HouseholdSharingLightbox({
             <span className="flex h-20 w-20 items-center justify-center rounded-full border border-accent/30 bg-accent/10 text-accent">
               <SharedIcon className="h-10 w-10" />
             </span>
-            <p className="text-sm text-muted">Shared with your household</p>
+            <p className="text-sm text-muted">Shared with this list</p>
           </div>
         </div>
 
         <div className="title-lightbox-body flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-5 md:p-6">
           <div>
-            <p className="text-xs uppercase tracking-wide text-muted">Household</p>
+            <p className="text-xs uppercase tracking-wide text-muted">Shared list</p>
             <h2
               id="household-lightbox-heading"
               className="mt-1 text-2xl font-semibold leading-tight md:text-3xl"
             >
               {householdName}
             </h2>
-            <p className="mt-1 text-sm text-muted">{regionLabel(region)}</p>
+            <p className="mt-1 text-sm text-muted">
+              Invite people to this list · {regionLabel(region)}
+            </p>
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
             <h3 className="text-sm font-medium">Invite link</h3>
             <p className="mt-1 text-sm text-muted">
-              Send this link so someone can sign up and join your household in one
+              Send this link so someone can sign up and join this shared list in one
               step.
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-3">

@@ -167,6 +167,26 @@ a {
   background: rgba(255, 255, 255, 0.04);
 }
 
+.household-switcher-actions {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.household-switcher-action {
+  padding: 0.75rem 1rem;
+  font-size: 0.8125rem;
+  color: var(--accent);
+}
+
+.household-switcher-action:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.household-switcher-action + .household-switcher-action {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
 .app-nav-drawer .household-switcher-menu {
   position: static;
   width: 100%;

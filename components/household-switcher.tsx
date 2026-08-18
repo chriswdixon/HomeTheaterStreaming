@@ -72,7 +72,7 @@ export function HouseholdSwitcher({
       </button>
       {open ? (
         <div className="household-switcher-menu" role="listbox" aria-label="Shared lists">
-          <p className="household-switcher-heading">Shared lists</p>
+          <p className="household-switcher-heading">Your shared lists</p>
           <ul className="household-switcher-list">
             {households.map((household) => {
               const selected = household.id === activeHouseholdId;
@@ -97,13 +97,22 @@ export function HouseholdSwitcher({
               );
             })}
           </ul>
-          <Link
-            href="/onboarding?add=1"
-            className="household-switcher-add"
-            onClick={() => setOpen(false)}
-          >
-            Join or create another list
-          </Link>
+          <div className="household-switcher-actions">
+            <Link
+              href="/create-list"
+              className="household-switcher-action"
+              onClick={() => setOpen(false)}
+            >
+              Create new shared list
+            </Link>
+            <Link
+              href="/join-list"
+              className="household-switcher-action"
+              onClick={() => setOpen(false)}
+            >
+              Join with invite code
+            </Link>
+          </div>
         </div>
       ) : null}
     </div>

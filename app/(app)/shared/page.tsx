@@ -3,7 +3,12 @@ import { loadWatchlistSafe } from "@/lib/server/load-watchlist";
 import { loadHouseholdMembers } from "@/lib/server/household-members";
 import { requirePageMembership } from "@/lib/server/page-session";
 
-export default async function SharedListPage() {
+export default async function SharedListPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ showInvite?: string }>;
+}) {
+  const { showInvite } = await searchParams;
   const { userId, membership } = await requirePageMembership();
   const [{ items, warning }, members] = await Promise.all([
     loadWatchlistSafe(
@@ -30,6 +35,7 @@ export default async function SharedListPage() {
         inviteCode: membership.household.inviteCode,
         region: membership.household.region,
       }}
+      initialShowHouseholdInvite={showInvite === "1"}
     />
   );
 }

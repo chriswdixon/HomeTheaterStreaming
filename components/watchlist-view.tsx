@@ -53,6 +53,7 @@ export function WatchlistView({
   household,
   initialSharedItemKeys = [],
   members = [],
+  initialShowHouseholdInvite = false,
 }: {
   list?: WatchlistKind;
   title: string;
@@ -68,6 +69,7 @@ export function WatchlistView({
   household?: { name: string; inviteCode: string; region: string };
   initialSharedItemKeys?: string[];
   members?: HouseholdMemberView[];
+  initialShowHouseholdInvite?: boolean;
 }) {
   const router = useRouter();
   const [items, setItems] = useState(initialItems);
@@ -80,7 +82,9 @@ export function WatchlistView({
   const [removeItem, setRemoveItem] = useState<WatchlistItemView | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [openFolderName, setOpenFolderName] = useState<string | null>(null);
-  const [showHouseholdInvite, setShowHouseholdInvite] = useState(false);
+  const [showHouseholdInvite, setShowHouseholdInvite] = useState(
+    initialShowHouseholdInvite,
+  );
   const [sharedItemKeys, setSharedItemKeys] = useState(
     () => new Set(initialSharedItemKeys),
   );

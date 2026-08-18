@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { WATCH_REGIONS } from "@/lib/regions";
@@ -79,7 +80,7 @@ export function OnboardingForm({
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(data.error ?? "Could not create household");
-      router.push("/start");
+      router.push("/shared?showInvite=1");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not create household");
@@ -100,7 +101,7 @@ export function OnboardingForm({
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(data.error ?? "Could not join household");
-      router.push("/start");
+      router.push("/shared");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not join household");
@@ -151,6 +152,28 @@ export function OnboardingForm({
       ) : null}
 
       {mode === "choose" ? (
+        addingAnother ? (
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            <Link
+              href="/create-list"
+              className="rounded-2xl border border-white/10 bg-white/5 px-5 py-6 text-left transition hover:border-accent/50 hover:bg-white/8"
+            >
+              <h2 className="text-lg font-medium">Create a shared list</h2>
+              <p className="mt-2 text-sm text-muted">
+                Name it and get a new invite code to share.
+              </p>
+            </Link>
+            <Link
+              href="/join-list"
+              className="rounded-2xl border border-white/10 bg-white/5 px-5 py-6 text-left transition hover:border-accent/50 hover:bg-white/8"
+            >
+              <h2 className="text-lg font-medium">Join with an invite code</h2>
+              <p className="mt-2 text-sm text-muted">
+                Enter a code from someone who already created a list.
+              </p>
+            </Link>
+          </div>
+        ) : (
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <button
             type="button"
@@ -158,9 +181,9 @@ export function OnboardingForm({
             disabled={loading}
             className="rounded-2xl border border-white/10 bg-white/5 px-5 py-6 text-left transition hover:border-accent/50 hover:bg-white/8"
           >
-            <h2 className="text-lg font-medium">Create a household</h2>
+            <h2 className="text-lg font-medium">Create a shared list</h2>
             <p className="mt-2 text-sm text-muted">
-              Name it, pick your country, and choose the services you share.
+              Name it, pick your country, and get an invite code to share.
             </p>
           </button>
           <button
@@ -170,10 +193,11 @@ export function OnboardingForm({
           >
             <h2 className="text-lg font-medium">Join with an invite code</h2>
             <p className="mt-2 text-sm text-muted">
-              Use the code from someone already in the household.
+              Use the code from someone who already created a shared list.
             </p>
           </button>
         </div>
+        )
       ) : null}
 
       {mode === "join" ? (
@@ -210,12 +234,12 @@ export function OnboardingForm({
       {mode === "create" ? (
         <form onSubmit={createHousehold} className="mt-8 space-y-6">
           <label className="block text-sm text-muted">
-            Household name
+            Shared list name
             <input
               value={name}
               onChange={(event) => setName(event.target.value)}
               className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-foreground"
-              placeholder="The Dixons"
+              placeholder="Movie night crew"
               required
             />
           </label>
@@ -275,7 +299,7 @@ export function OnboardingForm({
               disabled={loading}
               className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-black"
             >
-              {loading ? "Saving…" : "Create household"}
+              {loading ? "Creating…" : "Create shared list"}
             </button>
           </div>
         </form>
