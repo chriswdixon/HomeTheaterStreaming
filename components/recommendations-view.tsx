@@ -6,6 +6,10 @@ import type { Provider } from "@/lib/effective-services";
 import { availabilityForViewer } from "@/lib/availability";
 import { fetchNoStore } from "@/lib/http-cache";
 import {
+  contentRatingsOnList,
+  filterByContentRatings,
+} from "@/lib/content-ratings";
+import {
   filterByViewerServices,
 } from "@/lib/recommendation-filter";
 import type {
@@ -44,6 +48,7 @@ export function RecommendationsView({
   const [payload, setPayload] = useState(initial);
   const [message, setMessage] = useState<string | null>(null);
   const [selectedServiceIds, setSelectedServiceIds] = useState<number[]>([]);
+  const [contentRatingIds, setContentRatingIds] = useState<string[]>([]);
   const [openFolderKey, setOpenFolderKey] = useState<string | null>(null);
 
   async function addFranchise(
@@ -140,19 +145,32 @@ export function RecommendationsView({
   const affinityGroups = unlocked ? (payload.affinityGroups ?? []) : [];
   const generalRecs = unlocked ? (payload.generalRecs ?? []) : [];
 
+  const contentRatings = useMemo(
+    () =>
+      contentRatingsOnList([
+        ...watchOrderGroups.flatMap((group) => group.movies),
+        ...affinityGroups.flatMap((group) => group.movies),
+        ...generalRecs,
+      ]),
+    [affinityGroups, generalRecs, watchOrderGroups],
+  );
+
   const filteredWatchOrderGroups = useMemo(
     () =>
       watchOrderGroups
         .map((group) => ({
           ...group,
-          movies: filterByViewerServices(
-            group.movies,
-            selectedServiceIds,
-            viewerServices,
+          movies: filterByContentRatings(
+            filterByViewerServices(
+              group.movies,
+              selectedServiceIds,
+              viewerServices,
+            ),
+            contentRatingIds,
           ),
         }))
         .filter((group) => group.movies.length > 0),
-    [selectedServiceIds, viewerServices, watchOrderGroups],
+    [contentRatingIds, selectedServiceIds, viewerServices, watchOrderGroups],
   );
 
   const filteredAffinityGroups = useMemo(
@@ -160,20 +178,26 @@ export function RecommendationsView({
       affinityGroups
         .map((group) => ({
           ...group,
-          movies: filterByViewerServices(
-            group.movies,
-            selectedServiceIds,
-            viewerServices,
+          movies: filterByContentRatings(
+            filterByViewerServices(
+              group.movies,
+              selectedServiceIds,
+              viewerServices,
+            ),
+            contentRatingIds,
           ),
         }))
         .filter((group) => group.movies.length > 0),
-    [affinityGroups, selectedServiceIds, viewerServices],
+    [affinityGroups, contentRatingIds, selectedServiceIds, viewerServices],
   );
 
   const filteredGeneralRecs = useMemo(
     () =>
-      filterByViewerServices(generalRecs, selectedServiceIds, viewerServices),
-    [generalRecs, selectedServiceIds, viewerServices],
+      filterByContentRatings(
+        filterByViewerServices(generalRecs, selectedServiceIds, viewerServices),
+        contentRatingIds,
+      ),
+    [contentRatingIds, generalRecs, selectedServiceIds, viewerServices],
   );
 
   const franchiseFolders = useMemo((): FranchiseFolderData[] => {
@@ -230,6 +254,8 @@ export function RecommendationsView({
     watchOrderGroups.length > 0 ||
     affinityGroups.length > 0 ||
     generalRecs.length > 0;
+  const hasActiveFilters =
+    selectedServiceIds.length > 0 || contentRatingIds.length > 0;
 
   return (
     <div>
@@ -244,6 +270,17 @@ export function RecommendationsView({
         </p>
       ) : null}
       <div className="mt-4 flex flex-wrap items-start gap-3">
+        {contentRatings.length > 0 ? (
+          <MultiSelectFilter
+            label="Rating"
+            options={contentRatings.map((rating) => ({
+              value: rating,
+              label: rating,
+            }))}
+            selected={contentRatingIds}
+            onChange={setContentRatingIds}
+          />
+        ) : null}
         {viewerServices.length > 0 ? (
           <MultiSelectFilter
             label="Services"
@@ -260,13 +297,13 @@ export function RecommendationsView({
       {!hasRecommendations ? (
         <div className="mt-8 rounded-3xl border border-dashed border-white/15 px-6 py-16 text-center">
           <h2 className="text-xl font-medium">
-            {hasUnfilteredRecommendations && selectedServiceIds.length > 0
-              ? "Nothing on your selected services right now"
+            {hasUnfilteredRecommendations && hasActiveFilters
+              ? "Nothing matches your filters right now"
               : "No matches yet"}
           </h2>
           <p className="mt-2 text-muted">
-            {hasUnfilteredRecommendations && selectedServiceIds.length > 0
-              ? "Clear the service filter or pick different services to see more."
+            {hasUnfilteredRecommendations && hasActiveFilters
+              ? "Clear the rating or service filters to see more."
               : "Add more titles to your personal list to unlock franchise and general recommendations."}
           </p>
         </div>

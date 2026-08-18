@@ -259,6 +259,8 @@ export type RecommendationPayload =
 
 export const MAX_WATCH_PROVIDER_LOOKUPS = 30;
 const WATCH_PROVIDER_CONCURRENCY = 5;
+const MAX_CONTENT_RATING_LOOKUPS = 40;
+const CONTENT_RATING_CONCURRENCY = 5;
 
 async function settledMap<T>(
   items: T[],
@@ -281,6 +283,42 @@ async function settledMap<T>(
   if (items.length === 0) return;
   const workerCount = Math.min(concurrency, items.length);
   await Promise.all(Array.from({ length: workerCount }, () => worker()));
+}
+
+type RatedRecommendation = {
+  tmdbMovieId: number;
+  mediaType?: MediaType;
+  contentRating?: string | null;
+};
+
+async function hydrateRecommendationContentRatings(
+  deps: { tmdb: TmdbClient },
+  region: string,
+  movies: RatedRecommendation[],
+) {
+  const ratingsById = new Map<number, string | null>();
+  const toLookup = [
+    ...new Map(
+      movies
+        .filter((movie) => movie.contentRating == null)
+        .map((movie) => [movie.tmdbMovieId, movie]),
+    ).values(),
+  ].slice(0, MAX_CONTENT_RATING_LOOKUPS);
+
+  await settledMap(toLookup, CONTENT_RATING_CONCURRENCY, async (movie) => {
+    if (ratingsById.has(movie.tmdbMovieId)) return;
+    const rating = await deps.tmdb.getContentRating(
+      movie.tmdbMovieId,
+      movie.mediaType ?? "movie",
+      region,
+    );
+    ratingsById.set(movie.tmdbMovieId, rating);
+  });
+
+  for (const movie of movies) {
+    if (movie.contentRating != null) continue;
+    movie.contentRating = ratingsById.get(movie.tmdbMovieId) ?? null;
+  }
 }
 
 function listedMovieItems(
@@ -388,6 +426,7 @@ async function buildWatchOrderGroups(
               posterPath: listed.posterPath,
               overview: listed.overview,
               providers: listed.cachedFlatrateProviders,
+              contentRating: listed.contentRating,
             };
           }
           return { ...title, mediaType: "movie" as const, providers: [] };
@@ -638,6 +677,12 @@ async function buildRecommendationPayload(
     providers: providersById.get(movie.tmdbMovieId) ?? [],
     rentProviders: rentProvidersById.get(movie.tmdbMovieId) ?? [],
   }));
+
+  await hydrateRecommendationContentRatings(deps, input.region, [
+    ...watchOrderGroups.flatMap((group) => group.movies),
+    ...affinityGroups.flatMap((group) => group.movies),
+    ...hydratedGeneralRecs,
+  ]);
 
   return {
     unlocked: true,

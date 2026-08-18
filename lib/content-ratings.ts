@@ -34,9 +34,9 @@ export function sortContentRatings(ratings: string[]): string[] {
   });
 }
 
-export function contentRatingsOnList<T extends { contentRating: string | null }>(
-  items: T[],
-): string[] {
+export function contentRatingsOnList<
+  T extends { contentRating?: string | null },
+>(items: T[]): string[] {
   const seen = new Set<string>();
   for (const item of items) {
     const rating = normalizeContentRating(item.contentRating);
@@ -45,10 +45,9 @@ export function contentRatingsOnList<T extends { contentRating: string | null }>
   return sortContentRatings([...seen]);
 }
 
-export function filterByContentRatings<T extends { contentRating: string | null }>(
-  items: T[],
-  selectedRatings: string[],
-): T[] {
+export function filterByContentRatings<
+  T extends { contentRating?: string | null },
+>(items: T[], selectedRatings: string[]): T[] {
   if (selectedRatings.length === 0) return items;
   const allowed = new Set(selectedRatings);
   return items.filter((item) => {
