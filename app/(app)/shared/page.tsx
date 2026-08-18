@@ -1,15 +1,19 @@
 import { WatchlistView } from "@/components/watchlist-view";
 import { loadWatchlistSafe } from "@/lib/server/load-watchlist";
+import { loadHouseholdMembers } from "@/lib/server/household-members";
 import { requirePageMembership } from "@/lib/server/page-session";
 
 export default async function SharedListPage() {
   const { userId, membership } = await requirePageMembership();
-  const { items, warning } = await loadWatchlistSafe(
-    userId,
-    membership.householdId,
-    "shared",
-    membership.household.region,
-  );
+  const [{ items, warning }, members] = await Promise.all([
+    loadWatchlistSafe(
+      userId,
+      membership.householdId,
+      "shared",
+      membership.household.region,
+    ),
+    loadHouseholdMembers(membership.householdId, userId),
+  ]);
 
   return (
     <WatchlistView
@@ -18,6 +22,7 @@ export default async function SharedListPage() {
       description="The household queue. Anyone here can add, reorder, or remove titles."
       initialItems={items}
       warning={warning}
+      members={members}
       household={{
         name: membership.household.name,
         inviteCode: membership.household.inviteCode,

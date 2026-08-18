@@ -17,6 +17,7 @@ import {
   visibleWatchlistItems,
 } from "@/lib/list-query";
 import type { StoredWatchlistItem } from "@/lib/server/watchlist-actions";
+import type { HouseholdMemberView } from "@/lib/server/household-members";
 import type { TmdbSearchMovie } from "@/lib/tmdb";
 import { layoutWatchlistFolders } from "@/lib/watchlist-folders";
 import type { WatchState } from "@/lib/watch-state";
@@ -24,6 +25,7 @@ import type { WatchlistKind } from "@/lib/watchlist";
 import { watchlistItemKey } from "@/lib/default-list-view";
 import { ConfirmDialog, RatingDialog } from "./dialogs";
 import { HouseholdSharingLightbox } from "./household-sharing-lightbox";
+import { HouseholdMembersList } from "./household-members-list";
 import { MultiSelectFilter } from "./multi-select-filter";
 import { MovieCard } from "./movie-card";
 import { MovieSearch } from "./movie-search";
@@ -46,6 +48,7 @@ export function WatchlistView({
   showServiceFilter = false,
   household,
   initialSharedItemKeys = [],
+  members = [],
 }: {
   list?: WatchlistKind;
   title: string;
@@ -59,6 +62,7 @@ export function WatchlistView({
   showServiceFilter?: boolean;
   household?: { name: string; inviteCode: string; region: string };
   initialSharedItemKeys?: string[];
+  members?: HouseholdMemberView[];
 }) {
   const router = useRouter();
   const [items, setItems] = useState(initialItems);
@@ -294,6 +298,7 @@ export function WatchlistView({
               {household.name}
             </button>
           ) : null}
+          {members.length > 0 ? <HouseholdMembersList members={members} /> : null}
           <p className="mt-1 text-muted">{description}</p>
         </div>
         <p className="text-sm text-muted">{displayed.length} titles</p>
