@@ -246,7 +246,12 @@ export function MovieCard({
         ) : (
           <span />
         )}
-        <ProviderBadges availability={availability} title={title} linkable />
+        <ProviderBadges
+          availability={availability}
+          title={title}
+          linkable
+          logoOnly
+        />
       </div>
     </div>
   );
