@@ -85,6 +85,7 @@ export function TopMoviesView({
               overview={movie.overview}
               mediaType="movie"
               order={movie.rank}
+              showServices={false}
               availability={availabilityForViewer(
                 {
                   flatrate: movie.providers,

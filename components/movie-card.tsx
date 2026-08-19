@@ -60,6 +60,7 @@ export function MovieCard({
   votedByCurrentUser,
   actions,
   order,
+  showServices = true,
 }: {
   tmdbMovieId?: number;
   title: string;
@@ -80,6 +81,7 @@ export function MovieCard({
   votedByCurrentUser?: boolean;
   actions?: ReactNode;
   order?: number;
+  showServices?: boolean;
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const openTarget = availability.openTarget;
@@ -231,28 +233,32 @@ export function MovieCard({
           ))}
         </p>
       ) : null}
-      <div
-        className="mt-auto flex min-h-[1.75rem] w-full items-end justify-between gap-2"
-        onClick={stopOverlayClick}
-      >
-        {voteCount != null ? (
-          <span
-            className={`vote-count-badge ${votedByCurrentUser ? "vote-count-badge-active" : ""}`}
-            title={`${voteCount} vote${voteCount === 1 ? "" : "s"}`}
-          >
-            <VoteIcon className="h-3.5 w-3.5" />
-            <span>{voteCount}</span>
-          </span>
-        ) : (
-          <span />
-        )}
-        <ProviderBadges
-          availability={availability}
-          title={title}
-          linkable
-          logoOnly
-        />
-      </div>
+      {showServices || voteCount != null ? (
+        <div
+          className="mt-auto flex min-h-[1.75rem] w-full items-end justify-between gap-2"
+          onClick={stopOverlayClick}
+        >
+          {voteCount != null ? (
+            <span
+              className={`vote-count-badge ${votedByCurrentUser ? "vote-count-badge-active" : ""}`}
+              title={`${voteCount} vote${voteCount === 1 ? "" : "s"}`}
+            >
+              <VoteIcon className="h-3.5 w-3.5" />
+              <span>{voteCount}</span>
+            </span>
+          ) : (
+            <span />
+          )}
+          {showServices ? (
+            <ProviderBadges
+              availability={availability}
+              title={title}
+              linkable
+              logoOnly
+            />
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 
