@@ -1041,6 +1041,13 @@ textarea.glass-input {
   color: var(--accent);
 }
 
+@media (min-width: 768px) {
+  .app-nav-menu-button,
+  .app-nav-drawer-overlay {
+    display: none;
+  }
+}
+
 .app-nav-brand-icon {
   display: inline-flex;
   height: 2.25rem;

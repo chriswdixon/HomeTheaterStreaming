@@ -49,6 +49,16 @@ export function AppNav({
   }, [pathname]);
 
   useEffect(() => {
+    const media = window.matchMedia("(min-width: 768px)");
+    function closeOnDesktop() {
+      if (media.matches) setMenuOpen(false);
+    }
+    closeOnDesktop();
+    media.addEventListener("change", closeOnDesktop);
+    return () => media.removeEventListener("change", closeOnDesktop);
+  }, []);
+
+  useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") setMenuOpen(false);
     }
