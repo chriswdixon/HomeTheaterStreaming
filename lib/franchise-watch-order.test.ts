@@ -41,6 +41,8 @@ describe("getCuratedWatchOrder", () => {
     expect(order?.[0]).toBe(1726);
     expect(order?.[5]).toBe(24428);
     expect(order?.includes(299534)).toBe(true);
+    expect(order).toContain(634649);
+    expect(order).not.toContain(634028);
   });
 
   it("returns null for franchises without a curated path", () => {
