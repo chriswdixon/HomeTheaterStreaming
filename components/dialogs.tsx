@@ -15,12 +15,12 @@ export function RatingDialog({
   const [hover, setHover] = useState(0);
 
   return (
-    <div className="glass-overlay mobile-dialog-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="title-lightbox-overlay mobile-dialog-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="rating-title"
-        className="glass mobile-dialog-panel w-full max-w-sm rounded-3xl p-6"
+        className="title-lightbox-panel mobile-dialog-panel w-full max-w-sm rounded-3xl p-6"
       >
         <h2 id="rating-title" className="text-lg font-medium">
           Rate {title}
@@ -65,11 +65,11 @@ export function ConfirmDialog({
   onConfirm: () => void;
 }) {
   return (
-    <div className="glass-overlay mobile-dialog-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="title-lightbox-overlay mobile-dialog-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         role="dialog"
         aria-modal="true"
-        className="glass mobile-dialog-panel w-full max-w-sm rounded-3xl p-6"
+        className="title-lightbox-panel mobile-dialog-panel w-full max-w-sm rounded-3xl p-6"
       >
         <h2 className="text-lg font-medium">{title}</h2>
         <p className="mt-2 text-sm text-muted">{message}</p>

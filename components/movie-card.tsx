@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type MouseEvent, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import type { ViewerAvailability } from "@/lib/availability";
 import type { MediaType } from "@/lib/media";
 import { formatReleaseLabel } from "@/lib/release-label";
@@ -197,7 +198,10 @@ export function MovieCard({
       {showActions ? (
         <>
           <div className="card-action-overlay card-action-overlay-desktop pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl p-4 opacity-0 transition-opacity">
-            <div className="card-action-stack pointer-events-auto flex flex-col items-center gap-2">
+            <div
+              className="card-action-stack pointer-events-auto flex flex-col items-center gap-2"
+              onClick={stopOverlayClick}
+            >
               {actionButtons}
             </div>
           </div>
@@ -264,23 +268,31 @@ export function MovieCard({
 
   return (
     <>
-      <article className="group/card movie-card glass flex h-full flex-col rounded-3xl p-3 transition-shadow hover:ring-2 hover:ring-[var(--accent-warm)]">
+      <article
+        className={`group/card movie-card glass flex h-full flex-col rounded-3xl p-3 transition-shadow hover:ring-2 hover:ring-[var(--accent-warm)] ${
+          canOpenDetail ? "cursor-pointer" : ""
+        }`}
+        onClick={canOpenDetail ? handlePosterClick : undefined}
+      >
         {posterBlock}
         {detailsBlock}
       </article>
-      {detailOpen && tmdbMovieId != null ? (
-        <TitleDetailLightbox
-          tmdbMovieId={tmdbMovieId}
-          mediaType={mediaType}
-          title={title}
-          year={year}
-          posterPath={posterPath}
-          overview={overview}
-          availability={availability}
-          onRemove={onRemove}
-          onClose={() => setDetailOpen(false)}
-        />
-      ) : null}
+      {detailOpen && tmdbMovieId != null
+        ? createPortal(
+            <TitleDetailLightbox
+              tmdbMovieId={tmdbMovieId}
+              mediaType={mediaType}
+              title={title}
+              year={year}
+              posterPath={posterPath}
+              overview={overview}
+              availability={availability}
+              onRemove={onRemove}
+              onClose={() => setDetailOpen(false)}
+            />,
+            document.body,
+          )
+        : null}
     </>
   );
 }

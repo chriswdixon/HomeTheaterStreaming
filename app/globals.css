@@ -1133,7 +1133,6 @@ textarea.glass-input {
 @media (hover: hover) and (pointer: fine) {
   .group\/card:hover .card-action-overlay-desktop {
     opacity: 1;
-    pointer-events: auto;
   }
 }
 
