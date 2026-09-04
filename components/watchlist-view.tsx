@@ -184,6 +184,7 @@ export function WatchlistView({
       name: backupName,
       exportedAt: exportedAt.toISOString(),
       items,
+      services: list === "personal" ? viewerServices : [],
     });
     const blob = new Blob([JSON.stringify(backup, null, 2)], {
       type: "application/json",
@@ -224,6 +225,7 @@ export function WatchlistView({
         added?: number;
         skipped?: number;
         failed?: number;
+        servicesAdded?: number;
         items?: WatchlistItemView[];
         error?: string;
       };
@@ -245,6 +247,7 @@ export function WatchlistView({
           added: data.added ?? addedItems.length,
           skipped: data.skipped ?? 0,
           failed: data.failed ?? 0,
+          servicesAdded: data.servicesAdded ?? 0,
         }),
       );
       router.refresh();

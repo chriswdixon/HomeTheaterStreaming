@@ -10,6 +10,7 @@
 - Any household member can import into the shared list (same as adding a title).
 - Restore does not write votes, watch ratings, availability, internal ids, or sort order.
 - New titles use the existing add-to-list path (fresh TMDB metadata). `folderName` is restored on newly added titles only.
+- My List backups include the viewer’s selected streaming services. Import merges missing personal services and never removes existing ones. Shared-list backups leave `services` empty.
 - Filename: `{slug(name)}-YYYY-MM-DD.json`.
 
 ## File shape
@@ -21,6 +22,9 @@
   "exportedAt": "2026-09-04T21:26:00.000Z",
   "list": "personal",
   "name": "My List",
+  "services": [
+    { "tmdbProviderId": 8, "name": "Netflix", "logoPath": "/netflix.png" }
+  ],
   "items": [
     {
       "mediaType": "movie",
@@ -49,7 +53,7 @@ Shared files use `"list": "shared"` and `"name"` as the household name.
 
 - Auth: signed-in household member.
 - Body: `{ list: "personal" | "shared", backup: <file> }`.
-- Response: `{ added, skipped, failed, items }` where `items` are newly added rows.
+- Response: `{ added, skipped, failed, servicesAdded, items }` where `items` are newly added rows.
 
 ## Errors
 

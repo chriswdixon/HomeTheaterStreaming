@@ -1,9 +1,10 @@
 import { availabilityForViewer } from "@/lib/availability";
 import { mergeEffectiveServices } from "@/lib/effective-services";
-import { parseListBackup } from "@/lib/list-backup";
+import { backupServicesToAdd, parseListBackup } from "@/lib/list-backup";
 import { jsonError, jsonOk, requireHousehold } from "@/lib/server/api";
 import { importListBackup } from "@/lib/server/import-list-backup";
 import {
+  addPersonalProviders,
   getHouseholdProviders,
   getPersonalProviders,
 } from "@/lib/server/membership";
@@ -49,12 +50,31 @@ export async function POST(request: Request) {
     getHouseholdProviders(result.membership.householdId),
     getPersonalProviders(result.userId, result.membership.householdId),
   ]);
-  const viewerServices = mergeEffectiveServices(household, personal);
+
+  let servicesAdded = 0;
+  let restoredServices = personal;
+  if (list === "personal" && parsed.backup.services.length > 0) {
+    const toAdd = backupServicesToAdd(
+      parsed.backup.services,
+      mergeEffectiveServices(household, personal),
+    );
+    if (toAdd.length > 0) {
+      servicesAdded = await addPersonalProviders(
+        result.userId,
+        result.membership.householdId,
+        toAdd,
+      );
+      restoredServices = [...personal, ...toAdd];
+    }
+  }
+
+  const viewerServices = mergeEffectiveServices(household, restoredServices);
 
   return jsonOk({
     added: imported.added,
     skipped: imported.skipped,
     failed: imported.failed,
+    servicesAdded,
     items: imported.items.map((item) => ({
       ...item,
       availability: availabilityForViewer(

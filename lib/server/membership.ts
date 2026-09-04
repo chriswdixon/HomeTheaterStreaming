@@ -150,6 +150,26 @@ export async function getPersonalProviders(
   }));
 }
 
+export async function addPersonalProviders(
+  userId: string,
+  householdId: string,
+  providers: Provider[],
+) {
+  if (providers.length === 0) return 0;
+
+  const db = getDb();
+  await db.insert(userSubscriptions).values(
+    providers.map((provider) => ({
+      userId,
+      householdId,
+      tmdbProviderId: provider.tmdbProviderId,
+      name: provider.name,
+      logoPath: provider.logoPath,
+    })),
+  );
+  return providers.length;
+}
+
 export async function getHouseholdInvitePreview(code: string) {
   const normalized = code.trim().toUpperCase();
   const db = getDb();

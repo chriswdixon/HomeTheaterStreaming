@@ -91,6 +91,7 @@ function backup(items: ListBackupFile["items"]): ListBackupFile {
     exportedAt: "2026-09-04T21:26:00.000Z",
     list: "personal",
     name: "My List",
+    services: [],
     items,
   };
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  backupServicesToAdd,
   buildListBackup,
   listBackupFileName,
   listImportMessage,
@@ -59,6 +60,7 @@ describe("buildListBackup", () => {
       exportedAt: "2026-09-04T21:26:00.000Z",
       list: "personal",
       name: "My List",
+      services: [],
       items: [
         matrix,
         {
@@ -82,6 +84,28 @@ describe("buildListBackup", () => {
       ],
     });
   });
+
+  it("includes selected services on a personal backup", () => {
+    const netflix = {
+      tmdbProviderId: 8,
+      name: "Netflix",
+      logoPath: "/netflix.png",
+    };
+
+    expect(
+      buildListBackup({
+        list: "personal",
+        name: "My List",
+        exportedAt: "2026-09-04T21:26:00.000Z",
+        items: [matrix],
+        services: [netflix],
+      }),
+    ).toMatchObject({
+      list: "personal",
+      services: [netflix],
+      items: [matrix],
+    });
+  });
 });
 
 describe("parseListBackup", () => {
@@ -95,13 +119,35 @@ describe("parseListBackup", () => {
   };
 
   it("accepts a valid v1 file", () => {
-    expect(parseListBackup(valid)).toEqual({ ok: true, backup: valid });
+    expect(parseListBackup(valid)).toEqual({
+      ok: true,
+      backup: { ...valid, services: [] },
+    });
   });
 
   it("accepts an empty items array", () => {
     expect(parseListBackup({ ...valid, items: [] })).toEqual({
       ok: true,
-      backup: { ...valid, items: [] },
+      backup: { ...valid, items: [], services: [] },
+    });
+  });
+
+  it("keeps selected services from a personal backup", () => {
+    const netflix = {
+      tmdbProviderId: 8,
+      name: "Netflix",
+      logoPath: "/netflix.png",
+    };
+    expect(parseListBackup({ ...valid, list: "personal", services: [netflix] })).toEqual({
+      ok: true,
+      backup: { ...valid, list: "personal", services: [netflix] },
+    });
+  });
+
+  it("rejects invalid services", () => {
+    expect(parseListBackup({ ...valid, services: [{ name: "Netflix" }] })).toEqual({
+      ok: false,
+      error: "Backup services are invalid",
     });
   });
 
@@ -132,6 +178,20 @@ describe("parseListBackup", () => {
   });
 });
 
+describe("backupServicesToAdd", () => {
+  it("skips services already on the list", () => {
+    expect(
+      backupServicesToAdd(
+        [
+          { tmdbProviderId: 8, name: "Netflix", logoPath: "/n.png" },
+          { tmdbProviderId: 9, name: "Prime", logoPath: "/p.png" },
+        ],
+        [{ tmdbProviderId: 8 }],
+      ),
+    ).toEqual([{ tmdbProviderId: 9, name: "Prime", logoPath: "/p.png" }]);
+  });
+});
+
 describe("listImportMessage", () => {
   it("reports a merge that added and skipped titles", () => {
     expect(listImportMessage({ added: 3, skipped: 2, failed: 0 })).toBe(
@@ -143,6 +203,12 @@ describe("listImportMessage", () => {
     expect(listImportMessage({ added: 0, skipped: 2, failed: 0 })).toBe(
       "Nothing new to add — those titles are already on the list",
     );
+  });
+
+  it("mentions restored services", () => {
+    expect(
+      listImportMessage({ added: 1, skipped: 0, failed: 0, servicesAdded: 2 }),
+    ).toBe("Added 1 title, restored 2 services");
   });
 });
 

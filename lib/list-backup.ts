@@ -1,3 +1,4 @@
+import type { Provider } from "./effective-services";
 import type { MediaType } from "./media";
 import type { WatchlistKind } from "./watchlist";
 
@@ -14,12 +15,19 @@ export type ListBackupItem = {
   folderName: string | null;
 };
 
+export type ListBackupService = {
+  tmdbProviderId: number;
+  name: string;
+  logoPath: string | null;
+};
+
 export type ListBackupFile = {
   format: typeof LIST_BACKUP_FORMAT;
   version: typeof LIST_BACKUP_VERSION;
   exportedAt: string;
   list: WatchlistKind;
   name: string;
+  services: ListBackupService[];
   items: ListBackupItem[];
 };
 
@@ -38,6 +46,7 @@ export function buildListBackup(input: {
   name: string;
   exportedAt: string;
   items: ListBackupSourceItem[];
+  services?: ListBackupService[];
 }): ListBackupFile {
   return {
     format: LIST_BACKUP_FORMAT,
@@ -45,6 +54,11 @@ export function buildListBackup(input: {
     exportedAt: input.exportedAt,
     list: input.list,
     name: input.name,
+    services: (input.services ?? []).map((service) => ({
+      tmdbProviderId: service.tmdbProviderId,
+      name: service.name,
+      logoPath: service.logoPath,
+    })),
     items: input.items.map((item) => ({
       mediaType: item.mediaType,
       tmdbMovieId: item.tmdbMovieId,
@@ -80,6 +94,20 @@ export function parseListBackup(
     return { ok: false, error: "Not a ScreenStack list backup" };
   }
 
+  const services: ListBackupService[] = [];
+  if (value.services !== undefined) {
+    if (!Array.isArray(value.services)) {
+      return { ok: false, error: "Backup services are invalid" };
+    }
+    for (const service of value.services) {
+      const parsed = parseBackupService(service);
+      if (!parsed) {
+        return { ok: false, error: "Backup services are invalid" };
+      }
+      services.push(parsed);
+    }
+  }
+
   const items: ListBackupItem[] = [];
   for (const item of value.items) {
     const parsed = parseBackupItem(item);
@@ -97,6 +125,7 @@ export function parseListBackup(
       exportedAt: value.exportedAt,
       list: value.list,
       name: value.name,
+      services,
       items,
     },
   };
@@ -106,8 +135,10 @@ export function listImportMessage(result: {
   added: number;
   skipped: number;
   failed: number;
+  servicesAdded?: number;
 }) {
-  if (result.added === 0 && result.failed === 0) {
+  const servicesAdded = result.servicesAdded ?? 0;
+  if (result.added === 0 && result.failed === 0 && servicesAdded === 0) {
     return result.skipped > 0
       ? "Nothing new to add — those titles are already on the list"
       : "Nothing to import";
@@ -125,6 +156,11 @@ export function listImportMessage(result: {
   if (result.failed > 0) {
     parts.push(`could not add ${result.failed}`);
   }
+  if (servicesAdded > 0) {
+    parts.push(
+      `restored ${servicesAdded} ${servicesAdded === 1 ? "service" : "services"}`,
+    );
+  }
   return parts.join(", ");
 }
 
@@ -136,6 +172,34 @@ export function listBackupFileName(name: string, exportedAt: Date) {
     .replace(/^-+|-+$/g, "");
   const date = exportedAt.toISOString().slice(0, 10);
   return `${slug || "list"}-${date}.json`;
+}
+
+export function backupServicesToAdd(
+  incoming: ListBackupService[],
+  existing: Pick<Provider, "tmdbProviderId">[],
+): ListBackupService[] {
+  const have = new Set(existing.map((service) => service.tmdbProviderId));
+  return incoming.filter((service) => !have.has(service.tmdbProviderId));
+}
+
+function parseBackupService(raw: unknown): ListBackupService | null {
+  if (!raw || typeof raw !== "object") return null;
+  const service = raw as Record<string, unknown>;
+  if (
+    typeof service.tmdbProviderId !== "number" ||
+    !Number.isFinite(service.tmdbProviderId)
+  ) {
+    return null;
+  }
+  if (typeof service.name !== "string") return null;
+  if (service.logoPath !== null && typeof service.logoPath !== "string") {
+    return null;
+  }
+  return {
+    tmdbProviderId: service.tmdbProviderId,
+    name: service.name,
+    logoPath: service.logoPath,
+  };
 }
 
 function parseBackupItem(raw: unknown): ListBackupItem | null {

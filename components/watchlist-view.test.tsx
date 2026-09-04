@@ -153,6 +153,9 @@ describe("WatchlistView backup actions", () => {
         description="Your queue"
         initialItems={[item]}
         showSearch={false}
+        viewerServices={[
+          { tmdbProviderId: 8, name: "Netflix", logoPath: "/netflix.png" },
+        ]}
       />,
     );
     root = mounted.root;
@@ -173,6 +176,9 @@ describe("WatchlistView backup actions", () => {
       version: 1,
       list: "personal",
       name: "My List",
+      services: [
+        { tmdbProviderId: 8, name: "Netflix", logoPath: "/netflix.png" },
+      ],
       items: [
         {
           mediaType: "movie",
