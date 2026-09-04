@@ -1,9 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { ViewerAvailability } from "@/lib/availability";
 import { fetchNoStore } from "@/lib/http-cache";
+import {
+  buildListBackup,
+  listBackupFileName,
+  listImportMessage,
+  parseListBackup,
+} from "@/lib/list-backup";
 import {
   filterByContentRatings,
   contentRatingsOnList,
@@ -88,6 +94,8 @@ export function WatchlistView({
   const [sharedItemKeys, setSharedItemKeys] = useState(
     () => new Set(initialSharedItemKeys),
   );
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const states = items
     .map((item) => item.watchState)
@@ -163,6 +171,88 @@ export function WatchlistView({
         onRemove={() => setRemoveItem(item)}
       />
     );
+  }
+
+  const backupName =
+    list === "shared" && household ? household.name : "My List";
+
+  function exportList() {
+    if (!list) return;
+    const exportedAt = new Date();
+    const backup = buildListBackup({
+      list,
+      name: backupName,
+      exportedAt: exportedAt.toISOString(),
+      items,
+    });
+    const blob = new Blob([JSON.stringify(backup, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = listBackupFileName(backup.name, exportedAt);
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function importList(file: File) {
+    if (!list) return;
+    setMessage(null);
+    let raw: unknown;
+    try {
+      raw = JSON.parse(await file.text());
+    } catch {
+      setMessage("Could not read that file");
+      return;
+    }
+
+    const parsed = parseListBackup(raw);
+    if (!parsed.ok) {
+      setMessage(`Could not import: ${parsed.error}`);
+      return;
+    }
+
+    setImporting(true);
+    try {
+      const response = await fetchNoStore("/api/watchlist/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ list, backup: parsed.backup }),
+      });
+      const data = (await response.json()) as {
+        added?: number;
+        skipped?: number;
+        failed?: number;
+        items?: WatchlistItemView[];
+        error?: string;
+      };
+      if (!response.ok) {
+        setMessage(data.error ?? "Could not import that backup");
+        return;
+      }
+
+      const addedItems = data.items ?? [];
+      if (addedItems.length > 0) {
+        setItems((current) =>
+          enableSharedVoting
+            ? sortSharedListItems([...current, ...addedItems])
+            : [...addedItems, ...current],
+        );
+      }
+      setMessage(
+        listImportMessage({
+          added: data.added ?? addedItems.length,
+          skipped: data.skipped ?? 0,
+          failed: data.failed ?? 0,
+        }),
+      );
+      router.refresh();
+    } catch {
+      setMessage("Could not import that backup");
+    } finally {
+      setImporting(false);
+    }
   }
 
   async function addMovie(movie: TmdbSearchMovie) {
@@ -357,7 +447,39 @@ export function WatchlistView({
           {members.length > 0 ? <HouseholdMembersList members={members} /> : null}
           <p className="mt-1 text-muted">{description}</p>
         </div>
-        <p className="text-sm text-muted">{displayed.length} titles</p>
+        <div className="flex flex-col items-start gap-2 sm:items-end">
+          {list ? (
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="glass-button px-3 py-1.5 text-sm"
+                onClick={exportList}
+              >
+                Export
+              </button>
+              <button
+                type="button"
+                className="glass-button px-3 py-1.5 text-sm"
+                disabled={importing}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {importing ? "Importing…" : "Import"}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/json,.json"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (file) void importList(file);
+                }}
+              />
+            </div>
+          ) : null}
+          <p className="text-sm text-muted">{displayed.length} titles</p>
+        </div>
       </div>
       {warning ? (
         <p className="mt-4 rounded-2xl border border-amber-400/25 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
